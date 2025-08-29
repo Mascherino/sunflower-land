@@ -1,3 +1,4 @@
+import { INITIAL_EQUIPPED } from "features/game/lib/constants";
 import { Equipped } from "features/game/types/bumpkin";
 import { hasSeasonEnded } from "features/game/types/seasons";
 
@@ -113,7 +114,8 @@ export type NPCName =
   | "gunter"
   | "gorga"
   | "rocket man"
-  | "bailey"; // weatherman
+  | "bailey" // weatherman
+  | "maschs";
 
 export const NPC_WEARABLES: Record<NPCName, Equipped> = {
   "rocket man": {
@@ -1270,6 +1272,7 @@ export const NPC_WEARABLES: Record<NPCName, Equipped> = {
     background: "Pumpkin Plaza Background",
     shoes: "Cowboy Boots",
   },
+  maschs: { ...INITIAL_EQUIPPED },
 };
 
 if (Date.now() < new Date("2025-02-15T00:00:00.000Z").getTime()) {
