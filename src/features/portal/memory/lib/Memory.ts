@@ -201,8 +201,8 @@ export class Memory {
             this.scene.tweens.each(function (tween: Tweens.Tween) {
               tween.completeAfterLoop(0);
             });
-            this.handleCardClick(card);
           }
+          this.handleCardClick(card);
         });
         this.boardContainer?.add(sprite);
         this.cards.push(card);
