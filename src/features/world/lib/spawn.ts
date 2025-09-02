@@ -173,4 +173,10 @@ export const SPAWNS: () => SpawnLocation = () => ({
       y: 290,
     },
   },
+  memory: {
+    default: {
+      x: 100,
+      y: 100,
+    },
+  },
 });
