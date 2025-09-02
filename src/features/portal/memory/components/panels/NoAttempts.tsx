@@ -7,7 +7,6 @@ import { PortalContext } from "../../lib/PortalProvider";
 import { Label } from "components/ui/Label";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { PortalMachineState } from "../../lib/MemoryMachine";
-import sfl from "assets/icons/sfl.webp";
 import { CloseButtonPanel } from "features/game/components/CloseablePanel";
 import {
   MEMORY_NPC_WEARABLES,
@@ -39,7 +38,7 @@ export const NoAttempts: React.FC = () => {
             {t("memory.noAttemptsLeft")}
           </Label>
           <Label
-            icon={sfl}
+            icon={flowerIcon}
             type={
               flowerBalance.lt(RESTOCK_ATTEMPTS_COST) ? "danger" : "default"
             }
