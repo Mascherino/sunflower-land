@@ -1,3 +1,4 @@
+import { INITIAL_EQUIPPED } from "features/game/lib/constants";
 import { Equipped } from "features/game/types/bumpkin";
 
 export const MINIGAME_NAME = "memory";
@@ -22,13 +23,6 @@ export type MemoryNPC = "Maschs";
 
 export const MEMORY_NPC_WEARABLES: Record<MemoryNPC, Equipped> = {
   Maschs: {
-    hair: "Basic Hair",
-    shirt: "Skull Shirt",
-    pants: "Farmer Pants",
-    background: "Seashore Background",
-    hat: "Feather Hat",
-    body: "Beige Farmer Potion",
-    shoes: "Yellow Boots",
-    tool: "Farmer Pitchfork",
+    ...INITIAL_EQUIPPED,
   },
 };
