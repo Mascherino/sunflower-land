@@ -184,7 +184,7 @@ export class Memory {
           (this.TILE_SIZE / sprite.width) * this.scale,
           (this.TILE_SIZE / sprite.height) * this.scale,
         );
-        sprite.setInteractive().on("pointerup", () => {
+        sprite.setInteractive({ useHandCursor: true }).on("pointerup", () => {
           if (this.scene.locked || card.isFlipped) return;
 
           // Lock scene to prevent flipping during processing
@@ -197,12 +197,18 @@ export class Memory {
               });
               t.completeAfterLoop(0);
             }
+            card.tweens = [];
           } else {
             this.scene.tweens.each(function (tween: Tweens.Tween) {
               tween.completeAfterLoop(0);
             });
+
+            // Remove tweens for all cards if tweening card was not clicked
+            this.cards.forEach((card) => {
+              if (card.tweens && card.tweens.length > 0) card.tweens = [];
+            });
+            this.handleCardClick(card);
           }
-          this.handleCardClick(card);
         });
         this.boardContainer?.add(sprite);
         this.cards.push(card);
