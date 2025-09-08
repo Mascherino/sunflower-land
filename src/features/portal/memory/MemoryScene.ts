@@ -119,7 +119,7 @@ export class MemoryScene extends Phaser.Scene {
     });
     this.cameras.main.centerOn(
       (this.map.width / 2) * SQUARE_WIDTH,
-      (this.map.height / 2) * SQUARE_WIDTH,
+      (this.map.height / 2 - 1) * SQUARE_WIDTH,
     );
   }
 
