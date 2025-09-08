@@ -29,8 +29,8 @@ export const Hint: React.FC = () => {
       <div
         className="fixed z-50 flex flex-col justify-between"
         style={{
-          left: `${PIXEL_SCALE * 3}px`,
-          top: `${PIXEL_SCALE * 35}px`,
+          right: `${PIXEL_SCALE * 3}px`,
+          top: `${PIXEL_SCALE * 15}px`,
         }}
       >
         <RoundButton
