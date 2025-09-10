@@ -39,6 +39,7 @@ export interface Context {
   attemptsRemaining: number;
   score: number;
   canBuyHint: boolean;
+  health: number;
 }
 
 type GameStartEvent = {
@@ -57,6 +58,7 @@ type MoveEvent = {
   type: "MAKE_MOVE";
   solved: boolean;
   score: number;
+  health: number;
 };
 
 export type PortalEvent =
@@ -112,6 +114,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
     startAt: 0,
     score: 0,
     canBuyHint: false,
+    health: 0,
   },
   states: {
     initialising: {
@@ -252,6 +255,9 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             attemptsRemaining: (context: Context) =>
               context.attemptsRemaining - 1,
             canBuyHint: false,
+            health: (context: Context, event: GameStartEvent) => {
+              return event.totalMoves;
+            },
           }) as any,
         },
       },
@@ -290,6 +296,9 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             },
             canBuyHint: (context: Context, event: MoveEvent) => {
               return context.movesMade % 2 != 0;
+            },
+            health: (context: Context, event: MoveEvent) => {
+              return (context.health = event.health);
             },
           }),
         },

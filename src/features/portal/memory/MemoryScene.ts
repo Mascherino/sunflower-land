@@ -173,4 +173,7 @@ export class MemoryScene extends Phaser.Scene {
   public get maxMoves() {
     return this.portalService ? this.portalService?.state.context.maxMoves : 0;
   }
+  public get health() {
+    return this.portalService ? this.portalService?.state.context.health : 0;
+  }
 }

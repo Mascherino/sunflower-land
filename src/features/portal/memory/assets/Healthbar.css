@@ -1,0 +1,15 @@
+@keyframes borderBlink {
+  from,
+  to {
+    border-color: rgba(0, 0, 0, 0);
+  }
+
+  50% {
+    border-color: red;
+  }
+}
+
+.borderBlink {
+  border-width: 2px;
+  animation: borderBlink 1s ease-in-out infinite;
+}

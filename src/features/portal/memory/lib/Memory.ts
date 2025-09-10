@@ -226,6 +226,7 @@ export class Memory {
     let score = this.scene.score;
     const movesMade = this.scene.movesMade;
     const maxMoves = this.scene.maxMoves;
+    const health = this.scene.health;
 
     this.scene.time.delayedCall(AFTER_FLIP_DELAY, () => {
       if (this.flippedCards.length === 2) {
@@ -252,6 +253,7 @@ export class Memory {
             this.scene.portalService?.send("MAKE_MOVE", {
               score: score,
               solved: solved,
+              health: Math.min(health + 5, this.scene.maxMoves),
             });
 
             if (movesMade > maxMoves) {
@@ -263,7 +265,10 @@ export class Memory {
             }
           });
         } else {
-          this.scene.portalService?.send("MAKE_MOVE", { score: score });
+          this.scene.portalService?.send("MAKE_MOVE", {
+            score: score,
+            health: Math.max(health - 1, 0),
+          });
           if (movesMade > maxMoves) {
             this.scene.endGame(0);
           }
@@ -284,6 +289,7 @@ export class Memory {
         this.scene.portalService?.send("MAKE_MOVE", {
           score: score,
           flippedCard: this.flippedCards[0].name,
+          health: health - 1,
         });
         this.scene.locked = false;
         if (movesMade > maxMoves) {

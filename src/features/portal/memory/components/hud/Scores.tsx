@@ -6,13 +6,13 @@ import { PortalMachineState } from "../../lib/MemoryMachine";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 
 const scoreSel = (state: PortalMachineState) => state.context.score;
-const movesMadeSel = (state: PortalMachineState) => state.context.movesMade;
+// const movesMadeSel = (state: PortalMachineState) => state.context.movesMade;
 
 export const Scores: React.FC = () => {
   const { portalService } = useContext(PortalContext);
   const { t } = useAppTranslation();
   const score = useSelector(portalService, scoreSel);
-  const movesMade = useSelector(portalService, movesMadeSel);
+  // const movesMade = useSelector(portalService, movesMadeSel);
 
   return (
     <div
@@ -34,7 +34,7 @@ export const Scores: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="relative">
+      {/* <div className="relative">
         <div className="h-6 w-full mt-0.5 bg-black bg-opacity-30 flex items-center rounded">
           <div
             className="flex items-center space-x-2 text-white"
@@ -48,7 +48,7 @@ export const Scores: React.FC = () => {
             </span>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

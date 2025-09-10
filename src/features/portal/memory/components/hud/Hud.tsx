@@ -9,14 +9,15 @@ import { PIXEL_SCALE } from "features/game/lib/constants";
 import { Scores } from "./Scores";
 import { Target } from "./Target";
 import { Hint } from "./Hint";
+import { Healthbar } from "./Healthbar";
 
 const isPlayingSel = (state: PortalMachineState) => state.matches("playing");
+const healthSel = (state: PortalMachineState) => state.context.health;
 
 export const Hud: React.FC = () => {
   const { portalService } = useContext(PortalContext);
 
   const isPlaying = useSelector(portalService, isPlayingSel);
-
   return (
     <HudContainer zIndex={"99"}>
       <div>
@@ -31,7 +32,7 @@ export const Hud: React.FC = () => {
             <>
               <Target />
               <Scores />
-              <Hint />
+              <Healthbar />
             </>
           )}
         </div>
@@ -44,6 +45,7 @@ export const Hud: React.FC = () => {
         {isPlaying && (
           <>
             <Time />
+            <Hint />
           </>
         )}
       </div>
