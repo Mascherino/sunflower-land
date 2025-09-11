@@ -39,6 +39,8 @@ jobs:
           VITE_API_URL: "https://api-dev.sunflower-land.com"
           VITE_PORTAL_GAME_URL: "https://sunflower-land.com/testnet/"
           VITE_ANIMATION_URL: "https://animations-dev.sunflower-land.com"
+          VITE_PRIVATE_PORTAL_URL: ${{ secrets.PROTECTED_PORTAL_URL }}
+          VITE_PORTAL_DONATION_ADDRESS: ${{ secrets.PORTAL_DONATION_ADDRESS }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1.5.9
