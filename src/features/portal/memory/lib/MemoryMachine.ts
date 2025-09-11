@@ -288,7 +288,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
         MAKE_MOVE: {
           actions: assign<Context, any>({
             solved: (context: Context, event: MoveEvent) => {
-              return event.solved;
+              return (context.solved = event.solved);
             },
             movesMade: (context: Context, event: MoveEvent) => {
               return (context.movesMade = context.movesMade + 1);
@@ -362,7 +362,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
         {
           target: "winner",
           cond: (context) => {
-            return context.solved && context.movesMade <= context.maxMoves;
+            return context.solved;
           },
           actions: assign({
             score: () => 0,
