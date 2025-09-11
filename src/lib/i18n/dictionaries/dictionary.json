@@ -6056,7 +6056,6 @@
   "blessing.confirm": "Confirm",
   "blessing.offerTitle": "Offer a Tribute",
   "blessing.guardiansSeek": "Every day, the Guardians seek a tribute.",
-
   "blessing.chooseAmount": "Choose your {{name}} amount",
   "blessing.minimumRequired": "Minimum {{amount}} required",
   "blessings.results": "Blessing results",
@@ -6539,5 +6538,7 @@
   "memory.hintDescription": "A hint will show the matching card for your currently flipped card.",
   "memory.hintCost": "A single hint costs {{cost}}",
   "memory.currentBalance": "You currently have {{balance}}",
-  "memory.buyHint": "Buy hint"
+  "memory.buyHint": "Buy hint",
+  "memory.changelogTitle": "Changelog",
+  "memory.donationDescription": "This minigame is created for the community. Donations are greatly appreciated!"
 }
