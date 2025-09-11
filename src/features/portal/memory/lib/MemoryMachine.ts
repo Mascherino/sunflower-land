@@ -272,12 +272,12 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             startAt: (context: any) => 0,
             canBuyHint: (context: any) => false,
             state: (context: any) => {
-              submitScore({ score: 0 });
+              submitScore({ score: context.score });
               return submitMinigameScore({
                 state: context.state,
                 action: {
                   type: "minigame.scoreSubmitted",
-                  score: 0,
+                  score: context.score,
                   id: "memory",
                 },
               });
