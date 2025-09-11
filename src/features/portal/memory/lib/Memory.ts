@@ -78,6 +78,10 @@ export class Memory {
         frameRate: 10,
       });
     }
+    if (!this.scene.sound.get("match_found"))
+      this.scene.sound.add("match_found");
+    if (!this.scene.sound.get("cardflip")) this.scene.sound.add("cardflip");
+    if (!this.scene.sound.get("complete")) this.scene.sound.add("complete");
     Memory.current = this;
   }
 
@@ -306,6 +310,8 @@ export class Memory {
   }
 
   private handleCardClick(card: MemoryCard): void {
+    const flipSound = this.scene.sound.get("cardflip");
+    flipSound.play("", { seek: 0.13, volume: 0.75 });
     card.flipInstance.flip();
     card.isFlipped = true;
 
@@ -324,6 +330,7 @@ export class Memory {
         ) {
           score = score + 1;
           this.solvedCards = this.solvedCards.concat(this.flippedCards);
+          this.scene.sound.get("match_found").play({ volume: 0.75 });
 
           // Make matching cards disappear from game board
           this.scene.time.delayedCall(VANISH_DELAY, () => {
@@ -356,9 +363,6 @@ export class Memory {
             } else if (health <= 0) {
               // Fail mission if maxMoves has been exceeded
               this.scene.endGame(0);
-            } else if (solved) {
-              // End game when targetScore has been achieved
-              this.scene.endGame(score);
             }
           });
         } else {
@@ -372,6 +376,7 @@ export class Memory {
           this.checkEndGame(health, solvedBefore, score);
 
           this.scene.time.delayedCall(FLIP_BACK_DELAY, () => {
+            flipSound.play("", { seek: 0.13, volume: 0.75 });
             this.flippedCards.forEach((c) => {
               c.flipInstance.on("complete", () => {
                 c.isFlipped = false;
@@ -385,6 +390,7 @@ export class Memory {
         }
       } else {
         // Single card flipped
+
         health = Math.max(health - 1, 0);
 
         this.scene.portalService?.send("MAKE_MOVE", {

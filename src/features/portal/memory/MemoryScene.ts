@@ -4,7 +4,7 @@ import { Memory } from "./lib/Memory";
 import mapJson from "./assets/memory.json";
 import defaultTilesetConfig from "assets/map/tileset.json";
 import { SQUARE_WIDTH } from "features/game/lib/constants";
-import { MachineInterpreter } from "./lib/MemoryMachine";
+import { MachineInterpreter, PortalMachineState } from "./lib/MemoryMachine";
 import RexFlipPlugin from "phaser3-rex-plugins/plugins/flip-plugin.js";
 import { ITEM_DETAILS } from "features/game/types/images";
 import { ALL_PRODUCE } from "features/game/types/crops";
@@ -28,6 +28,7 @@ export class MemoryScene extends Phaser.Scene {
 
   preload() {
     this.loadImages();
+    this.loadAudio();
     const json = {
       ...mapJson,
       tilesets: defaultTilesetConfig.tilesets,
@@ -159,6 +160,12 @@ export class MemoryScene extends Phaser.Scene {
       cropImage.destroy();
     }
     cardfront.destroy();
+  }
+
+  loadAudio() {
+    this.load.audio("cardflip", "world/memory/cardflip.mp3");
+    this.load.audio("complete", "world/memory/complete.wav");
+    this.load.audio("match_found", "world/memory/match_found.wav");
   }
 
   public get isPlaying() {
