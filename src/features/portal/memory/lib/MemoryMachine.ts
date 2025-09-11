@@ -283,7 +283,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
               });
             },
           }),
-          target: "introduction",
+          target: "gameOver",
         },
         MAKE_MOVE: {
           actions: assign<Context, any>({
@@ -353,7 +353,6 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             return !!history[dateKey]?.prizeClaimedAt;
           },
           actions: assign({
-            score: () => 0,
             startedAt: () => 0,
             canBuyHint: () => false,
           }) as any,
@@ -365,7 +364,6 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             return context.solved;
           },
           actions: assign({
-            score: () => 0,
             startedAt: () => 0,
             canBuyHint: () => false,
           }) as any,
@@ -373,7 +371,6 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
         {
           target: "loser",
           actions: assign({
-            score: () => 0,
             startedAt: () => 0,
             canBuyHint: () => false,
           }) as any,

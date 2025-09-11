@@ -80,7 +80,13 @@ export class MemoryScene extends Phaser.Scene {
         }
       }
       const listener: (state: PortalMachineState) => void = (state) => {
-        if (state.matches("introduction") && state.changed) {
+        if (
+          (state.matches("introduction") ||
+            state.matches("winner") ||
+            state.matches("loser") ||
+            state.matches("complete")) &&
+          state.changed
+        ) {
           this.gameBoard.cleanPregame();
           this.gameBoard.drawPregame();
         }
