@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 
 import { SUNNYSIDE } from "assets/sunnyside";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { CloseButtonPanel } from "features/game/components/CloseablePanel";
 import { Mission } from "./Mission";
 import { MEMORY_NPC_WEARABLES } from "../../util/Constants";
+import chores from "assets/icons/chores.webp";
+import { Changelog } from "./Changelog";
+import { Donations } from "./Donations";
 
 interface Props {
   mode: "introduction" | "success" | "failed";
@@ -22,26 +25,44 @@ export const Overview: React.FC<Props> = ({
 }) => {
   const { t } = useAppTranslation();
 
+  const [tab, setTab] = useState<"main" | "donations" | "changelog">("main");
+
   return (
     <CloseButtonPanel
-      className="overflow-y-hidden"
+      className="overflow-y-hidden max-h-[65vh]"
       bumpkinParts={MEMORY_NPC_WEARABLES["Maschs"]}
-      currentTab={0}
+      currentTab={tab}
+      setCurrentTab={setTab}
       tabs={[
         {
           icon: SUNNYSIDE.icons.plant,
           name: t("memory.mission"),
+          id: "main",
+        },
+        {
+          icon: chores,
+          name: t("memory.changelogTitle"),
+          id: "changelog",
+        },
+        {
+          icon: SUNNYSIDE.icons.heart,
+          name: t("donations"),
+          id: "donations",
         },
       ]}
     >
       <>
-        <Mission
-          mode={mode}
-          showScore={showScore}
-          showExitButton={showExitButton}
-          confirmButtonText={confirmButtonText}
-          onConfirm={onConfirm}
-        />
+        {tab === "main" && (
+          <Mission
+            mode={mode}
+            showScore={showScore}
+            showExitButton={showExitButton}
+            confirmButtonText={confirmButtonText}
+            onConfirm={onConfirm}
+          />
+        )}
+        {tab === "changelog" && <Changelog />}
+        {tab === "donations" && <Donations />}
       </>
     </CloseButtonPanel>
   );

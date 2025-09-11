@@ -1,0 +1,18 @@
+[
+  {
+    "date": "02-09-2025",
+    "text": ["Testnet release. 🚀"]
+  },
+  {
+    "date": "08-09-2025",
+    "text": ["Moved buy hint button to top right"]
+  },
+  {
+    "date": "10-09-2025",
+    "text": ["Replaced moves made with healthbar"]
+  },
+  {
+    "date": "11-09-2025",
+    "text": ["Added card animations for pregame and game starting"]
+  }
+]
