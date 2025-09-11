@@ -1,8 +1,11 @@
 import { SceneId } from "features/world/mmoMachine";
 import { MINIGAME_NAME } from "./util/Constants";
 import { Memory } from "./lib/Memory";
-import mapJson from "./assets/memory.json";
-import defaultTilesetConfig from "assets/map/tileset.json";
+import springMap from "./assets/spring_memory.json";
+import summerMap from "./assets/summer_memory.json";
+import autumnMap from "./assets/autumn_memory.json";
+import winterMap from "./assets/winter_memory.json";
+// import defaultTilesetConfig from "assets/map/tileset.json";
 import { SQUARE_WIDTH } from "features/game/lib/constants";
 import { MachineInterpreter, PortalMachineState } from "./lib/MemoryMachine";
 import RexFlipPlugin from "phaser3-rex-plugins/plugins/flip-plugin.js";
@@ -10,6 +13,8 @@ import { ITEM_DETAILS } from "features/game/types/images";
 import { ALL_PRODUCE } from "features/game/types/crops";
 import { GameState, InventoryItemName } from "features/game/types/game";
 import { isMobile } from "mobile-device-detect";
+import seasonal_tileset from "assets/map/seasonal_tileset.json";
+import { CONFIG } from "lib/config";
 
 export class MemoryScene extends Phaser.Scene {
   sceneId: SceneId = MINIGAME_NAME;
@@ -29,11 +34,33 @@ export class MemoryScene extends Phaser.Scene {
   preload() {
     this.loadImages();
     this.loadAudio();
+    const season = this.gameState.season.season;
+    let mapJson = springMap;
+    switch (season) {
+      case "spring":
+        mapJson = springMap;
+        break;
+      case "summer":
+        mapJson = summerMap;
+        break;
+      case "autumn":
+        mapJson = autumnMap;
+        break;
+      case "winter":
+        mapJson = winterMap;
+        break;
+      default:
+        mapJson = summerMap;
+    }
     const json = {
       ...mapJson,
-      tilesets: defaultTilesetConfig.tilesets,
+      tilesets: [...seasonal_tileset, ...mapJson.tilesets],
     };
     this.load.tilemapTiledJSON("memory_tilemap", json);
+    this.load.image(
+      "Tree tileset",
+      `${CONFIG.PROTECTED_PORTAL_URL}/Tree-tileset.png`,
+    );
   }
 
   async create() {
@@ -118,14 +145,27 @@ export class MemoryScene extends Phaser.Scene {
 
     const tileset = this.map.addTilesetImage(
       "Sunnyside V3",
-      "tileset",
+      "seasonal-tileset",
       16,
       16,
       1,
       2,
     ) as Phaser.Tilemaps.Tileset;
+    const treeTileset = this.map.addTilesetImage(
+      "Tree tileset",
+      "Tree tileset",
+      16,
+      16,
+      0,
+      0,
+    ) as Phaser.Tilemaps.Tileset;
     this.map.layers.forEach((layerData) => {
-      const layer = this.map.createLayer(layerData.name, tileset, 0, 0);
+      const layer = this.map.createLayer(
+        layerData.name,
+        [tileset, treeTileset],
+        0,
+        0,
+      );
       this.layers[layerData.name] = layer as Phaser.Tilemaps.TilemapLayer;
     });
     this.cameras.main.centerOn(
