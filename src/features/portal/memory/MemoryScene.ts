@@ -186,4 +186,9 @@ export class MemoryScene extends Phaser.Scene {
   public get health() {
     return this.portalService ? this.portalService?.state.context.health : 0;
   }
+  public get solved() {
+    return this.portalService
+      ? this.portalService?.state.context.solved
+      : false;
+  }
 }

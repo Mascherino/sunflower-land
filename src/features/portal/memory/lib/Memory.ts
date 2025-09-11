@@ -12,6 +12,7 @@ import {
   DEFAULT_GAME_DURATION,
   DEFAULT_GAME_ROWS,
   FLIP_BACK_DELAY,
+  MATCH_FOUND_HEALTH,
   VANISH_DELAY,
 } from "../util/Constants";
 import { EventObject } from "xstate";
@@ -46,6 +47,7 @@ export class Memory {
   private scale = 0.8;
   private moveMultiplier = 1.2;
   private targetScore = 0;
+  private maxScore = 0;
   private hintListener: ((event: EventObject) => void) | null = null;
   static current: Memory | null = null;
   private followers: Array<{
@@ -88,6 +90,7 @@ export class Memory {
         this.moveMultiplier * this.options.rows * this.options.columns,
       ) * 2;
     this.targetScore = 10;
+    this.maxScore = (this.options.rows * this.options.columns) / 2;
 
     this.cleanGame();
     this.boardContainer = this.scene.add.container(
@@ -310,9 +313,8 @@ export class Memory {
     this.flippedCards.push(card);
 
     let score = this.scene.score;
-    const movesMade = this.scene.movesMade;
-    const maxMoves = this.scene.maxMoves;
-    const health = this.scene.health;
+    let health = this.scene.health;
+    const solvedBefore = !!this.scene.solved;
 
     this.scene.time.delayedCall(AFTER_FLIP_DELAY, () => {
       if (this.flippedCards.length === 2) {
@@ -335,14 +337,23 @@ export class Memory {
                 });
             });
 
-            const solved = score == this.targetScore;
+            health = Math.min(health + MATCH_FOUND_HEALTH, this.scene.maxMoves);
+            const solved = score >= this.targetScore;
             this.scene.portalService?.send("MAKE_MOVE", {
               score: score,
               solved: solved,
-              health: Math.min(health + 5, this.scene.maxMoves),
+              health: health,
             });
 
-            if (movesMade > maxMoves) {
+            if (!solvedBefore && solved) {
+              // End game when targetScore has been achieved
+              this.scene.sound.get("complete").play({ volume: 0.6 });
+
+              // Move was last move, but game is solved
+              if (health <= 0) this.scene.endGame(score);
+            } else if (score == this.maxScore) {
+              this.scene.endGame(score);
+            } else if (health <= 0) {
               // Fail mission if maxMoves has been exceeded
               this.scene.endGame(0);
             } else if (solved) {
@@ -351,13 +362,15 @@ export class Memory {
             }
           });
         } else {
+          health = Math.max(health - 1, 0);
           this.scene.portalService?.send("MAKE_MOVE", {
+            solved: solvedBefore,
             score: score,
-            health: Math.max(health - 1, 0),
+            health: health,
           });
-          if (movesMade > maxMoves) {
-            this.scene.endGame(0);
-          }
+
+          this.checkEndGame(health, solvedBefore, score);
+
           this.scene.time.delayedCall(FLIP_BACK_DELAY, () => {
             this.flippedCards.forEach((c) => {
               c.flipInstance.on("complete", () => {
@@ -372,17 +385,37 @@ export class Memory {
         }
       } else {
         // Single card flipped
+        health = Math.max(health - 1, 0);
+
         this.scene.portalService?.send("MAKE_MOVE", {
+          solved: solvedBefore,
           score: score,
           flippedCard: this.flippedCards[0].name,
-          health: health - 1,
+          health: health,
         });
+
         this.scene.locked = false;
-        if (movesMade > maxMoves) {
-          this.scene.endGame(0);
-        }
+
+        // End game if moves exceeded
+        this.checkEndGame(health, solvedBefore, score);
       }
     });
+  }
+
+  private checkEndGame(
+    health: number,
+    solvedBefore: boolean,
+    score: number,
+    maxScore: number | undefined = undefined,
+  ): void {
+    if (maxScore) {
+      // All cards have been solved
+      if (score === maxScore) return this.scene.endGame(score);
+    }
+    if (health <= 0) {
+      if (solvedBefore) return this.scene.endGame(score);
+      return this.scene.endGame(0);
+    }
   }
 
   /**

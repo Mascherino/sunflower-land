@@ -8,7 +8,6 @@ import { PortalMachineState } from "../../lib/MemoryMachine";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 
 const maxMovesSel = (state: PortalMachineState) => state.context.maxMoves;
-const movesMadeSel = (state: PortalMachineState) => state.context.movesMade;
 const targetScoreSel = (state: PortalMachineState) => state.context.targetScore;
 const scoreSel = (state: PortalMachineState) => state.context.score;
 
@@ -17,11 +16,10 @@ export const Target: React.FC = () => {
   const { t } = useAppTranslation();
 
   const maxMoves = useSelector(portalService, maxMovesSel);
-  const movesMade = useSelector(portalService, movesMadeSel);
   const targetScore = useSelector(portalService, targetScoreSel);
   const score = useSelector(portalService, scoreSel);
 
-  const isTargetReached = movesMade <= maxMoves && score >= targetScore;
+  const isTargetReached = score >= targetScore;
 
   return (
     <Label

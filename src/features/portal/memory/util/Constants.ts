@@ -19,6 +19,8 @@ export const DEFAULT_GAME_COLUMNS = 6;
 // Default game duration in minutes
 export const DEFAULT_GAME_DURATION = 10.5;
 
+export const MATCH_FOUND_HEALTH = 5;
+
 export type MemoryNPC = "Maschs";
 
 export const MEMORY_NPC_WEARABLES: Record<MemoryNPC, Equipped> = {
