@@ -4,7 +4,7 @@ import {
   createMachine,
   EventObject,
   InterpreterFrom,
-  State,
+  StateFrom,
 } from "xstate";
 import { CONFIG } from "lib/config";
 import { decodeToken } from "features/auth/actions/login";
@@ -93,10 +93,12 @@ export type PortalState = {
 };
 
 export type MachineInterpreter = InterpreterFrom<typeof portalMachine> & {
-  _listeners: Set<(event: EventObject) => void>;
+  _listeners: Set<
+    ((event: EventObject) => void) | ((state: PortalMachineState) => void)
+  >;
 };
 
-export type PortalMachineState = State<Context, PortalEvent, PortalState>;
+export type PortalMachineState = StateFrom<typeof portalMachine>;
 
 export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
   id: "portalMachine",

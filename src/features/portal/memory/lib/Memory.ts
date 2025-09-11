@@ -31,8 +31,9 @@ interface MemoryCard {
 }
 
 export class Memory {
-  private options: Required<MemoryConfig> = { rows: 9, columns: 9 };
+  private options: Required<MemoryConfig> = { rows: 5, columns: 6 };
   private board: string[] = [];
+  private _cards: MemoryCard[] = [];
   private cards: MemoryCard[] = [];
   private scene: MemoryScene;
   private boardContainer?: Phaser.GameObjects.Container;
@@ -47,6 +48,12 @@ export class Memory {
   private targetScore = 0;
   private hintListener: ((event: EventObject) => void) | null = null;
   static current: Memory | null = null;
+  private followers: Array<{
+    phase: number;
+    sprite: Phaser.GameObjects.Sprite;
+    position: { x: number; y: number };
+  }> = [];
+  private circleTween: Phaser.Tweens.Tween | undefined;
 
   constructor(scene: MemoryScene) {
     this.scene = scene;
@@ -87,8 +94,6 @@ export class Memory {
       (this.scene.map.width / 2 - this.options.columns + 1) * SQUARE_WIDTH,
       (this.scene.map.height / 2 - this.options.rows) * SQUARE_WIDTH,
     );
-
-    this.generateBoard();
 
     this.drawGame();
 
@@ -136,7 +141,7 @@ export class Memory {
    * Kill all tweens, clean and destroy board container, reset game variables
    */
   public cleanGame() {
-    this.scene.tweens.killAll();
+    // this.scene.tweens.killAll();
     this.boardContainer?.removeAll(true);
     this.boardContainer?.destroy(true);
     this.flippedCards = [];
@@ -151,18 +156,41 @@ export class Memory {
     this.hintListener = null;
   }
 
-  /**
-   * Draw new game board
-   */
-  drawGame() {
+  public cleanPregame() {
+    this.circleTween?.stop();
+    this.followers.forEach((follower) => {
+      follower.sprite.destroy(true);
+    });
+    this.followers = [];
+    this._cards = [];
+  }
+
+  drawPregame() {
+    this.generateBoard();
+    const path = new Phaser.Curves.Path();
+    path.add(
+      new Phaser.Curves.Ellipse(
+        (this.scene.map.width / 2) * SQUARE_WIDTH,
+        (this.scene.map.height / 2 - 1) * SQUARE_WIDTH,
+        60,
+        60,
+        0,
+        360,
+        false,
+        270,
+      ),
+    );
+    const points = path.getSpacedPoints(
+      this.options.rows * this.options.columns - 1,
+    );
     for (let row = 0; row < this.options.rows; row++) {
       for (let column = 0; column < this.options.columns; column++) {
-        const boardIndex = row * this.options.columns + column;
-        const spriteKey = this.board[boardIndex];
-
+        const index = row * this.options.columns + column;
+        const spriteKey = this.board[index];
+        const pt = points[index];
         const sprite = this.scene.add.sprite(
-          column * this.TILE_SIZE,
-          row * this.TILE_SIZE,
+          pt.x,
+          pt.y,
           `cardFront-${spriteKey}`,
         );
 
@@ -210,10 +238,68 @@ export class Memory {
             this.handleCardClick(card);
           }
         });
-        this.boardContainer?.add(sprite);
-        this.cards.push(card);
+        // this.boardContainer?.add(sprite);
+        this._cards.push(card);
+        this.followers.push({
+          phase: index / points.length,
+          sprite: sprite,
+          position: { x: column * this.TILE_SIZE, y: row * this.TILE_SIZE },
+        });
       }
     }
+    const progress = { t: 0 };
+    this.circleTween = this.scene.tweens.add({
+      targets: progress,
+      t: 1,
+      duration: 8000,
+      repeat: -1,
+      yoyo: false,
+      ease: "Linear",
+      onUpdate: () => {
+        for (const { phase, sprite } of this.followers) {
+          let p = progress.t + phase;
+          if (p > 1) p -= 1;
+          const point = path.getPoint(p);
+          sprite.setPosition(point.x, point.y);
+          sprite.rotation = path.getTangent(p).angle();
+        }
+      },
+    });
+  }
+
+  /**
+   * Draw new game board
+   */
+  drawGame() {
+    // for (let row = 0; row < this.options.rows; row++) {
+    //   for (let column = 0; column < this.options.columns; column++) {
+
+    this.circleTween?.stop();
+    this.scene.tweens.add({
+      targets: this.followers.map((follower) => follower.sprite),
+      x: (this.scene.map.width / 2) * SQUARE_WIDTH,
+      y: (this.scene.map.height / 2 - 1) * SQUARE_WIDTH,
+      rotation: 0,
+      duration: 400,
+      ease: "Linear",
+    });
+    this.scene.time.delayedCall(600, () => {
+      this.followers.forEach((follower) => {
+        this.scene.tweens.add({
+          targets: follower.sprite,
+          x:
+            (this.scene.map.width / 2 - this.options.columns + 1) *
+              SQUARE_WIDTH +
+            follower.position.x,
+          y:
+            (this.scene.map.height / 2 - this.options.rows) * SQUARE_WIDTH +
+            follower.position.y,
+          duration: 300,
+          ease: "Linear",
+        });
+      });
+      this.cards = this._cards;
+    });
   }
 
   private handleCardClick(card: MemoryCard): void {

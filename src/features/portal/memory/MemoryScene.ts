@@ -51,6 +51,14 @@ export class MemoryScene extends Phaser.Scene {
           this.portalService.off(l);
         }
       }
+      const listener: (state: PortalMachineState) => void = (state) => {
+        if (state.matches("introduction") && state.changed) {
+          this.gameBoard.cleanPregame();
+          this.gameBoard.drawPregame();
+        }
+      };
+      this.portalService.onTransition(listener);
+      this.portalService._listeners.add(listener);
     }
   }
   updateCameraBounds() {
@@ -69,6 +77,8 @@ export class MemoryScene extends Phaser.Scene {
     if (!this.isPlaying) this.gameBoard.cleanGame();
   }
   public endGame = (score: number) => {
+    this.gameBoard.cleanGame();
+    this.gameBoard.drawPregame();
     this.portalService?.send("GAME_OVER", {
       score: score,
     });
