@@ -13,6 +13,15 @@
   },
   {
     "date": "11-09-2025",
-    "text": ["Added card animations for pregame and game starting"]
+    "text": [
+      "Card animations for pregame and game starting",
+      "Added sound effects",
+      "Guide and Changelog added",
+      "Seasonal maps"
+    ]
+  },
+  {
+    "date": "12-09-2025",
+    "text": ["Replaced bumpkin placeholder", "Added background music"]
   }
 ]
