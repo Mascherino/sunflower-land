@@ -82,6 +82,10 @@ export class Memory {
       this.scene.sound.add("match_found");
     if (!this.scene.sound.get("cardflip")) this.scene.sound.add("cardflip");
     if (!this.scene.sound.get("complete")) this.scene.sound.add("complete");
+    if (!this.scene.sound.get("background")) {
+      const bgm = this.scene.sound.add("background");
+      bgm.play({ volume: 0.05, loop: true, rate: 0.7 });
+    }
     Memory.current = this;
   }
 

@@ -212,6 +212,7 @@ export class MemoryScene extends Phaser.Scene {
     this.load.audio("cardflip", "world/memory/cardflip.mp3");
     this.load.audio("complete", "world/memory/complete.wav");
     this.load.audio("match_found", "world/memory/match_found.wav");
+    this.load.audio("background", "world/memory/bgm.wav");
   }
 
   public get isPlaying() {
