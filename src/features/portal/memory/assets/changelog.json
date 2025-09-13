@@ -23,5 +23,11 @@
   {
     "date": "12-09-2025",
     "text": ["Replaced bumpkin placeholder", "Added background music"]
+  },
+  {
+    "date": "13-09-2025",
+    "text": [
+      "Added adjustable settings for background music, sound effects and animations."
+    ]
   }
 ]
