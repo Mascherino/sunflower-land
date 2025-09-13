@@ -36,8 +36,14 @@ export const Changelog: React.FC = () => {
       <div className="flex flex-col gap-1 overflow-y-auto scrollable pr-1">
         {changelog
           .sort((a, b) => {
-            const aDate = new Date(a.date.split("/").reverse().join(""));
-            const bDate = new Date(b.date.split("/").reverse().join(""));
+            const aSplit = a.date.split("-").map((val) => {
+              return Number(val);
+            });
+            const bSplit = b.date.split("-").map((val) => {
+              return Number(val);
+            });
+            const aDate = new Date(aSplit[2], aSplit[1], aSplit[0]);
+            const bDate = new Date(bSplit[2], bSplit[1], bSplit[0]);
             return bDate.getTime() - aDate.getTime();
           })
           .map((data, index) => (
