@@ -16,6 +16,25 @@ import { isMobile } from "mobile-device-detect";
 import seasonal_tileset from "assets/map/seasonal_tileset.json";
 import { CONFIG } from "lib/config";
 
+interface SoundConfig {
+  cardflip?:
+    | Phaser.Sound.WebAudioSound
+    | Phaser.Sound.HTML5AudioSound
+    | Phaser.Sound.NoAudioSound;
+  complete?:
+    | Phaser.Sound.WebAudioSound
+    | Phaser.Sound.HTML5AudioSound
+    | Phaser.Sound.NoAudioSound;
+  match_found?:
+    | Phaser.Sound.WebAudioSound
+    | Phaser.Sound.HTML5AudioSound
+    | Phaser.Sound.NoAudioSound;
+  background?:
+    | Phaser.Sound.WebAudioSound
+    | Phaser.Sound.HTML5AudioSound
+    | Phaser.Sound.NoAudioSound;
+}
+
 export class MemoryScene extends Phaser.Scene {
   sceneId: SceneId = MINIGAME_NAME;
   gameBoard!: Memory;
@@ -26,6 +45,7 @@ export class MemoryScene extends Phaser.Scene {
   rexFlip: RexFlipPlugin | undefined;
   locked = false;
   static current: MemoryScene | null = null;
+  SOUNDS: SoundConfig = {} as SoundConfig;
 
   constructor() {
     super(MINIGAME_NAME);
@@ -65,11 +85,13 @@ export class MemoryScene extends Phaser.Scene {
 
   async create() {
     this.createCardImages();
+    this.initSounds();
     this.initCamera();
     this.initMap();
     this.updateCameraBounds();
     this.physics.world.drawDebug = false;
     this.gameBoard = new Memory(this);
+
     if (this.portalService) {
       if (!this.portalService._listeners) {
         this.portalService._listeners = new Set();
@@ -213,6 +235,17 @@ export class MemoryScene extends Phaser.Scene {
     this.load.audio("complete", "world/memory/complete.wav");
     this.load.audio("match_found", "world/memory/match_found.wav");
     this.load.audio("background", "world/memory/bgm.wav");
+  }
+
+  initSounds() {
+    if (!this.SOUNDS.match_found)
+      this.SOUNDS.match_found = this.sound.add("match_found");
+    if (!this.SOUNDS.cardflip)
+      this.SOUNDS.cardflip = this.sound.add("cardflip");
+    if (!this.SOUNDS.complete)
+      this.SOUNDS.complete = this.sound.add("complete");
+    if (!this.SOUNDS.background)
+      this.SOUNDS.background = this.sound.add("background");
   }
 
   public get isPlaying() {

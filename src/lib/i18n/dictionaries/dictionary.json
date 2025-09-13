@@ -6560,5 +6560,10 @@
   "memory.guide.hint.text.1": "If you have only a few moves left, but still need to find a match, you have the option to buy a hint.",
   "memory.guide.hint.text.2": "Buying a hint will show you the matching card of the one that is currently flipped.",
   "memory.guide.hint.text.3": "To buy a hint, flip a single card, click the button in the top right corner and follow the instructions.",
-  "memory.guide.hint.text.4": "The cost of a single hint is {{cost}} Flower."
+  "memory.guide.hint.text.4": "The cost of a single hint is {{cost}} Flower.",
+  "memory.settings.bgmMuted": "Enable background music?",
+  "memory.settings.bgmVolume": "Background music volume",
+  "memory.settings.effectsMuted": "Enable sound effects?",
+  "memory.settings.effectsVolume": "Sound effects volume",
+  "memory.settings.disableAnimations": "Enable animations?"
 }

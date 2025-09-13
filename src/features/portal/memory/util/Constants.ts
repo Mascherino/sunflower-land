@@ -20,6 +20,14 @@ export const DEFAULT_GAME_DURATION = 10.5;
 
 export const MATCH_FOUND_HEALTH = 5;
 
+export const LS_PREFIX = "minigames.memory";
+
+export const defaultBgmMuted = false;
+export const defaultBgmVolume = 0.25;
+export const defaultEffectsMuted = false;
+export const defaultEffectsVolume = 0.65;
+export const defaultDisableAnimations = false;
+
 export type MemoryNPC = "Maschs";
 
 export const MEMORY_NPC_WEARABLES: Record<MemoryNPC, Equipped> = {

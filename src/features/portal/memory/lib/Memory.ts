@@ -11,12 +11,18 @@ import {
   DEFAULT_GAME_COLUMNS,
   DEFAULT_GAME_DURATION,
   DEFAULT_GAME_ROWS,
+  defaultBgmVolume,
+  defaultEffectsVolume,
   FLIP_BACK_DELAY,
   MATCH_FOUND_HEALTH,
   VANISH_DELAY,
 } from "../util/Constants";
 import { EventObject } from "xstate";
 import { Tweens } from "phaser";
+import { EventBus } from "./EventBus";
+import { EVENTS } from "./events";
+import { getMemorySettings } from "../util/useSettings";
+import { MemorySettings } from "./Settings";
 
 interface MemoryConfig {
   rows?: number;
@@ -56,6 +62,7 @@ export class Memory {
     position: { x: number; y: number };
   }> = [];
   private circleTween: Phaser.Tweens.Tween | undefined;
+  public settings: MemorySettings = getMemorySettings();
 
   constructor(scene: MemoryScene) {
     this.scene = scene;
@@ -78,15 +85,67 @@ export class Memory {
         frameRate: 10,
       });
     }
-    if (!this.scene.sound.get("match_found"))
-      this.scene.sound.add("match_found");
-    if (!this.scene.sound.get("cardflip")) this.scene.sound.add("cardflip");
-    if (!this.scene.sound.get("complete")) this.scene.sound.add("complete");
-    if (!this.scene.sound.get("background")) {
-      const bgm = this.scene.sound.add("background");
-      bgm.play({ volume: 0.05, loop: true, rate: 0.7 });
-    }
+
+    this.setupSounds();
+
     Memory.current = this;
+    EventBus.emitter
+      .removeAllListeners("SETTINGS_CHANGED")
+      .on("SETTINGS_CHANGED", (x) => {
+        const event = x as EVENTS["SETTINGS_CHANGED"];
+        this.handleSettingsUpdate(event);
+      });
+  }
+
+  handleSettingsUpdate(settings: EVENTS["SETTINGS_CHANGED"]) {
+    const memorySettings = getMemorySettings();
+
+    // Background music
+    const newBgmMuted =
+      settings.Music?.isMuted ?? !!memorySettings.Music?.isMuted;
+    const newBgmVolume =
+      settings.Music?.volume ??
+      memorySettings.Music?.volume ??
+      defaultBgmVolume;
+    this.scene.SOUNDS.background?.setMute(newBgmMuted);
+    if (!newBgmMuted) this.scene.SOUNDS.background?.setVolume(newBgmVolume);
+
+    // Sound effects
+    const newEffectsMuted =
+      settings.Effects?.isMuted ?? !!memorySettings.Effects?.isMuted;
+    const newEffectsVolume =
+      settings.Effects?.volume ??
+      memorySettings.Effects?.volume ??
+      defaultEffectsVolume;
+
+    this.scene.SOUNDS.cardflip?.setMute(newEffectsMuted);
+    this.scene.SOUNDS.complete?.setMute(newEffectsMuted);
+    this.scene.SOUNDS.match_found?.setMute(newEffectsMuted);
+    if (!newEffectsMuted) {
+      this.scene.SOUNDS.cardflip?.setVolume(newEffectsVolume);
+      this.scene.SOUNDS.complete?.setVolume(newEffectsVolume);
+      this.scene.SOUNDS.match_found?.setVolume(newEffectsVolume);
+    }
+    this.settings = { ...memorySettings };
+  }
+
+  setupSounds() {
+    this.scene.SOUNDS.background?.setMute(!!this.settings.Music?.isMuted);
+    this.scene.SOUNDS.background?.play({
+      volume: this.settings.Music?.volume ?? 0,
+      loop: true,
+      rate: 0.7,
+    });
+
+    const effectsVolume = this.settings.Effects?.volume ?? defaultEffectsVolume;
+    const effectsIsMuted = !!this.settings.Effects?.isMuted;
+    this.scene.SOUNDS.cardflip?.setVolume(effectsVolume);
+    this.scene.SOUNDS.complete?.setVolume(effectsVolume);
+    this.scene.SOUNDS.match_found?.setVolume(effectsVolume);
+
+    this.scene.SOUNDS.cardflip?.setMute(effectsIsMuted);
+    this.scene.SOUNDS.complete?.setMute(effectsIsMuted);
+    this.scene.SOUNDS.match_found?.setMute(effectsIsMuted);
   }
 
   public newGame() {
@@ -199,11 +258,20 @@ export class Memory {
         const index = row * this.options.columns + column;
         const spriteKey = this.board[index];
         const pt = points[index];
-        const sprite = this.scene.add.sprite(
-          pt.x,
-          pt.y,
-          `cardFront-${spriteKey}`,
-        );
+        let sprite;
+        if (this.settings.isAnimationsDisabled) {
+          sprite = this.scene.add.sprite(
+            (this.scene.map.width / 2 - this.options.columns + 1) *
+              SQUARE_WIDTH +
+              column * this.TILE_SIZE,
+            (this.scene.map.height / 2 - this.options.rows) * SQUARE_WIDTH +
+              row * this.TILE_SIZE,
+            `cardFront-${spriteKey}`,
+          );
+          sprite.setVisible(false);
+        } else {
+          sprite = this.scene.add.sprite(pt.x, pt.y, `cardFront-${spriteKey}`);
+        }
 
         const flip = this.scene.rexFlip?.add(sprite, {
           duration: 250,
@@ -251,31 +319,36 @@ export class Memory {
         });
         // this.boardContainer?.add(sprite);
         this._cards.push(card);
-        this.followers.push({
-          phase: index / points.length,
-          sprite: sprite,
-          position: { x: column * this.TILE_SIZE, y: row * this.TILE_SIZE },
-        });
+
+        if (!this.settings.isAnimationsDisabled) {
+          this.followers.push({
+            phase: index / points.length,
+            sprite: sprite,
+            position: { x: column * this.TILE_SIZE, y: row * this.TILE_SIZE },
+          });
+        }
       }
     }
-    const progress = { t: 0 };
-    this.circleTween = this.scene.tweens.add({
-      targets: progress,
-      t: 1,
-      duration: 8000,
-      repeat: -1,
-      yoyo: false,
-      ease: "Linear",
-      onUpdate: () => {
-        for (const { phase, sprite } of this.followers) {
-          let p = progress.t + phase;
-          if (p > 1) p -= 1;
-          const point = path.getPoint(p);
-          sprite.setPosition(point.x, point.y);
-          sprite.rotation = path.getTangent(p).angle();
-        }
-      },
-    });
+    if (!this.settings.isAnimationsDisabled) {
+      const progress = { t: 0 };
+      this.circleTween = this.scene.tweens.add({
+        targets: progress,
+        t: 1,
+        duration: 8000,
+        repeat: -1,
+        yoyo: false,
+        ease: "Linear",
+        onUpdate: () => {
+          for (const { phase, sprite } of this.followers) {
+            let p = progress.t + phase;
+            if (p > 1) p -= 1;
+            const point = path.getPoint(p);
+            sprite.setPosition(point.x, point.y);
+            sprite.rotation = path.getTangent(p).angle();
+          }
+        },
+      });
+    }
   }
 
   /**
@@ -285,37 +358,45 @@ export class Memory {
     // for (let row = 0; row < this.options.rows; row++) {
     //   for (let column = 0; column < this.options.columns; column++) {
 
-    this.circleTween?.stop();
-    this.scene.tweens.add({
-      targets: this.followers.map((follower) => follower.sprite),
-      x: (this.scene.map.width / 2) * SQUARE_WIDTH,
-      y: (this.scene.map.height / 2 - 1) * SQUARE_WIDTH,
-      rotation: 0,
-      duration: 400,
-      ease: "Linear",
-    });
-    this.scene.time.delayedCall(600, () => {
-      this.followers.forEach((follower) => {
-        this.scene.tweens.add({
-          targets: follower.sprite,
-          x:
-            (this.scene.map.width / 2 - this.options.columns + 1) *
-              SQUARE_WIDTH +
-            follower.position.x,
-          y:
-            (this.scene.map.height / 2 - this.options.rows) * SQUARE_WIDTH +
-            follower.position.y,
-          duration: 300,
-          ease: "Linear",
-        });
+    if (this.settings.isAnimationsDisabled) {
+      this._cards.forEach((card) => {
+        card.image.setVisible(true);
       });
       this.cards = this._cards;
-    });
+    } else {
+      this.circleTween?.stop();
+      this.scene.tweens.add({
+        targets: this.followers.map((follower) => follower.sprite),
+        x: (this.scene.map.width / 2) * SQUARE_WIDTH,
+        y: (this.scene.map.height / 2 - 1) * SQUARE_WIDTH,
+        rotation: 0,
+        duration: 400,
+        ease: "Linear",
+      });
+      this.scene.time.delayedCall(600, () => {
+        this.followers.forEach((follower) => {
+          this.scene.tweens.add({
+            targets: follower.sprite,
+            x:
+              (this.scene.map.width / 2 - this.options.columns + 1) *
+                SQUARE_WIDTH +
+              follower.position.x,
+            y:
+              (this.scene.map.height / 2 - this.options.rows) * SQUARE_WIDTH +
+              follower.position.y,
+            duration: 300,
+            ease: "Linear",
+          });
+        });
+        this.cards = this._cards;
+      });
+    }
   }
 
   private handleCardClick(card: MemoryCard): void {
-    const flipSound = this.scene.sound.get("cardflip");
-    flipSound.play("", { seek: 0.13, volume: 0.75 });
+    const flipSound = this.scene.SOUNDS.cardflip;
+    if (!flipSound) return;
+    flipSound.play("", { seek: 0.13 });
     card.flipInstance.flip();
     card.isFlipped = true;
 
@@ -334,7 +415,7 @@ export class Memory {
         ) {
           score = score + 1;
           this.solvedCards = this.solvedCards.concat(this.flippedCards);
-          this.scene.sound.get("match_found").play({ volume: 0.75 });
+          this.scene.SOUNDS.match_found?.play();
 
           // Make matching cards disappear from game board
           this.scene.time.delayedCall(VANISH_DELAY, () => {
@@ -358,7 +439,7 @@ export class Memory {
 
             if (!solvedBefore && solved) {
               // End game when targetScore has been achieved
-              this.scene.sound.get("complete").play({ volume: 0.6 });
+              this.scene.SOUNDS.complete?.play();
 
               // Move was last move, but game is solved
               if (health <= 0) this.scene.endGame(score);
@@ -380,7 +461,7 @@ export class Memory {
           this.checkEndGame(health, solvedBefore, score);
 
           this.scene.time.delayedCall(FLIP_BACK_DELAY, () => {
-            flipSound.play("", { seek: 0.13, volume: 0.75 });
+            flipSound.play("", { seek: 0.13 });
             this.flippedCards.forEach((c) => {
               c.flipInstance.on("complete", () => {
                 c.isFlipped = false;

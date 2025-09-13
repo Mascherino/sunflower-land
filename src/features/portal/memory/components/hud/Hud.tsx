@@ -10,9 +10,9 @@ import { Scores } from "./Scores";
 import { Target } from "./Target";
 import { Hint } from "./Hint";
 import { Healthbar } from "./Healthbar";
+import { Settings } from "./Settings";
 
 const isPlayingSel = (state: PortalMachineState) => state.matches("playing");
-const healthSel = (state: PortalMachineState) => state.context.health;
 
 export const Hud: React.FC = () => {
   const { portalService } = useContext(PortalContext);
@@ -40,6 +40,7 @@ export const Hud: React.FC = () => {
         {
           <>
             <Exit />
+            <Settings />
           </>
         }
         {isPlaying && (
