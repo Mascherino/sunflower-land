@@ -20,7 +20,7 @@ import {
 import { EventObject } from "xstate";
 import { Tweens } from "phaser";
 import { EventBus } from "./EventBus";
-import { EVENTS } from "./events";
+import { EVENTS } from "./Events";
 import { getMemorySettings } from "../util/useSettings";
 import { MemorySettings } from "./Settings";
 
