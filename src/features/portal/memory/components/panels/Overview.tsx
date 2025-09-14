@@ -15,6 +15,7 @@ interface Props {
   showExitButton: boolean;
   confirmButtonText: string;
   onConfirm: () => void;
+  buttonDisabled: boolean;
 }
 export const Overview: React.FC<Props> = ({
   mode,
@@ -22,6 +23,7 @@ export const Overview: React.FC<Props> = ({
   showExitButton,
   confirmButtonText,
   onConfirm,
+  buttonDisabled,
 }) => {
   const { t } = useAppTranslation();
 
@@ -59,6 +61,7 @@ export const Overview: React.FC<Props> = ({
             showExitButton={showExitButton}
             confirmButtonText={confirmButtonText}
             onConfirm={onConfirm}
+            buttonDisabled={buttonDisabled}
           />
         )}
         {tab === "changelog" && <Changelog />}

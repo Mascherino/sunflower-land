@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 import { useSelector } from "@xstate/react";
 import { Modal } from "components/ui/Modal";
@@ -18,6 +18,7 @@ import { authorisePortal, claimPrize } from "../lib/portalUtil";
 
 import { Overview } from "./components/panels/Overview";
 import { NoAttempts } from "./components/panels/NoAttempts";
+import { EventBus } from "./lib/EventBus";
 
 const flowerBalanceSel = (state: PortalMachineState) =>
   state.context.state?.balance;
@@ -74,6 +75,11 @@ export const Memory: React.FC = () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
+
+  const [buttonDisabled, setButtonDisabled] = useState(true);
+
+  EventBus.emitter.removeAllListeners("GAME_READY");
+  EventBus.emitter.on("GAME_READY", () => setButtonDisabled(false));
 
   if (isError) {
     return (
@@ -136,6 +142,7 @@ export const Memory: React.FC = () => {
             onConfirm={() => {
               portalService.send("CONTINUE");
             }}
+            buttonDisabled={buttonDisabled}
           />
         </Modal>
       )}
@@ -148,6 +155,7 @@ export const Memory: React.FC = () => {
             showExitButton={true}
             confirmButtonText={t("play.again")}
             onConfirm={() => portalService.send("RETRY")}
+            buttonDisabled={buttonDisabled}
           />
         </Modal>
       )}
@@ -160,6 +168,7 @@ export const Memory: React.FC = () => {
             showExitButton={false}
             confirmButtonText={t("claim")}
             onConfirm={claimPrize}
+            buttonDisabled={buttonDisabled}
           />
         </Modal>
       )}
@@ -172,6 +181,7 @@ export const Memory: React.FC = () => {
             showExitButton={true}
             confirmButtonText={t("play.again")}
             onConfirm={() => portalService.send("RETRY")}
+            buttonDisabled={buttonDisabled}
           />
         </Modal>
       )}

@@ -22,6 +22,7 @@ interface Props {
   showExitButton: boolean;
   confirmButtonText: string;
   onConfirm: () => void;
+  buttonDisabled: boolean;
 }
 
 const minigameSel = (state: PortalMachineState) =>
@@ -34,6 +35,7 @@ export const Mission: React.FC<Props> = ({
   showExitButton,
   confirmButtonText,
   onConfirm,
+  buttonDisabled,
 }) => {
   const { t } = useAppTranslation();
 
@@ -46,6 +48,14 @@ export const Mission: React.FC<Props> = ({
   const dateKey = new Date().toISOString().slice(0, 10);
 
   const [currentPage, setCurrentPage] = useState<"main" | "guide">("main");
+
+  // const [buttonDisabled, setButtonDisabled] = useState<boolean>();
+  // console.log(buttonDisabled);
+
+  // EventBus.emitter.on("GAME_READY", () => {
+  //   console.log("Modal ready");
+  //   setButtonDisabled(false);
+  // });
 
   return (
     <>
@@ -126,6 +136,7 @@ export const Mission: React.FC<Props> = ({
               </Button>
             )}
             <Button
+              disabled={buttonDisabled}
               className="whitespace-nowrap capitalize"
               onClick={onConfirm}
             >

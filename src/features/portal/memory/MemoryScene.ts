@@ -15,6 +15,7 @@ import { GameState, InventoryItemName } from "features/game/types/game";
 import { isMobile } from "mobile-device-detect";
 import seasonal_tileset from "assets/map/seasonal_tileset.json";
 import { CONFIG } from "lib/config";
+import { EventBus } from "./lib/EventBus";
 
 interface SoundConfig {
   cardflip?:
@@ -46,6 +47,7 @@ export class MemoryScene extends Phaser.Scene {
   locked = false;
   static current: MemoryScene | null = null;
   SOUNDS: SoundConfig = {} as SoundConfig;
+  finishedRendering = false;
 
   constructor() {
     super(MINIGAME_NAME);
@@ -111,6 +113,10 @@ export class MemoryScene extends Phaser.Scene {
         ) {
           this.gameBoard.cleanPregame();
           this.gameBoard.drawPregame();
+          if (!this.finishedRendering) {
+            this.finishedRendering = true;
+            EventBus.emitter.emit("GAME_READY");
+          }
         }
       };
       this.portalService.onTransition(listener);
@@ -129,7 +135,7 @@ export class MemoryScene extends Phaser.Scene {
     );
   }
   async update(time: number, delta: number) {
-    if (this.isReady) this.gameBoard.newGame();
+    if (this.isReady && this.finishedRendering) this.gameBoard.newGame();
     if (!this.isPlaying) this.gameBoard.cleanGame();
   }
   public endGame = (score: number) => {
