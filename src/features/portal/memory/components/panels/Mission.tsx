@@ -15,6 +15,7 @@ import { PIXEL_SCALE } from "features/game/lib/constants";
 import { SquareIcon } from "components/ui/SquareIcon";
 import codex from "assets/icons/codex.webp";
 import { Guide } from "./Guide";
+import { hasFeatureAccess } from "lib/flags";
 
 interface Props {
   mode: "introduction" | "success" | "failed";
@@ -28,6 +29,11 @@ interface Props {
 const minigameSel = (state: PortalMachineState) =>
   state.context.state?.minigames.games["memory"];
 const scoreSel = (state: PortalMachineState) => state.context.score;
+const betaSel = (state: PortalMachineState) => {
+  if (state.context.state)
+    return hasFeatureAccess(state.context.state, "BETA_ACCESS");
+  return false;
+};
 
 export const Mission: React.FC<Props> = ({
   mode,
@@ -44,6 +50,7 @@ export const Mission: React.FC<Props> = ({
   const minigame = useSelector(portalService, minigameSel);
   const attemptsLeft = getAttemptsLeft(minigame);
   const score = useSelector(portalService, scoreSel);
+  const hasBetaAccess = useSelector(portalService, betaSel);
 
   const dateKey = new Date().toISOString().slice(0, 10);
 
@@ -143,6 +150,17 @@ export const Mission: React.FC<Props> = ({
               {confirmButtonText}
             </Button>
           </div>
+          {hasBetaAccess && mode === "success" && (
+            <div className="flex flex-col mt-2">
+              <Label type="chill">{"Beta test only"}</Label>
+              <div className="flex mt-2">
+                <Button onClick={goHome}>{t("exit")}</Button>
+                <Button onClick={() => portalService.send("RETRY")}>
+                  {t("retry")}
+                </Button>
+              </div>
+            </div>
+          )}
         </>
       )}
       {currentPage === "guide" && (
