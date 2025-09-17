@@ -4,15 +4,16 @@ import { PortalContext } from "../../lib/PortalProvider";
 import { PortalMachineState } from "../../lib/MemoryMachine";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 import { useSound } from "lib/utils/hooks/useSound";
-import { RoundButton } from "components/ui/RoundButton";
 import { BuyHintModal } from "../modals/BuyHint";
-import lightning from "/world/lightning.png";
 import classNames from "classnames";
+import { Button } from "components/ui/Button";
+import { useAppTranslation } from "lib/i18n/useAppTranslations";
 
 const canBuyHintSel = (state: PortalMachineState) => state.context.canBuyHint;
 
 export const Hint: React.FC = () => {
   const { portalService } = useContext(PortalContext);
+  const { t } = useAppTranslation();
 
   const canBuyHint = useSelector(portalService, canBuyHintSel);
 
@@ -26,37 +27,30 @@ export const Hint: React.FC = () => {
 
   return (
     <>
+      <BuyHintModal show={showModal} onHide={onClose} />
       <div
-        className="fixed z-50 flex flex-col justify-between"
+        className={classNames(
+          "fixed flex flex-row h-10 justify-center w-full",
+          { "cursor-not-allowed opacity-50": !canBuyHint },
+        )}
         style={{
-          right: `${PIXEL_SCALE * 3}px`,
-          top: `${PIXEL_SCALE * 15}px`,
+          bottom: `${PIXEL_SCALE * 3}px`,
+          height: `${PIXEL_SCALE * 23}px`,
         }}
       >
-        <RoundButton
+        <Button
+          disabled={!canBuyHint}
+          variant="primary"
+          className="w-40 h-full font-bold"
           onClick={() => {
             if (canBuyHint) {
               button.play();
               setShowModal(true);
             }
           }}
-          disabled={!canBuyHint}
-          className={classNames({
-            "cursor-not-allowed opacity-50": !canBuyHint,
-          })}
         >
-          <img
-            src={lightning}
-            id="lightning"
-            style={{
-              height: `${PIXEL_SCALE * 12}px`,
-              left: `${PIXEL_SCALE * 7}px`,
-              top: `${PIXEL_SCALE * 5}px`,
-            }}
-            className="absolute group-active:translate-y-[2px]"
-          />
-        </RoundButton>
-        <BuyHintModal show={showModal} onHide={onClose} />
+          {t("memory.buyHint")}
+        </Button>
       </div>
     </>
   );
