@@ -18,6 +18,8 @@ const getEndOfDay = (date: Date) => {
 };
 
 export const getAttemptsLeft = (minigame?: Minigame) => {
+  return Infinity;
+
   const nowDate = new Date();
   const startOfToday = getStartOfDay(nowDate);
   const endOfToday = getEndOfDay(nowDate);
