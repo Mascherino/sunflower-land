@@ -29,10 +29,7 @@ export const Hint: React.FC = () => {
     <>
       <BuyHintModal show={showModal} onHide={onClose} />
       <div
-        className={classNames(
-          "fixed flex flex-row h-10 justify-center w-full",
-          { "cursor-not-allowed opacity-50": !canBuyHint },
-        )}
+        className="fixed flex flex-row h-10 justify-center w-full"
         style={{
           bottom: `${PIXEL_SCALE * 3}px`,
           height: `${PIXEL_SCALE * 23}px`,
@@ -41,7 +38,9 @@ export const Hint: React.FC = () => {
         <Button
           disabled={!canBuyHint}
           variant="primary"
-          className="w-40 h-full font-bold"
+          className={classNames("w-40 h-full font-bold", {
+            "cursor-not-allowed opacity-50": !canBuyHint,
+          })}
           onClick={() => {
             if (canBuyHint) {
               button.play();
