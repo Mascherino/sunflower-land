@@ -8,7 +8,7 @@ export const HINT_COST = 0.25;
 export const DAILY_ATTEMPTS = 5;
 export const RESTOCK_ATTEMPTS = 3;
 
-export const FLIP_BACK_DELAY = 500;
+export const FLIP_BACK_DELAY = 300;
 export const AFTER_FLIP_DELAY = 250;
 export const VANISH_DELAY = Math.max(500 - AFTER_FLIP_DELAY, 0);
 

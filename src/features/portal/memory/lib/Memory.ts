@@ -149,6 +149,7 @@ export class Memory {
   }
 
   public newGame() {
+    this.scene.locked = false;
     this.options.rows = DEFAULT_GAME_ROWS;
     this.options.columns = DEFAULT_GAME_COLUMNS;
     this.duration = DEFAULT_GAME_DURATION * 60 * 1000;
@@ -419,13 +420,14 @@ export class Memory {
 
           // Make matching cards disappear from game board
           this.scene.time.delayedCall(VANISH_DELAY, () => {
-            this.flippedCards.forEach((c) => {
-              c.image.anims
+            const _flippedCards = [...this.flippedCards.map((c) => c.image)];
+            this.flippedCards = [];
+            this.scene.locked = false;
+            _flippedCards.forEach((c) => {
+              c.anims
                 .play("poof")
                 .once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-                  c.image.destroy(true);
-                  this.flippedCards = [];
-                  this.scene.locked = false;
+                  c.destroy(true);
                 });
             });
 
