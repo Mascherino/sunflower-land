@@ -15,8 +15,8 @@ export const VANISH_DELAY = Math.max(500 - AFTER_FLIP_DELAY, 0);
 export const DEFAULT_GAME_ROWS = 5;
 export const DEFAULT_GAME_COLUMNS = 6;
 
-// Default game duration in minutes
-export const DEFAULT_GAME_DURATION = 10.5;
+// Default game duration in seconds
+export const DEFAULT_GAME_DURATION = 90;
 
 export const MATCH_FOUND_HEALTH = 5;
 
