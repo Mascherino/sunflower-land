@@ -14,7 +14,6 @@ import {
   defaultBgmVolume,
   defaultEffectsVolume,
   FLIP_BACK_DELAY,
-  MATCH_FOUND_HEALTH,
   VANISH_DELAY,
 } from "../util/Constants";
 import { EventObject } from "xstate";
@@ -431,7 +430,7 @@ export class Memory {
                 });
             });
 
-            health = Math.min(health + MATCH_FOUND_HEALTH, this.scene.maxMoves);
+            health = Math.max(health - 1, 0);
             const solved = score >= this.targetScore;
             this.scene.portalService?.send("MAKE_MOVE", {
               score: score,
