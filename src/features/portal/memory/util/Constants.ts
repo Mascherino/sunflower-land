@@ -4,7 +4,7 @@ export const MINIGAME_NAME = "memory";
 
 export const UNLIMITED_ATTEMPTS_COST = 3;
 export const RESTOCK_ATTEMPTS_COST = 1;
-export const HINT_COST = 0.5;
+export const HINT_COST = 0.25;
 export const DAILY_ATTEMPTS = 5;
 export const RESTOCK_ATTEMPTS = 3;
 
