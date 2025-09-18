@@ -7,6 +7,7 @@ import { secondsToString } from "lib/utils/time";
 import useUiRefresher from "lib/utils/hooks/useUiRefresher";
 import { Label } from "components/ui/Label";
 import { PortalMachineState } from "../../lib/MemoryMachine";
+import { DEFAULT_GAME_DURATION } from "../../util/Constants";
 
 const _startAt = (state: PortalMachineState) => state.context.startAt;
 
@@ -17,7 +18,8 @@ export const Time: React.FC = () => {
 
   const startAt = useSelector(portalService, _startAt);
 
-  const secondsLeft = !startAt ? 0 : Math.max(Date.now() - startAt, 0) / 1000;
+  const endAt = startAt ? startAt + DEFAULT_GAME_DURATION * 1000 : 0;
+  const secondsLeft = Math.max(endAt - Date.now(), 0) / 1000;
 
   return (
     <Label

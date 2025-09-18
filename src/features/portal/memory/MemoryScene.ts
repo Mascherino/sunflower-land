@@ -1,5 +1,5 @@
 import { SceneId } from "features/world/mmoMachine";
-import { MINIGAME_NAME } from "./util/Constants";
+import { DEFAULT_GAME_DURATION, MINIGAME_NAME } from "./util/Constants";
 import { Memory } from "./lib/Memory";
 import springMap from "./assets/spring_memory.json";
 import summerMap from "./assets/summer_memory.json";
@@ -137,6 +137,16 @@ export class MemoryScene extends Phaser.Scene {
   async update(time: number, delta: number) {
     if (this.isReady && this.finishedRendering) this.gameBoard.newGame();
     if (!this.isPlaying) this.gameBoard.cleanGame();
+    if (this.isPlaying) {
+      const timePassed = this.portalService?.state.context.startAt
+        ? Math.max(Date.now() - this.portalService?.state.context.startAt, 0) /
+          1000
+        : 0;
+      if (timePassed > DEFAULT_GAME_DURATION) {
+        const currentScore = this.score;
+        this.endGame(currentScore);
+      }
+    }
   }
   public endGame = (score: number) => {
     this.gameBoard.cleanGame();
