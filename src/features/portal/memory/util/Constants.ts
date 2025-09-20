@@ -18,7 +18,7 @@ export const DEFAULT_GAME_COLUMNS = 6;
 // Default game duration in seconds
 export const DEFAULT_GAME_DURATION = 90;
 
-export const MATCH_FOUND_HEALTH = 5;
+export const MATCH_FOUND_HEALTH = 2;
 
 export const LS_PREFIX = "minigames.memory";
 
