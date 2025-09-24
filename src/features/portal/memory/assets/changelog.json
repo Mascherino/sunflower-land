@@ -29,5 +29,18 @@
     "text": [
       "Added adjustable settings for background music, sound effects and animations."
     ]
+  },
+  {
+    "date": "18-09-2025",
+    "text": [
+      "Moved hint button to bottom middle.",
+      "Reduced cost of hint to 0.25 Flower.",
+      "Removed extra health when finding match.",
+      "Added time limit."
+    ]
+  },
+  {
+    "date": "24-09-2025",
+    "text": ["Added support for different difficulty levels."]
   }
 ]
