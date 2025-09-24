@@ -476,6 +476,7 @@ export class Memory {
 
               // Move was last move, but game is solved
               if (health <= 0) this.scene.endGame(score);
+              if (score === this.maxScore) this.scene.endGame(score);
             } else if (score == this.maxScore) {
               this.scene.endGame(score);
             } else if (health <= 0) {
