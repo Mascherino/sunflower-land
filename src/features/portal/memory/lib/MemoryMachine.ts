@@ -35,6 +35,7 @@ export interface Context {
   targetScore: number;
   movesMade: number;
   startAt: number;
+  endAt: number;
   solved: boolean;
   attemptsRemaining: number;
   score: number;
@@ -114,6 +115,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
     attemptsRemaining: 0,
     solved: false,
     startAt: 0,
+    endAt: 0,
     score: 0,
     canBuyHint: false,
     health: 0,
@@ -236,6 +238,9 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
           target: "playing",
           actions: assign<Context, any>({
             startAt: (context: any) => Date.now(),
+            endAt: (context: Context, event: GameStartEvent) => {
+              return Date.now() + event.duration;
+            },
             maxMoves: (context: Context, event: GameStartEvent) => {
               return event.totalMoves;
             },
@@ -270,6 +275,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
         END_GAME_EARLY: {
           actions: assign<Context, any>({
             startAt: (context: any) => 0,
+            endAt: (context: any) => 0,
             canBuyHint: (context: any) => false,
             state: (context: any) => {
               submitScore({ score: context.score });
@@ -353,7 +359,8 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             return !!history[dateKey]?.prizeClaimedAt;
           },
           actions: assign({
-            startedAt: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
             canBuyHint: () => false,
           }) as any,
         },
@@ -364,14 +371,16 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             return context.solved;
           },
           actions: assign({
-            startedAt: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
             canBuyHint: () => false,
           }) as any,
         },
         {
           target: "loser",
           actions: assign({
-            startedAt: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
             canBuyHint: () => false,
           }) as any,
         },
@@ -384,7 +393,8 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
           target: "starting",
           actions: assign({
             score: () => 0,
-            startedAt: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
             canBuyHint: () => false,
           }) as any,
         },
@@ -397,7 +407,8 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
           target: "starting",
           actions: assign({
             score: () => 0,
-            startedAt: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
             canBuyHint: () => false,
           }) as any,
         },
@@ -410,7 +421,8 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
           target: "starting",
           actions: assign({
             score: () => 0,
-            startedAt: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
             canBuyHint: () => false,
           }) as any,
         },

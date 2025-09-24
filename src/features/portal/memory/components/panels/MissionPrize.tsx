@@ -21,12 +21,18 @@ const minigamePrizeSel = (state: PortalMachineState) => {
   return state.context.state?.minigames.prizes["memory"];
 };
 
+// const maxMovesSel = (state: PortalMachineState) => state.context.maxMoves;
+const targetScoreSel = (state: PortalMachineState) => state.context.targetScore;
+
 export const MissionPrize: React.FC = () => {
   const { portalService } = useContext(PortalContext);
   const { t } = useAppTranslation();
 
   const prize = useSelector(portalService, minigamePrizeSel);
   const todayHighscore = useSelector(portalService, todayHighscoreSel);
+
+  // const maxMoves = useSelector(portalService, maxMovesSel);
+  const targetScore = useSelector(portalService, targetScoreSel);
 
   if (!prize) {
     return (
@@ -48,7 +54,7 @@ export const MissionPrize: React.FC = () => {
       <div className="px-1">
         <span className="text-xs mb-2">
           {t("memory.missionObjective", {
-            targetScore: prize.score,
+            targetScore: targetScore,
           })}
         </span>
         <div className="flex justify-between mt-2 flex-wrap">

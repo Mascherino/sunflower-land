@@ -148,16 +148,48 @@ export class Memory {
   }
 
   public newGame() {
-    this.scene.locked = false;
+    const prize = this.scene.gameState.minigames.prizes.memory;
     this.options.rows = DEFAULT_GAME_ROWS;
     this.options.columns = DEFAULT_GAME_COLUMNS;
-    this.duration = DEFAULT_GAME_DURATION * 60 * 1000;
-    this.totalMoves =
-      Math.floor(
-        this.moveMultiplier * this.options.rows * this.options.columns,
-      ) * 2;
-    this.targetScore = 10;
     this.maxScore = (this.options.rows * this.options.columns) / 2;
+    this.targetScore = this.maxScore;
+    switch (prize?.score) {
+      // 20 marks
+      case 1000:
+        this.duration = 110 * 1000; // 1:50
+        this.totalMoves = 90;
+        break;
+
+      // 30 marks
+      case 2000:
+        this.duration = 105 * 1000; // 1:45
+        this.totalMoves = 85;
+        break;
+
+      // 40 marks
+      case 3000:
+        this.duration = 100 * 1000; // 1:40
+        this.totalMoves = 80;
+        break;
+
+      // 50 marks
+      case 4000:
+        this.duration = 95 * 1000; // 1:35
+        this.totalMoves = 75;
+        break;
+
+      // 60 marks
+      case 5000:
+        this.duration = 90 * 1000; // 1:30
+        this.totalMoves = 72;
+        break;
+
+      case undefined:
+      default:
+        this.duration = DEFAULT_GAME_DURATION * 1000;
+        this.totalMoves = 72;
+    }
+    this.scene.locked = false;
 
     this.cleanGame();
     this.boardContainer = this.scene.add.container(
