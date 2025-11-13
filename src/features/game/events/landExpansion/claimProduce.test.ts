@@ -724,6 +724,49 @@ describe("claimProduce", () => {
     expect(newState.inventory["Merino Wool"]).toEqual(new Decimal(1.1));
   });
 
+  it("gives +0.1 Wool for sheep when Astronaut Sheep is placed", () => {
+    const sheepId = "123";
+
+    const newState = claimProduce({
+      state: {
+        ...GAME_STATE,
+        inventory: {
+          "Astronaut Sheep": new Decimal(1),
+        },
+        collectibles: {
+          "Astronaut Sheep": [
+            {
+              id: "astro-1",
+              createdAt: now,
+              coordinates: { x: 0, y: 0 },
+              readyAt: now,
+            },
+          ],
+        },
+        barn: {
+          ...GAME_STATE.barn,
+          animals: {
+            [sheepId]: {
+              id: sheepId,
+              type: "Sheep",
+              createdAt: 0,
+              state: "ready",
+              experience: 240,
+              asleepAt: 0,
+              lovedAt: 0,
+              item: "Petting Hand",
+              awakeAt: 0,
+            },
+          },
+        },
+      },
+      action: { type: "produce.claimed", animal: "Sheep", id: sheepId },
+      createdAt: now,
+    });
+
+    expect(newState.inventory.Wool).toEqual(new Decimal(1.1));
+  });
+
   it("gives +0.25 Leather for cows when player has Moo-ver placed", () => {
     const cowId = "123";
 
@@ -1953,5 +1996,150 @@ describe("claimProduce", () => {
     });
 
     expect(state.inventory.Wool).toEqual(new Decimal(1.1));
+  });
+
+  it("reduces the sleep time by 25% if a Collie Shrine is placed and ready", () => {
+    const state = claimProduce({
+      state: {
+        ...INITIAL_FARM,
+        buildings: {
+          Barn: [
+            {
+              id: "barn",
+              readyAt: now,
+              createdAt: now,
+              coordinates: { x: 0, y: 0 },
+            },
+          ],
+        },
+        barn: {
+          level: 3,
+          animals: {
+            "0": {
+              ...INITIAL_FARM.barn.animals["0"],
+              state: "ready",
+              type: "Sheep",
+              experience: 60,
+            },
+          },
+        },
+        collectibles: {
+          "Collie Shrine": [
+            {
+              id: "collie",
+              readyAt: now,
+              createdAt: now,
+              coordinates: { x: 0, y: 0 },
+            },
+          ],
+        },
+      },
+      action: {
+        type: "produce.claimed",
+        animal: "Sheep",
+        id: "0",
+      },
+      createdAt: now,
+    });
+
+    expect(state.barn.animals["0"].awakeAt).toEqual(
+      now + ANIMAL_SLEEP_DURATION * 0.75,
+    );
+  });
+  it("does not reduce the sleep time of chickens by 25% if a Collie Shrine is placed and ready", () => {
+    const state = claimProduce({
+      state: {
+        ...INITIAL_FARM,
+        buildings: {
+          "Hen House": [
+            {
+              id: "henHouse",
+              readyAt: now,
+              createdAt: now,
+              coordinates: { x: 0, y: 0 },
+            },
+          ],
+        },
+        henHouse: {
+          level: 3,
+          animals: {
+            "0": {
+              ...INITIAL_FARM.henHouse.animals["0"],
+              state: "ready",
+              type: "Chicken",
+              experience: 60,
+            },
+          },
+        },
+        collectibles: {
+          "Collie Shrine": [
+            {
+              id: "collie",
+              readyAt: now,
+              createdAt: now,
+              coordinates: { x: 0, y: 0 },
+            },
+          ],
+        },
+      },
+      action: {
+        type: "produce.claimed",
+        animal: "Chicken",
+        id: "0",
+      },
+      createdAt: now,
+    });
+
+    expect(state.henHouse.animals["0"].awakeAt).toEqual(
+      now + ANIMAL_SLEEP_DURATION,
+    );
+  });
+  it("reduces the sleep time of chickens by 25% if a Bantam Shrine is placed and ready", () => {
+    const state = claimProduce({
+      state: {
+        ...INITIAL_FARM,
+        buildings: {
+          "Hen House": [
+            {
+              id: "henHouse",
+              readyAt: now,
+              createdAt: now,
+              coordinates: { x: 0, y: 0 },
+            },
+          ],
+        },
+        henHouse: {
+          level: 3,
+          animals: {
+            "0": {
+              ...INITIAL_FARM.henHouse.animals["0"],
+              state: "ready",
+              type: "Chicken",
+              experience: 60,
+            },
+          },
+        },
+        collectibles: {
+          "Bantam Shrine": [
+            {
+              id: "bantam",
+              readyAt: now,
+              createdAt: now,
+              coordinates: { x: 0, y: 0 },
+            },
+          ],
+        },
+      },
+      action: {
+        type: "produce.claimed",
+        animal: "Chicken",
+        id: "0",
+      },
+      createdAt: now,
+    });
+
+    expect(state.henHouse.animals["0"].awakeAt).toEqual(
+      now + ANIMAL_SLEEP_DURATION * 0.75,
+    );
   });
 });

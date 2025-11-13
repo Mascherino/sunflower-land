@@ -35,7 +35,6 @@ import {
 import { loadSession } from "../actions/loadSession";
 import { EMPTY } from "./constants";
 import { autosave } from "../actions/autosave";
-import { CollectibleName } from "../types/craftables";
 import { ErrorCode, ERRORS } from "lib/errors";
 import { makeGame } from "./transforms";
 import { reset } from "features/farming/hud/actions/reset";
@@ -43,9 +42,9 @@ import { reset } from "features/farming/hud/actions/reset";
 import { checkProgress, processEvent } from "./processEvent";
 import {
   landscapingMachine,
+  LandscapingPlaceableType,
   SaveEvent,
 } from "../expansion/placeable/landscapingMachine";
-import { BuildingName } from "../types/buildings";
 import { Context } from "../GameProvider";
 import { isSwarming } from "../events/detectBot";
 import { generateTestLand } from "../expansion/actions/generateLand";
@@ -74,7 +73,6 @@ import { BumpkinItem } from "../types/bumpkin";
 import { getAuctionResults } from "../actions/getAuctionResults";
 import { AuctionResults } from "./auctionMachine";
 import { onboardingAnalytics } from "lib/onboardingAnalytics";
-import { BudName } from "../types/buds";
 import { gameAnalytics } from "lib/gameAnalytics";
 import { portal } from "features/world/ui/community/actions/portal";
 
@@ -103,7 +101,6 @@ import { preloadHotNow } from "features/marketplace/components/MarketplaceHotNow
 import { getLastTemperateSeasonStartedAt } from "./temperateSeason";
 import { hasVipAccess } from "./vipAccess";
 import { getActiveCalendarEvent, SeasonalEventName } from "../types/calendar";
-import { SpecialEventName } from "../types/specialEvents";
 import { getAccount, getChainId } from "@wagmi/core";
 import { config } from "features/wallet/WalletProvider";
 import { depositFlower } from "lib/blockchain/DepositFlower";
@@ -111,6 +108,9 @@ import { NetworkOption } from "features/island/hud/components/deposit/DepositFlo
 import { blessingIsReady } from "./blessings";
 import { hasReadNews } from "features/farming/mail/components/News";
 import { depositSFL } from "lib/blockchain/DepositSFL";
+import { hasFeatureAccess } from "lib/flags";
+import { COMPETITION_POINTS } from "../types/competitions";
+import { getBumpkinLevel } from "./level";
 
 // Run at startup in case removed from query params
 const portalName = new URLSearchParams(window.location.search).get("portal");
@@ -176,6 +176,7 @@ export interface Context {
   visitorState?: GameState;
   hasHelpedPlayerToday?: boolean;
   totalHelpedToday?: number;
+  apiKey?: string;
 }
 
 export type Moderation = {
@@ -209,7 +210,7 @@ type UpdateBlockBucksEvent = {
 };
 
 type LandscapeEvent = {
-  placeable?: BuildingName | CollectibleName | BudName;
+  placeable?: LandscapingPlaceableType;
   action?: GameEventName<PlacementEvent>;
   type: "LANDSCAPE";
   requirements?: {
@@ -239,6 +240,7 @@ type DepositEvent = {
   wearableIds: number[];
   wearableAmounts: number[];
   budIds: number[];
+  petIds: number[];
 };
 
 type DepositFlowerFromLinkedWalletEvent = {
@@ -332,6 +334,7 @@ const playingEventHandler = (eventName: string) => {
             state: context.state as GameState,
             action: event,
             farmId: context.farmId,
+            createdAt: Date.now(),
           });
 
           return !valid;
@@ -342,6 +345,7 @@ const playingEventHandler = (eventName: string) => {
               state: context.state as GameState,
               action: event,
               farmId: context.farmId,
+              createdAt: Date.now(),
             });
 
             return { maxedItem };
@@ -351,19 +355,22 @@ const playingEventHandler = (eventName: string) => {
       {
         actions: assign(
           (context: Context, event: PlayingEvent | VisitingEvent) => {
+            const createdAt = new Date();
+
             const result = processEvent({
               state: context.state,
               action: event,
               announcements: context.announcements,
               farmId: context.farmId,
               visitorState: context.visitorState,
+              createdAt: createdAt.getTime(),
             });
 
             let actions = [
               ...context.actions,
               {
                 ...event,
-                createdAt: new Date(),
+                createdAt,
               },
             ];
 
@@ -420,20 +427,25 @@ const PLACEMENT_EVENT_HANDLERS: TransitionsConfig<Context, BlockchainEvent> = [
   (events, eventName) => ({
     ...events,
     [eventName]: {
-      actions: assign((context: Context, event: PlacementEvent) => ({
-        state: processEvent({
-          state: context.state as GameState,
-          action: event,
-          farmId: context.farmId,
-        }) as GameState,
-        actions: [
-          ...context.actions,
-          {
-            ...event,
-            createdAt: new Date(),
-          },
-        ],
-      })),
+      actions: assign((context: Context, event: PlacementEvent) => {
+        const createdAt = new Date();
+
+        return {
+          state: processEvent({
+            state: context.state as GameState,
+            action: event,
+            farmId: context.farmId,
+            createdAt: createdAt.getTime(),
+          }) as GameState,
+          actions: [
+            ...context.actions,
+            {
+              ...event,
+              createdAt,
+            },
+          ],
+        };
+      }),
     },
   }),
   {},
@@ -623,6 +635,12 @@ const VISIT_EFFECT_STATES = Object.values(STATE_MACHINE_VISIT_EFFECTS).reduce(
 
           const { visitedFarmState, ...rest } = data;
 
+          // if you don't have access to pets, delete pets object from their gameState
+          const hasPetsAccess = hasFeatureAccess(gameState, "PETS");
+          if (!hasPetsAccess) {
+            visitedFarmState.pets = undefined;
+          }
+
           return {
             state: makeGame(visitedFarmState),
             data: rest,
@@ -689,6 +707,7 @@ export type BlockchainState = {
     | "visiting"
     | "gameRules"
     | "blessing"
+    | "roninAirdrop"
     | "FLOWERTeaser"
     | "portalling"
     | "introduction"
@@ -720,6 +739,7 @@ export type BlockchainState = {
     | "airdrop"
     | "offers"
     | "marketplaceSale"
+    | "tradesCleared"
     | "coolingDown"
     | "buyingBlockBucks"
     | "auctionResults"
@@ -732,7 +752,6 @@ export type BlockchainState = {
     | "competition"
     | "cheers"
     | "news"
-    | "roninWelcomePack"
     | "roninAirdrop"
     | "jinAirdrop"
     | StateMachineStateName
@@ -818,6 +837,7 @@ const handleSuccessfulSave = (context: Context, event: any) => {
       announcements: context.announcements,
       farmId: context.farmId,
       visitorState: context.visitorState,
+      createdAt: action.createdAt.getTime(),
     });
   }, event.data.farm);
 
@@ -859,6 +879,7 @@ export function startGame(authContext: AuthContext) {
         rawToken: authContext.user.rawToken,
         actions: [],
         state: EMPTY,
+        linkedWallet: "0x123",
         sessionId: INITIAL_SESSION,
         announcements: {},
         prices: {
@@ -937,6 +958,7 @@ export function startGame(authContext: AuthContext) {
                 fslId: response.fslId,
                 oauthNonce: response.oauthNonce,
                 prices: response.prices,
+                apiKey: response.apiKey,
               };
             },
             onDone: [
@@ -1026,8 +1048,8 @@ export function startGame(authContext: AuthContext) {
               }
 
               const {
-                visitedFarmState,
-                visitorFarmState,
+                visitedFarmState, // Their gameState
+                visitorFarmState, // Your gameState
                 hasHelpedPlayerToday,
                 totalHelpedToday,
                 visitorId,
@@ -1036,13 +1058,19 @@ export function startGame(authContext: AuthContext) {
                 authContext.user.rawToken as string,
               );
 
+              const hasPetsAccess = hasFeatureAccess(visitorFarmState, "PETS");
+              // if you don't have access to pets, delete pets object from their gameState
+              if (!hasPetsAccess) {
+                visitedFarmState.pets = undefined;
+              }
+
               return {
-                state: makeGame(visitedFarmState),
+                state: visitedFarmState,
                 farmId,
                 hasHelpedPlayerToday,
                 totalHelpedToday,
                 visitorId,
-                visitorState: makeGame(visitorFarmState),
+                visitorState: visitorFarmState,
               };
             },
             onDone: {
@@ -1167,6 +1195,16 @@ export function startGame(authContext: AuthContext) {
               },
             },
             {
+              target: "roninAirdrop",
+              cond: (context) => {
+                return (
+                  !!context.linkedWallet &&
+                  !context.state.roninRewards?.onchain &&
+                  hasFeatureAccess(context.state, "RONIN_AIRDROP")
+                );
+              },
+            },
+            {
               target: "vip",
               cond: (context) => {
                 const isNew = context.state.bumpkin.experience < 100;
@@ -1210,13 +1248,7 @@ export function startGame(authContext: AuthContext) {
                 return false;
               },
             },
-            {
-              target: "roninAirdrop",
-              cond: (context) =>
-                !!context.state.nfts?.ronin &&
-                !context.state.nfts.ronin.acknowledgedAt &&
-                context.state.nfts.ronin.expiresAt > Date.now(),
-            },
+
             {
               target: "referralRewards",
               cond: (context) => {
@@ -1247,7 +1279,7 @@ export function startGame(authContext: AuthContext) {
                 const game = context.state;
 
                 const activeEvent = getActiveCalendarEvent({
-                  game,
+                  calendar: game.calendar,
                 });
 
                 if (!activeEvent) return false;
@@ -1259,40 +1291,51 @@ export function startGame(authContext: AuthContext) {
                 return !isAcknowledged;
               },
             },
+
             {
-              target: "roninWelcomePack",
-              cond: (context: Context) => {
-                return (
-                  [
-                    "Ronin Bronze Pack",
-                    "Ronin Silver Pack",
-                    "Ronin Gold Pack",
-                    "Ronin Platinum Pack",
-                  ] as SpecialEventName[]
-                ).some(
-                  (pack) =>
-                    context.state.specialEvents.current[pack]?.isEligible ===
-                      true &&
-                    context.state.specialEvents.current[pack]?.tasks[0]
-                      .completedAt === undefined &&
-                    context.state.specialEvents.current[pack]?.startAt <
-                      Date.now() &&
-                    context.state.specialEvents.current[pack]?.endAt >
-                      Date.now(),
+              target: "competition",
+              cond: (context) => {
+                if (!hasFeatureAccess(context.state, "BUILDING_FRIENDSHIPS"))
+                  return false;
+
+                const hasStarted =
+                  Date.now() > COMPETITION_POINTS.BUILDING_FRIENDSHIPS.startAt;
+
+                const hasEnded =
+                  Date.now() > COMPETITION_POINTS.BUILDING_FRIENDSHIPS.endAt;
+                if (!hasStarted || hasEnded) return false;
+
+                const level = getBumpkinLevel(
+                  context.state.bumpkin?.experience ?? 0,
                 );
+                if (level <= 5) return false;
+
+                const competition =
+                  context.state.competitions.progress.BUILDING_FRIENDSHIPS;
+
+                return !competition;
               },
             },
             {
-              target: "competition",
-              cond: () => false,
-            },
-            {
               target: "news",
-              cond: () => !hasReadNews(),
+              cond: (context) => {
+                // Do not show if they are under level 5
+                const level = getBumpkinLevel(
+                  context.state.bumpkin?.experience ?? 0,
+                );
+                if (level < 5) return false;
+                return !hasReadNews();
+              },
             },
             {
               target: "cheers",
               cond: (context) => {
+                // Do not show if they are under level 5
+                const level = getBumpkinLevel(
+                  context.state.bumpkin?.experience ?? 0,
+                );
+                if (level < 5) return false;
+
                 const now = Date.now();
 
                 const today = new Date(now).toISOString().split("T")[0];
@@ -1347,6 +1390,19 @@ export function startGame(authContext: AuthContext) {
                   (id) => !!context.state.trades.listings![id].fulfilledAt,
                 ),
             },
+            {
+              target: "tradesCleared",
+              cond: (context: Context) => {
+                return (
+                  getKeys(context.state.trades.listings ?? {}).some(
+                    (id) => !!context.state.trades.listings![id].clearedAt,
+                  ) ||
+                  getKeys(context.state.trades.offers ?? {}).some(
+                    (id) => !!context.state.trades.offers![id].clearedAt,
+                  )
+                );
+              },
+            },
 
             {
               target: "jinAirdrop",
@@ -1359,16 +1415,7 @@ export function startGame(authContext: AuthContext) {
             },
           ],
         },
-        roninAirdrop: {
-          on: {
-            "onChainAirdrop.acknowledged": (GAME_EVENT_HANDLERS as any)[
-              "onChainAirdrop.acknowledged"
-            ],
-            ACKNOWLEDGE: {
-              target: "notifying",
-            },
-          },
-        },
+
         vip: {
           on: {
             ACKNOWLEDGE: {
@@ -1442,6 +1489,19 @@ export function startGame(authContext: AuthContext) {
             },
           },
         },
+        roninAirdrop: {
+          on: {
+            // "roninPack.claimed": (GAME_EVENT_HANDLERS as any)[
+            //   "roninPack.claimed"
+            // ],
+            "roninPack.claimed": {
+              target: STATE_MACHINE_EFFECTS["roninPack.claimed"],
+            },
+            ACKNOWLEDGE: {
+              target: "notifying",
+            },
+          },
+        },
         FLOWERTeaser: {
           on: {
             ACKNOWLEDGE: {
@@ -1484,6 +1544,15 @@ export function startGame(authContext: AuthContext) {
             RESET: {
               target: "refreshing",
             },
+            CLOSE: {
+              target: "playing",
+            },
+          },
+        },
+        tradesCleared: {
+          on: {
+            "trades.cleared": (GAME_EVENT_HANDLERS as any)["trades.cleared"],
+
             CLOSE: {
               target: "playing",
             },
@@ -1544,6 +1613,9 @@ export function startGame(authContext: AuthContext) {
             "nft.assigned": {
               target: STATE_MACHINE_EFFECTS["nft.assigned"],
             },
+            "admin.NFTAssigned": {
+              target: STATE_MACHINE_EFFECTS["admin.NFTAssigned"],
+            },
             TRANSACT: {
               target: "transacting",
             },
@@ -1560,17 +1632,7 @@ export function startGame(authContext: AuthContext) {
             },
           },
         },
-        roninWelcomePack: {
-          on: {
-            // Add function here to claim pack
-            "specialEvent.taskCompleted": (GAME_EVENT_HANDLERS as any)[
-              "specialEvent.taskCompleted"
-            ],
-            CLOSE: {
-              target: "notifying",
-            },
-          },
-        },
+
         jinAirdrop: {
           on: {
             "specialEvent.taskCompleted": (GAME_EVENT_HANDLERS as any)[
@@ -1779,7 +1841,7 @@ export function startGame(authContext: AuthContext) {
                   const game = event.data.farm;
 
                   const activeEvent = getActiveCalendarEvent({
-                    game,
+                    calendar: game.calendar,
                   });
 
                   if (!activeEvent) return false;
@@ -2235,13 +2297,13 @@ export function startGame(authContext: AuthContext) {
               const {
                 itemAmounts,
                 itemIds,
+                petIds,
                 wearableIds,
                 wearableAmounts,
                 budIds,
               } = event as DepositEvent;
 
               await depositToFarm({
-                sfl: "0", // Hardcoded to 0 for now. SFL is retired.
                 account: wallet.getAccount() as `0x${string}`,
                 farmId: context.nftId as number,
                 itemIds: itemIds,
@@ -2249,6 +2311,7 @@ export function startGame(authContext: AuthContext) {
                 wearableAmounts,
                 wearableIds,
                 budIds,
+                petIds,
               });
             },
             onDone: {
@@ -2548,6 +2611,7 @@ export function startGame(authContext: AuthContext) {
           fslId: (_, event) => event.data.fslId,
           oauthNonce: (_, event) => event.data.oauthNonce,
           prices: (_, event) => event.data.prices,
+          apiKey: (_, event) => event.data.apiKey,
         }),
         setTransactionId: assign<Context, any>({
           transactionId: () => randomID(),

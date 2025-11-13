@@ -27,6 +27,7 @@ import {
   RecipeIngredient,
   DOLLS,
   RECIPES,
+  RecipeCollectibleName,
 } from "features/game/lib/crafting";
 import {
   findMatchingRecipe,
@@ -168,6 +169,7 @@ export const CraftTab: React.FC<Props> = ({
     status: craftingStatus,
     readyAt: craftingReadyAt,
     recipes,
+    item,
   } = craftingBox;
 
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
@@ -507,6 +509,7 @@ export const CraftTab: React.FC<Props> = ({
               wardrobe={wardrobe}
               gems={gems}
               onInstantCraft={handleInstantCraft}
+              collectible={item?.collectible}
             />
           </div>
         </div>
@@ -800,6 +803,7 @@ const CraftButton: React.FC<{
   wardrobe: Wardrobe;
   gems: number;
   onInstantCraft: (gems: number) => void;
+  collectible?: RecipeCollectibleName;
 }> = ({
   isCrafting,
   isPending,
@@ -812,6 +816,7 @@ const CraftButton: React.FC<{
   wardrobe,
   gems,
   onInstantCraft,
+  collectible,
 }) => {
   const { t } = useTranslation();
   const [showConfirmation, setShowConfirmation] = useState(false);

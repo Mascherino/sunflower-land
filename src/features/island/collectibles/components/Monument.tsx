@@ -42,7 +42,10 @@ const ProjectModal: React.FC<{
   const { t } = useAppTranslation();
 
   const isProjectComplete = cheers >= REQUIRED_CHEERS[project];
-  const boostLabel = COLLECTIBLE_BUFF_LABELS(state)[project];
+  const boostLabel = COLLECTIBLE_BUFF_LABELS[project]?.({
+    skills: state.bumpkin.skills,
+    collectibles: state.collectibles,
+  });
 
   return (
     <Panel>
@@ -107,7 +110,7 @@ const MonumentImage = (
   }, [input.open]);
 
   return (
-    <div className="absolute" style={input.divStyle}>
+    <div className="absolute cursor-pointer" style={input.divStyle}>
       <img src={input.image} style={input.imgStyle} alt={input.alt} />
     </div>
   );
@@ -152,7 +155,11 @@ export const Monument: React.FC<MonumentProps> = (input) => {
       totalHelpedToday: totalHelpedToday ?? 0,
     });
 
-    if (isHelpComplete({ game: gameService.getSnapshot().context.state })) {
+    if (
+      isHelpComplete({
+        game: gameService.getSnapshot().context.state,
+      })
+    ) {
       setShowHelped(true);
     }
   };

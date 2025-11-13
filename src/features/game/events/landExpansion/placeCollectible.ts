@@ -8,15 +8,20 @@ import { PlaceableLocation } from "features/game/types/collectibles";
 import { produce } from "immer";
 import { getCountAndType } from "features/island/hud/components/inventory/utils/inventory";
 import { MonumentName, REQUIRED_CHEERS } from "features/game/types/monuments";
+import { isPet } from "features/game/types/pets";
+import { hasFeatureAccess } from "lib/flags";
+import {
+  EXPIRY_COOLDOWNS,
+  TemporaryCollectibleName,
+} from "features/game/lib/collectibleBuilt";
+import { Coordinates } from "features/game/expansion/components/MapPlacement";
+import { COMPETITION_POINTS } from "features/game/types/competitions";
 
 export type PlaceCollectibleAction = {
   type: "collectible.placed";
   name: CollectibleName;
   id: string;
-  coordinates: {
-    x: number;
-    y: number;
-  };
+  coordinates: Coordinates;
   location: PlaceableLocation;
 };
 
@@ -25,6 +30,18 @@ type Options = {
   action: PlaceCollectibleAction;
   createdAt?: number;
 };
+
+/**
+ * We only need to store createdAt and readyAt for certain collectibles
+ * This helps store on space since most items don't need these timestamps
+ */
+export function isCollectibleWithTimestamps(name: CollectibleName) {
+  return (
+    EXPIRY_COOLDOWNS[name as TemporaryCollectibleName] ||
+    name === "Maneki Neko" ||
+    name === "Magic Bean"
+  );
+}
 
 export function placeCollectible({
   state,
@@ -38,6 +55,13 @@ export function placeCollectible({
       stateCopy,
       collectible,
     );
+
+    if (
+      action.name === "Fox Shrine" &&
+      createdAt < COMPETITION_POINTS.BUILDING_FRIENDSHIPS.endAt
+    ) {
+      throw new Error("You cannot place this item");
+    }
 
     if (!inventoryItemBalance || inventoryItemBalance.lte(0)) {
       throw new Error("You can't place an item that is not on the inventory");
@@ -56,6 +80,27 @@ export function placeCollectible({
       stateCopy.socialFarming.villageProjects[action.name as MonumentName] = {
         cheers: 0,
       };
+    }
+
+    if (isPet(action.name) && hasFeatureAccess(stateCopy, "PETS")) {
+      if (!stateCopy.pets) {
+        stateCopy.pets = {};
+      }
+      if (!stateCopy.pets.common) {
+        stateCopy.pets.common = {};
+      }
+      if (!stateCopy.pets.common[action.name]) {
+        stateCopy.pets.common[action.name] = {
+          name: action.name,
+          experience: 0,
+          energy: 0,
+          requests: {
+            food: [], // Pet Requests are populated on the server
+            fedAt: createdAt,
+          },
+          pettedAt: createdAt,
+        };
+      }
     }
 
     // Search for existing collectible in current location
@@ -116,10 +161,13 @@ export function placeCollectible({
     // If no existing collectible is found, create a new one
     const newCollectiblePlacement: PlacedItem = {
       id: action.id,
-      createdAt: createdAt,
       coordinates: action.coordinates,
-      readyAt: createdAt,
     };
+
+    // There are some rare cases where we need to set the createdAt
+    if (isCollectibleWithTimestamps(action.name)) {
+      newCollectiblePlacement.createdAt = createdAt;
+    }
 
     collectibleItems.push(newCollectiblePlacement);
 

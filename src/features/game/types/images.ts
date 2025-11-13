@@ -24,6 +24,7 @@ import lavenderSeed from "assets/flowers/lavender_seed.webp";
 import cloverSeed from "assets/flowers/clover_seed.webp";
 
 import gem from "assets/icons/gem.webp";
+import blueVipIcon from "assets/icons/blue_vip.webp";
 import tradePoint from "assets/icons/trade_points_coupon.webp";
 
 import communityEgg from "assets/sfts/easter_donation_egg.webp";
@@ -97,7 +98,7 @@ import anchor from "assets/sfts/anchor.webp";
 import rubberDucky from "assets/sfts/rubber_ducky.webp";
 import krakenTentacle from "assets/sfts/kraken_tentacle.webp";
 import krakenHead from "assets/sfts/kraken_head.webp";
-import skillShrimpy from "assets/sfts/skill_shrimpy.png";
+import skillShrimpy from "assets/sfts/skill_shrimpy.webp";
 import soilKrabby from "assets/sfts/soil_krabby.webp";
 import nana from "assets/sfts/nana.webp";
 import hummingBird from "assets/sfts/hummingbird.webp";
@@ -114,6 +115,11 @@ import flowerRug from "assets/sfts/flower_rug.webp";
 import teaRug from "assets/sfts/tea_rug.webp";
 import greenFieldRug from "assets/sfts/green_field_rug.webp";
 import gauchoRug from "assets/sfts/gaucho_rug.webp";
+import pawPrintsRug from "assets/sfts/paw_prints_rug.webp";
+import petBed from "assets/sfts/pet_bed.webp";
+import petBowls from "assets/sfts/pet_bowls.webp";
+import giantAcorn from "assets/sfts/giant_acorn.webp";
+import moonFoxStatue from "assets/sfts/moon_fox_statue.webp";
 // Clash of Factions
 import turboSprout from "assets/sfts/turbo_sprout.webp";
 import soybliss from "assets/sfts/soybliss.webp";
@@ -141,7 +147,7 @@ import fatChicken from "assets/animals/chickens/fat_chicken.webp";
 import richChicken from "assets/animals/chickens/rich_chicken.webp";
 import elPolloVeloz from "assets/animals/chickens/el_pollo_veloz.webp";
 import ayamCemani from "assets/animals/chickens/ayam_cemani.webp";
-import bananaChicken from "assets/animals/chickens/banana_chicken.png";
+import bananaChicken from "assets/animals/chickens/banana_chicken.webp";
 import crimPeckster from "assets/animals/chickens/crim_peckster.png";
 import knightChicken from "assets/animals/chickens/knight_chicken.webp";
 import pharaohChicken from "assets/animals/chickens/pharaoh_chicken.webp";
@@ -583,6 +589,7 @@ import weakfish from "assets/fish/weak_fish.png";
 import rockBlackfish from "assets/fish/rock_blackfish.png";
 import cobia from "assets/fish/copia.png";
 import tilapia from "assets/fish/tilapia.png";
+import superStar from "assets/sfts/starfish_marvel.webp";
 
 import festiveTree from "assets/sfts/festive_tree.png";
 import nutcracker from "assets/sfts/bumpkin_nutcracker.png";
@@ -731,6 +738,10 @@ import goldCookingTrophy from "assets/sfts/cooking_gold_trophy.webp";
 import silverCookingTrophy from "assets/sfts/cooking_silver_trophy.webp";
 import bronzeCookingTrophy from "assets/sfts/cooking_bronze_trophy.webp";
 
+import bronzeFriendsTrophy from "assets/sfts/friends_third_place_trophy.webp";
+import silverFriendsTrophy from "assets/sfts/friends_second_place_trophy.webp";
+import goldFriendsTrophy from "assets/sfts/friends_first_place_trophy.webp";
+
 import desertRose from "assets/sfts/desert_rose.webp";
 import sarcophagus from "assets/sfts/sarcophagus.webp";
 import anubisJackal from "assets/sfts/anubis_jackal.webp";
@@ -833,6 +844,8 @@ import timeshard from "assets/icons/timeshard.webp";
 import ancientClock from "assets/icons/ancient_clock.png";
 import windsOfChangeBanner from "assets/decorations/banners/winds-of-change_banner_loop.gif";
 import betterTogetherBanner from "assets/decorations/banners/better_together_banner.webp";
+import pawPrintsBanner from "assets/decorations/banners/paw_prints_banner.webp";
+
 import pesticide from "assets/sfts/pesticide.webp";
 import jin from "assets/sfts/jin_ronin.webp";
 import loveCharm from "assets/icons/love_charm.webp";
@@ -840,6 +853,8 @@ import geniseed from "assets/icons/geniseed.webp";
 import brokenPillar from "assets/icons/broken_pillar.webp";
 import bracelet from "assets/icons/bracelet.webp";
 import coprolite from "assets/icons/coprolite.webp";
+import petCookie from "assets/icons/pet_cookie.webp";
+import moonCrystal from "assets/icons/moon_crystal.webp";
 
 import floralArch from "assets/sfts/floral_arch.webp";
 import flowerCoin from "assets/sfts/flower_coin.webp";
@@ -878,6 +893,17 @@ import rainbowFlower from "assets/sfts/rainbow_flower.webp";
 import ponyToy from "assets/sfts/pony_toy.webp";
 import redSlimeBalloon from "assets/sfts/red_slime_balloon.webp";
 import blueSlimeBalloon from "assets/sfts/blue_slime_balloon.webp";
+
+import halloweenToken2025 from "assets/icons/halloween_token_2025.webp";
+import halloweenTicket2025 from "assets/icons/halloween_ticket_2025.webp";
+import cerberus from "assets/sfts/cerberus.webp";
+import witchsCauldron from "assets/sfts/witchs_cauldron.webp";
+import raveyard from "assets/sfts/raveyard.webp";
+import hauntedHouse from "assets/sfts/haunted_house.webp";
+import mimicEgg from "assets/sfts/mimic_egg.webp";
+import hauntedTomb from "assets/sfts/haunted_tomb.webp";
+import guillotine from "assets/sfts/guillotine.webp";
+import vampireCoffin from "assets/sfts/vampire_coffin.webp";
 
 import quarry from "assets/sfts/quarry.webp";
 import obsidianTurtle from "assets/sfts/obsidian_turtle.webp";
@@ -989,6 +1015,21 @@ import babySheep from "assets/sfts/baby_sheep.webp";
 import janitorChicken from "assets/animals/chickens/janitor_chicken.webp";
 import venusBumpkinTrap from "assets/flowers/venus_bumpkin_trap.webp";
 import poseidon from "assets/sfts/poseidon_fish.webp";
+import blackHoleFlower from "assets/sfts/black_hole_flower.webp";
+import sleepyChicken from "assets/sfts/sleepy_chicken.webp";
+import astronautCow from "assets/sfts/cow_astronaut.webp";
+import astronautSheep from "assets/sfts/sheep_astronaut.webp";
+
+import petnipPlant from "assets/sfts/petnip_plant.webp";
+import petKennel from "assets/sfts/pet_kennel.webp";
+import petToys from "assets/sfts/pet_toys.webp";
+import petPlayground from "assets/sfts/pet_playground.webp";
+import fishBowl from "assets/sfts/fish_bowl.webp";
+import giantGoldBone from "assets/sfts/giant_gold_bone.webp";
+import lunarTemple from "assets/sfts/lunar_temple.webp";
+import magmaStone from "assets/sfts/magma_stone.webp";
+import cornucopia from "assets/monuments/cornucopia_monument_stage3.webp";
+import messyBed from "assets/sfts/messy_bed.webp";
 
 import barkley from "assets/sfts/pets/dogs/barkley.webp";
 import biscuit from "assets/sfts/pets/dogs/biscuit.webp";
@@ -1012,12 +1053,26 @@ import pip from "assets/sfts/pets/penguins/pip.webp";
 import skipper from "assets/sfts/pets/penguins/skipper.webp";
 import waddles from "assets/sfts/pets/penguins/waddles.webp";
 import ramsey from "assets/sfts/pets/ramsey.webp";
+import petEgg from "assets/icons/pet_egg.png";
 
-import moonfur from "assets/icons/moonfur.webp";
 import dewberry from "assets/icons/dewberry.webp";
-import ribbon from "assets/icons/medal.webp";
-import frostPebble from "assets/icons/diamond.webp";
-import wildGrass from "assets/icons/wild_grass.webp";
+
+import badgerShrine from "assets/sfts/shrines/badger_shrine.webp";
+import bantamShrine from "assets/sfts/shrines/bantam_shrine.webp";
+import bearShrine from "assets/sfts/shrines/bear_shrine.webp";
+import boarShrine from "assets/sfts/shrines/boar_shrine.webp";
+import collieShrine from "assets/sfts/shrines/collie_shrine.webp";
+import foxShrine from "assets/sfts/shrines/fox_shrine.webp";
+import houndShrine from "assets/sfts/shrines/hound_shrine.webp";
+import moleShrine from "assets/sfts/shrines/mole_shrine.webp";
+import mothShrine from "assets/sfts/shrines/moth_shrine.webp";
+import sparrowShrine from "assets/sfts/shrines/sparrow_shrine.webp";
+import stagShrine from "assets/sfts/shrines/stag_shrine.webp";
+import tortoiseShrine from "assets/sfts/shrines/tortoise_shrine.webp";
+import toucanShrine from "assets/sfts/shrines/toucan_shrine.webp";
+import legendaryShrine from "assets/sfts/shrines/legendary_shrine.webp";
+import obsidianShrine from "assets/sfts/shrines/obsidian_shrine.webp";
+import tradingShrine from "assets/sfts/shrines/trading_shrine.webp";
 
 import { COUPONS, EASTER_EGG, FERTILISERS, InventoryItemName } from "./game";
 
@@ -3541,6 +3596,12 @@ export const ITEM_DETAILS: Items = {
     description: translate("description.gilded.swordfish"),
     isPermanent: true,
   },
+  "Super Star": {
+    image: superStar,
+    howToGetItem: [translate("ocean.fishing")],
+    itemType: "collectible",
+    description: translate("description.super.star"),
+  },
   "Crimson Carp": {
     image: crimsonCarp,
     howToGetItem: [translate("howToGetThisItem.crimsonCarp")],
@@ -4686,6 +4747,10 @@ export const ITEM_DETAILS: Items = {
     image: gem,
     description: translate("description.gem"),
   },
+  VIP3: {
+    image: blueVipIcon,
+    description: translate("description.vip3"),
+  },
   Marty: {
     image: marty,
     description: translate("description.marty"),
@@ -4887,6 +4952,10 @@ export const ITEM_DETAILS: Items = {
     image: chicory,
     description: translate("description.chicory"),
   },
+  "Black Hole Flower": {
+    image: blackHoleFlower,
+    description: translate("description.blackHoleFlower"),
+  },
   Wagon: {
     image: Wagon,
     description: "A perfect wagon for your bears to rest and relax.",
@@ -4899,6 +4968,10 @@ export const ITEM_DETAILS: Items = {
     image: alienChicken,
     description: translate("description.alien.chicken"),
   },
+  "Sleepy Chicken": {
+    image: sleepyChicken,
+    description: translate("description.sleepyChicken"),
+  },
   "Toxic Tuft": {
     image: toxicTuft,
     description: translate("description.toxic.tuft"),
@@ -4906,6 +4979,10 @@ export const ITEM_DETAILS: Items = {
   Mootant: {
     image: mootant,
     description: translate("description.mootant"),
+  },
+  "Astronaut Cow": {
+    image: astronautCow,
+    description: translate("description.astronautCow"),
   },
   "Crop Circle": {
     image: cropCircle,
@@ -5106,6 +5183,10 @@ export const ITEM_DETAILS: Items = {
   "Frozen Sheep": {
     image: frozenSheep,
     description: translate("description.frozen.sheep"),
+  },
+  "Astronaut Sheep": {
+    image: astronautSheep,
+    description: translate("description.astronautSheep"),
   },
   "Summer Chicken": {
     image: summerChicken,
@@ -5595,6 +5676,26 @@ export const ITEM_DETAILS: Items = {
     image: groovyGramophone,
     description: translate("description.groovyGramophone"),
   },
+  "Paw Prints Rug": {
+    image: pawPrintsRug,
+    description: translate("description.pawPrintsRug"),
+  },
+  "Pet Bowls": {
+    image: petBowls,
+    description: translate("description.petBowls"),
+  },
+  "Pet Bed": {
+    image: petBed,
+    description: translate("description.petBed"),
+  },
+  "Giant Acorn": {
+    image: giantAcorn,
+    description: translate("description.giantAcorn"),
+  },
+  "Moon Fox Statue": {
+    image: moonFoxStatue,
+    description: translate("description.moonFoxStatue"),
+  },
   "Wheat Whiskers": {
     image: wheatWhiskers,
     description: translate("description.wheatWhiskers"),
@@ -5611,7 +5712,18 @@ export const ITEM_DETAILS: Items = {
     image: bronzeCookingTrophy,
     description: translate("description.bronzeCookingTrophy"),
   },
-
+  "Bronze Friends Trophy": {
+    image: bronzeFriendsTrophy,
+    description: translate("description.bronzeFriendsTrophy"),
+  },
+  "Silver Friends Trophy": {
+    image: silverFriendsTrophy,
+    description: translate("description.silverFriendsTrophy"),
+  },
+  "Gold Friends Trophy": {
+    image: goldFriendsTrophy,
+    description: translate("description.goldFriendsTrophy"),
+  },
   Doll: {
     image: doll,
     description: translate("description.doll"),
@@ -5769,7 +5881,7 @@ export const ITEM_DETAILS: Items = {
     description: translate("description.giantBanana"),
   },
   "Pet Egg": {
-    image: SUNNYSIDE.resource.egg,
+    image: petEgg,
     description: translate("description.petEgg"),
   },
   Barkley: {
@@ -5846,7 +5958,7 @@ export const ITEM_DETAILS: Items = {
     description: "",
   },
   "Chewed Bone": {
-    image: camelBone,
+    image: SUNNYSIDE.resource.chewed_bone,
     description: translate("description.chewedBone"),
   },
   "Heart leaf": {
@@ -5862,51 +5974,51 @@ export const ITEM_DETAILS: Items = {
     description: translate("description.acorn"),
   },
   "Fox Shrine": {
-    image: thermalStone,
+    image: foxShrine,
     description: translate("description.foxShrine"),
   },
   "Sparrow Shrine": {
-    image: thermalStone,
+    image: sparrowShrine,
     description: translate("description.sparrowShrine"),
   },
   "Toucan Shrine": {
-    image: thermalStone,
+    image: toucanShrine,
     description: translate("description.toucanShrine"),
   },
   "Collie Shrine": {
-    image: thermalStone,
+    image: collieShrine,
     description: translate("description.collieShrine"),
   },
   "Badger Shrine": {
-    image: thermalStone,
+    image: badgerShrine,
     description: translate("description.badgerShrine"),
   },
   "Boar Shrine": {
-    image: thermalStone,
+    image: boarShrine,
     description: translate("description.boarShrine"),
   },
   "Hound Shrine": {
-    image: thermalStone,
+    image: houndShrine,
     description: translate("description.houndShrine"),
   },
   "Stag Shrine": {
-    image: thermalStone,
+    image: stagShrine,
     description: translate("description.stagShrine"),
   },
   "Legendary Shrine": {
-    image: thermalStone,
+    image: legendaryShrine,
     description: translate("description.legendaryShrine"),
   },
   "Obsidian Shrine": {
-    image: thermalStone,
+    image: obsidianShrine,
     description: translate("description.obsidianShrine"),
   },
   Moonfur: {
-    image: moonfur,
+    image: SUNNYSIDE.resource.moonfur,
     description: translate("description.moonfur"),
   },
   "Fossil Shell": {
-    image: SUNNYSIDE.resource.clam_shell,
+    image: SUNNYSIDE.resource.fossil_shell,
     description: translate("description.fossilShell"),
   },
   Mudhorn: {
@@ -5926,33 +6038,39 @@ export const ITEM_DETAILS: Items = {
     description: translate("description.ramsey"),
   },
   "Tortoise Shrine": {
-    image: thermalStone,
+    image: tortoiseShrine,
     description: translate("description.tortoiseShrine"),
   },
   "Moth Shrine": {
-    image: thermalStone,
+    image: mothShrine,
     description: translate("description.mothShrine"),
   },
   "Mole Shrine": {
-    image: thermalStone,
+    image: moleShrine,
     description: translate("description.moleShrine"),
   },
   "Bear Shrine": {
-    image: thermalStone,
+    image: bearShrine,
     description: translate("description.bearShrine"),
   },
+  "Bantam Shrine": {
+    image: bantamShrine,
+    description: translate("description.bantamShrine"),
+  },
+  "Trading Shrine": {
+    image: tradingShrine,
+    description: translate("description.tradingShrine"),
+  },
   "Wild Grass": {
-    image: wildGrass,
+    image: SUNNYSIDE.resource.wild_grass,
     description: translate("description.wildGrass"),
   },
   "Frost Pebble": {
-    image: frostPebble,
-
+    image: SUNNYSIDE.resource.frost_pebble,
     description: translate("description.frostPebble"),
   },
   Ribbon: {
-    image: ribbon,
-
+    image: SUNNYSIDE.resource.ribbon,
     description: translate("description.ribbon"),
   },
   Dewberry: {
@@ -5960,35 +6078,127 @@ export const ITEM_DETAILS: Items = {
     description: translate("description.dewberry"),
   },
   "Fused Stone Rock": {
-    image: SUNNYSIDE.resource.stone_rock,
-    description: "Fused Stone",
+    image: SUNNYSIDE.resource.fusedStoneRock,
+    description: "A fused stone rock",
   },
   "Reinforced Stone Rock": {
-    image: SUNNYSIDE.resource.iron_rock,
-    description: "Reinforced Stone",
+    image: SUNNYSIDE.resource.reinforcedStoneRock,
+    description: "A reinforced stone rock",
   },
   "Ancient Tree": {
-    image: SUNNYSIDE.icons.expression_confused,
-    description: "Forging soon...",
+    image: SUNNYSIDE.resource.ancient_tree,
+    description: "An ancient tree",
   },
   "Sacred Tree": {
-    image: SUNNYSIDE.icons.expression_confused,
-    description: "Forging soon...",
+    image: SUNNYSIDE.resource.sacred_tree,
+    description: "A sacred tree",
   },
   "Refined Iron Rock": {
-    image: SUNNYSIDE.icons.expression_confused,
-    description: "Forging soon...",
+    image: SUNNYSIDE.resource.refinedIronRock,
+    description: "A refined iron rock",
   },
   "Tempered Iron Rock": {
-    image: SUNNYSIDE.icons.expression_confused,
-    description: "Forging soon...",
+    image: SUNNYSIDE.resource.temperedIronRock,
+    description: "A tempered iron rock",
   },
   "Pure Gold Rock": {
-    image: SUNNYSIDE.icons.expression_confused,
-    description: "Forging soon...",
+    image: SUNNYSIDE.resource.pureGoldRock,
+    description: "A pure gold rock",
   },
-  "Enchanted Gold Rock": {
-    image: SUNNYSIDE.icons.expression_confused,
-    description: "Forging soon...",
+  "Prime Gold Rock": {
+    image: SUNNYSIDE.resource.primeGoldRock,
+    description: "A prime gold rock",
+  },
+  "Paw Prints Banner": {
+    image: pawPrintsBanner,
+    description: translate("description.pawPrintsBanner"),
+  },
+  "Pet Cookie": {
+    image: petCookie,
+    description: translate("description.petCookie"),
+  },
+  "Moon Crystal": {
+    image: moonCrystal,
+    description: translate("description.moonCrystal"),
+  },
+  Cerberus: {
+    image: cerberus,
+    description: translate("description.cerberus"),
+  },
+  "Witch's Cauldron": {
+    image: witchsCauldron,
+    description: translate("description.witchsCauldron"),
+  },
+  Raveyard: {
+    image: raveyard,
+    description: translate("description.raveyard"),
+  },
+  "Haunted House": {
+    image: hauntedHouse,
+    description: translate("description.hauntedHouse"),
+  },
+  "Mimic Egg": {
+    image: mimicEgg,
+    description: translate("description.mimicEgg"),
+  },
+  "Haunted Tomb": {
+    image: hauntedTomb,
+    description: translate("description.hauntedTomb"),
+  },
+  Guillotine: {
+    image: guillotine,
+    description: translate("description.guillotine"),
+  },
+  "Vampire Coffin": {
+    image: vampireCoffin,
+    description: translate("description.vampireCoffin"),
+  },
+  "Halloween Token 2025": {
+    image: halloweenToken2025,
+    description: translate("description.halloweenToken2025"),
+  },
+  "Halloween Ticket 2025": {
+    image: halloweenTicket2025,
+    description: translate("description.halloweenTicket2025"),
+  },
+  "Petnip Plant": {
+    image: petnipPlant,
+    description: "",
+  },
+  "Pet Kennel": {
+    image: petKennel,
+    description: "",
+  },
+  "Pet Toys": {
+    image: petToys,
+    description: "",
+  },
+  "Pet Playground": {
+    image: petPlayground,
+    description: "",
+  },
+  "Fish Bowl": {
+    image: fishBowl,
+    description: "",
+  },
+  "Giant Gold Bone": {
+    image: giantGoldBone,
+    description: "",
+  },
+  "Lunar Temple": {
+    image: lunarTemple,
+    description: "",
+  },
+  "Magma Stone": {
+    image: magmaStone,
+    description: "",
+  },
+  Cornucopia: {
+    image: cornucopia,
+    description: "",
+  },
+  "Messy Bed": {
+    image: messyBed,
+    description: "",
   },
 };

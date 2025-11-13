@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -23,17 +24,17 @@ import Draggable from "react-draggable";
 import { detectCollision } from "features/game/expansion/placeable/lib/collisionDetection";
 import { useSelector } from "@xstate/react";
 import {
+  LandscapingPlaceable,
   MachineInterpreter,
   MachineState,
 } from "features/game/expansion/placeable/landscapingMachine";
 import {
   BUILDINGS_DIMENSIONS,
-  BuildingName,
   Dimensions,
 } from "features/game/types/buildings";
 import { GameEventName, PlacementEvent } from "features/game/events";
 import { RESOURCES, ResourceName } from "features/game/types/resources";
-import { GameState, InventoryItemName } from "features/game/types/game";
+import { GameState } from "features/game/types/game";
 import { removePlaceable } from "./lib/placing";
 import { SUNNYSIDE } from "assets/sunnyside";
 import { ITEM_DETAILS } from "features/game/types/images";
@@ -71,11 +72,11 @@ export const RESOURCE_MOVE_EVENTS: Record<
   "Refined Iron Rock": "iron.moved",
   "Tempered Iron Rock": "iron.moved",
   "Pure Gold Rock": "gold.moved",
-  "Enchanted Gold Rock": "gold.moved",
+  "Prime Gold Rock": "gold.moved",
 };
 
 function getMoveAction(
-  name: InventoryItemName | "Bud",
+  name: LandscapingPlaceable,
 ): GameEventName<PlacementEvent> {
   if (name in BUILDINGS_DIMENSIONS) {
     return "building.moved";
@@ -89,12 +90,8 @@ function getMoveAction(
     return "collectible.moved";
   }
 
-  if (name === "Chicken") {
-    return "chicken.moved";
-  }
-
-  if (name === "Bud") {
-    return "bud.moved";
+  if (name === "Bud" || name === "Pet") {
+    return "nft.moved";
   }
 
   throw new Error("No matching move event");
@@ -123,12 +120,16 @@ export const RESOURCES_REMOVE_ACTIONS: Record<
   "Refined Iron Rock": "iron.removed",
   "Tempered Iron Rock": "iron.removed",
   "Pure Gold Rock": "gold.removed",
-  "Enchanted Gold Rock": "gold.removed",
+  "Prime Gold Rock": "gold.removed",
 };
 
 export function getRemoveAction(
-  name: InventoryItemName | "Bud",
+  name: LandscapingPlaceable | undefined,
 ): GameEventName<PlacementEvent> | null {
+  if (!name) {
+    return null;
+  }
+
   if (
     name in BUILDINGS_DIMENSIONS &&
     name !== "Manor" &&
@@ -143,16 +144,12 @@ export function getRemoveAction(
     return null;
   }
 
-  if (name === "Chicken") {
-    return "chicken.removed";
-  }
-
   if (name in COLLECTIBLES_DIMENSIONS) {
     return "collectible.removed";
   }
 
-  if (name === "Bud") {
-    return "bud.removed";
+  if (name === "Bud" || name === "Pet") {
+    return "nft.removed";
   }
 
   if (name in RESOURCES_REMOVE_ACTIONS) {
@@ -163,11 +160,11 @@ export function getRemoveAction(
 }
 
 export const isCollectible = (
-  name: CollectibleName | BuildingName | "Chicken" | "Bud",
+  name: LandscapingPlaceable,
 ): name is CollectibleName => name in COLLECTIBLES_DIMENSIONS;
 
 export interface MovableProps {
-  name: CollectibleName | BuildingName | "Chicken" | "Bud";
+  name: LandscapingPlaceable;
   id: string;
   index: number;
   x: number;
@@ -263,7 +260,7 @@ export const MoveableComponent: React.FC<
 }) => {
   const { scale } = useContext(ZoomContext);
 
-  const nodeRef = useRef(null);
+  const nodeRef = useRef<HTMLDivElement>(null);
 
   const { gameService } = useContext(Context);
   const [isColliding, setIsColliding] = useState(false);
@@ -339,13 +336,20 @@ export const MoveableComponent: React.FC<
     }
   }, [isSelected, movingItem]);
 
-  const dimensions = {
+  const DIMENSIONS_MAP = {
     ...BUILDINGS_DIMENSIONS,
     ...COLLECTIBLES_DIMENSIONS,
     ...ANIMAL_DIMENSIONS,
     ...RESOURCE_DIMENSIONS,
-    ...{ Bud: { width: 1, height: 1 } },
-  }[name];
+  };
+
+  const dimensions = useMemo(() => {
+    return name === "Bud"
+      ? { width: 1, height: 1 }
+      : name === "Pet"
+        ? { width: 2, height: 2 }
+        : DIMENSIONS_MAP[name];
+  }, [name]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onStop = useCallback(
@@ -363,7 +367,7 @@ export const MoveableComponent: React.FC<
         coordinatesX: number;
         coordinatesY: number;
         id: string;
-        name: CollectibleName | BuildingName | "Chicken" | "Bud";
+        name: LandscapingPlaceable;
         location: PlaceableLocation;
         dimensions: Dimensions;
       }) => {
@@ -401,7 +405,11 @@ export const MoveableComponent: React.FC<
           setPosition({ x: 0, y: 0 });
           gameService.send(getMoveAction(name), {
             // Don't send name for resource events and Bud events
-            ...(name in RESOURCE_MOVE_EVENTS || name === "Bud" ? {} : { name }),
+            ...(name in RESOURCE_MOVE_EVENTS
+              ? {}
+              : name === "Bud" || name === "Pet"
+                ? { nft: name }
+                : { name }),
             coordinates: { x, y },
             id,
             // Resources do not require location to be passed
@@ -592,7 +600,7 @@ export const MoveableComponent: React.FC<
   return (
     <Draggable
       key={`${coordinatesX}-${coordinatesY}-${counts}`}
-      nodeRef={nodeRef}
+      nodeRef={nodeRef as React.RefObject<HTMLElement>}
       grid={[GRID_WIDTH_PX * scale.get(), GRID_WIDTH_PX * scale.get()]}
       scale={scale.get()}
       allowAnyClick

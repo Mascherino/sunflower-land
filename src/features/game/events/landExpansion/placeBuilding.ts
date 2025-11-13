@@ -10,9 +10,9 @@ import {
 import { produce } from "immer";
 import { ComposterName } from "features/game/types/composters";
 import { getReadyAt } from "./startComposter";
-import { getBoostedAwakeAt } from "features/game/lib/animals";
 import { RECIPES } from "features/game/lib/crafting";
 import { getBoostedCraftingTime } from "./startCrafting";
+import { Coordinates } from "features/game/expansion/components/MapPlacement";
 
 export enum PLACE_BUILDING_ERRORS {
   NO_BUMPKIN = "You do not have a Bumpkin!",
@@ -24,10 +24,7 @@ export type PlaceBuildingAction = {
   type: "building.placed";
   name: BuildingName;
   id: string;
-  coordinates: {
-    x: number;
-    y: number;
-  };
+  coordinates: Coordinates;
 };
 
 type Options = {
@@ -141,14 +138,10 @@ export function placeBuilding({
 
         Object.values(animals).forEach((animal) => {
           if (existingBuilding.removedAt) {
-            const timeOffset = existingBuilding.removedAt - animal.asleepAt;
-            animal.asleepAt = createdAt - timeOffset;
-            const { awakeAt } = getBoostedAwakeAt({
-              animalType: animal.type,
-              createdAt: animal.asleepAt, // use asleepAt to calculate the new awakeAt
-              game: stateCopy,
-            });
-            animal.awakeAt = awakeAt;
+            const timeOffset = createdAt - existingBuilding.removedAt;
+            animal.asleepAt = animal.asleepAt + timeOffset;
+            animal.awakeAt = animal.awakeAt + timeOffset;
+            animal.lovedAt = animal.lovedAt + timeOffset;
           }
         });
       }
@@ -158,10 +151,12 @@ export function placeBuilding({
         if (existingBuilding.removedAt && craftingBox.item) {
           const timeOffset = existingBuilding.removedAt - craftingBox.startedAt;
           craftingBox.startedAt = createdAt - timeOffset;
-          const { seconds: recipeTime } = craftingBox.item.collectible
+          const collectible = craftingBox.item.collectible;
+          const { seconds: recipeTime } = collectible
             ? getBoostedCraftingTime({
                 game: stateCopy,
-                time: RECIPES[craftingBox.item.collectible]?.time ?? 0,
+                time: RECIPES[collectible]?.time ?? 0,
+                createdAt,
               })
             : { seconds: 0 };
           craftingBox.readyAt = craftingBox.startedAt + recipeTime;

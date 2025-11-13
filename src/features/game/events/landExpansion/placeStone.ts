@@ -2,19 +2,21 @@ import { GameState, Rock } from "features/game/types/game";
 import {
   ADVANCED_RESOURCES,
   UpgradedResourceName,
-  RockName,
+  StoneRockName,
+  RESOURCE_MULTIPLIER,
 } from "features/game/types/resources";
-import Decimal from "decimal.js-light";
 import { produce } from "immer";
+import {
+  findExistingUnplacedNode,
+  getAvailableNodes,
+} from "features/game/lib/resourceNodes";
+import { Coordinates } from "features/game/expansion/components/MapPlacement";
 
 export type PlaceStoneAction = {
   type: "stone.placed";
-  name: RockName;
+  name: StoneRockName;
   id: string;
-  coordinates: {
-    x: number;
-    y: number;
-  };
+  coordinates: Coordinates;
 };
 
 type Options = {
@@ -23,34 +25,25 @@ type Options = {
   createdAt?: number;
 };
 
-export const STONE_MULTIPLIERS: Record<RockName, number> = {
-  "Stone Rock": 1,
-  "Fused Stone Rock": 4,
-  "Reinforced Stone Rock": 16,
-};
-
 export function placeStone({
   state,
   action,
   createdAt = Date.now(),
 }: Options): GameState {
   return produce(state, (game) => {
-    const available = (game.inventory[action.name] || new Decimal(0)).minus(
-      Object.values(game.stones).filter(
-        (stone) =>
-          stone.x !== undefined &&
-          stone.y !== undefined &&
-          (stone?.name ?? "Stone Rock") === action.name,
-      ).length,
-    );
+    const available = getAvailableNodes(game, "stones");
 
     if (available.lt(1)) {
       throw new Error("No stone available");
     }
 
-    const existingStone = Object.entries(game.stones).find(
-      ([_, stone]) => stone.x === undefined && stone.y === undefined,
-    );
+    const nodeStateAccessor = game.stones;
+
+    const existingStone = findExistingUnplacedNode({
+      nodeStateAccessor,
+      nodeToFind: action.name,
+      baseNode: "Stone Rock",
+    });
 
     if (existingStone) {
       const [id, stone] = existingStone;
@@ -81,7 +74,7 @@ export function placeStone({
       },
       tier: ADVANCED_RESOURCES[action.name as UpgradedResourceName]?.tier ?? 1,
       name: action.name,
-      multiplier: STONE_MULTIPLIERS[action.name],
+      multiplier: RESOURCE_MULTIPLIER[action.name],
     };
 
     game.stones = {

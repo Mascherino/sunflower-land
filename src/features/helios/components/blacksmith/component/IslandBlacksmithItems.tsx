@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { useActor } from "@xstate/react";
+import { useSelector } from "@xstate/react";
 
 import { Box } from "components/ui/Box";
 
@@ -9,6 +9,7 @@ import { ITEM_DETAILS } from "features/game/types/images";
 
 import { Button } from "components/ui/Button";
 import {
+  CraftableCollectible,
   HELIOS_BLACKSMITH_ITEMS,
   HeliosBlacksmithItem,
 } from "features/game/types/collectibles";
@@ -25,14 +26,16 @@ import {
   MonumentName,
   REQUIRED_CHEERS,
   REWARD_ITEMS,
+  VillageProjectName,
   WORKBENCH_MONUMENTS,
+  WorkbenchMonumentName,
 } from "features/game/types/monuments";
 import { GameState } from "features/game/types/game";
 import { Label } from "components/ui/Label";
 import helpIcon from "assets/icons/help.webp";
 import { getBumpkinLevel } from "features/game/lib/level";
 
-const PROJECTS: HeliosBlacksmithItem[] = [
+const PROJECTS: WorkbenchMonumentName[] = [
   "Basic Cooking Pot",
   "Expert Cooking Pot",
   "Advanced Cooking Pot",
@@ -49,7 +52,7 @@ const DecorationLabel = ({
   selectedName,
 }: {
   gameState: GameState;
-  selectedName: HeliosBlacksmithItem;
+  selectedName: HeliosBlacksmithItem | WorkbenchMonumentName;
 }) => {
   const { t } = useAppTranslation();
 
@@ -76,7 +79,7 @@ const DecorationLabel = ({
   }
 
   if (isMonument) {
-    const reward = REWARD_ITEMS[selectedName as MonumentName];
+    const reward = REWARD_ITEMS[selectedName as VillageProjectName];
 
     return (
       <div className="flex items-center flex-col space-y-1">
@@ -98,30 +101,42 @@ const DecorationLabel = ({
   return null;
 };
 
+const BLACKSMITH_ITEMS: Record<
+  HeliosBlacksmithItem | WorkbenchMonumentName,
+  CraftableCollectible
+> = {
+  ...HELIOS_BLACKSMITH_ITEMS,
+  ...WORKBENCH_MONUMENTS,
+};
+
 export const IslandBlacksmithItems: React.FC = () => {
   const { t } = useAppTranslation();
-  const [selectedName, setSelectedName] =
-    useState<HeliosBlacksmithItem>("Basic Scarecrow");
+  const [selectedName, setSelectedName] = useState<
+    HeliosBlacksmithItem | WorkbenchMonumentName
+  >("Basic Scarecrow");
   const { gameService, shortcutItem } = useContext(Context);
-  const [
-    {
-      context: { state },
-    },
-  ] = useActor(gameService);
+  const state = useSelector(gameService, (state) => state.context.state);
+  const inventory = useSelector(
+    gameService,
+    (state) => state.context.state.inventory,
+  );
+  const coins = useSelector(gameService, (state) => state.context.state.coins);
+  const bumpkin = useSelector(
+    gameService,
+    (state) => state.context.state.bumpkin,
+  );
 
-  const { inventory, coins } = state;
-
-  const selectedItem = HELIOS_BLACKSMITH_ITEMS[selectedName];
+  const selectedItem = BLACKSMITH_ITEMS[selectedName];
 
   // Change boost if skill is active
   if (selectedItem) {
     if (
       selectedName === "Immortal Pear" &&
-      state.bumpkin.skills["Pear Turbocharge"]
+      bumpkin.skills["Pear Turbocharge"]
     ) {
       selectedItem.boost = t("description.immortal.pear.boosted.boost");
     }
-    if (selectedName === "Macaw" && state.bumpkin.skills["Loyal Macaw"]) {
+    if (selectedName === "Macaw" && bumpkin.skills["Loyal Macaw"]) {
       selectedItem.boost = t("description.macaw.boosted.boost");
     }
   }
@@ -139,12 +154,12 @@ export const IslandBlacksmithItems: React.FC = () => {
 
   const hasLevel =
     !selectedItem?.level ||
-    getBumpkinLevel(state.bumpkin?.experience ?? 0) >= selectedItem?.level;
+    getBumpkinLevel(bumpkin?.experience ?? 0) >= selectedItem?.level;
 
   const craft = () => {
     if (selectedName in WORKBENCH_MONUMENTS) {
       gameService.send("LANDSCAPE", {
-        placeable: selectedName,
+        placeable: { name: selectedName },
         action: "monument.bought",
         requirements: {
           coins: selectedItem?.coins ?? 0,
@@ -154,7 +169,7 @@ export const IslandBlacksmithItems: React.FC = () => {
       });
     } else {
       gameService.send("LANDSCAPE", {
-        placeable: selectedName,
+        placeable: { name: selectedName },
         action: "collectible.crafted",
         // Not used yet
         requirements: {
@@ -164,7 +179,7 @@ export const IslandBlacksmithItems: React.FC = () => {
       });
     }
 
-    const count = state.inventory[selectedName]?.toNumber() ?? 1;
+    const count = inventory[selectedName]?.toNumber() ?? 1;
     gameAnalytics.trackMilestone({
       event: `Crafting:Collectible:${selectedName}${count}`,
     });
@@ -184,7 +199,7 @@ export const IslandBlacksmithItems: React.FC = () => {
   };
 
   const hasBuiltMonument = () => {
-    return !!state.inventory[selectedName as MonumentName]?.gt(0);
+    return !!inventory[selectedName as MonumentName]?.gt(0);
   };
 
   const VALID_EQUIPMENT: HeliosBlacksmithItem[] = [
@@ -212,7 +227,10 @@ export const IslandBlacksmithItems: React.FC = () => {
             from: selectedItem?.from,
             to: selectedItem?.to,
           }}
-          boost={COLLECTIBLE_BUFF_LABELS(state)[selectedName]}
+          boost={COLLECTIBLE_BUFF_LABELS[selectedName]?.({
+            skills: state.bumpkin.skills,
+            collectibles: state.collectibles,
+          })}
           requirements={{
             resources: selectedItem?.ingredients ?? {},
             coins: selectedItem?.coins ?? 0,
@@ -288,7 +306,7 @@ export const IslandBlacksmithItems: React.FC = () => {
           </p>
 
           <div className="flex flex-wrap">
-            {PROJECTS.map((name: HeliosBlacksmithItem) => {
+            {PROJECTS.map((name) => {
               return (
                 <Box
                   isSelected={selectedName === name}

@@ -21,7 +21,6 @@ import {
   CollectibleName,
 } from "features/game/types/craftables";
 import { READONLY_COLLECTIBLES } from "features/island/collectibles/CollectibleCollection";
-import { Chicken } from "features/island/chickens/Chicken";
 
 import { Section } from "lib/utils/hooks/useScrollIntoView";
 import { SUNNYSIDE } from "assets/sunnyside";
@@ -29,20 +28,22 @@ import { READONLY_RESOURCE_COMPONENTS } from "features/island/resources/Resource
 import { getGameGrid } from "./lib/makeGrid";
 import { READONLY_BUILDINGS } from "features/island/buildings/components/building/BuildingComponents";
 import { ZoomContext } from "components/ZoomProvider";
-import { isBudName } from "features/game/types/buds";
 import { PlaceableLocation } from "features/game/types/collectibles";
 import { RESOURCE_DIMENSIONS } from "features/game/types/resources";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { GameState } from "features/game/types/game";
 import { DIRT_PATH_VARIANTS } from "features/island/lib/alternateArt";
 import { getCurrentBiome, LandBiomeName } from "features/island/biomes/biomes";
+import {
+  getSortedCollectiblePositions,
+  getSortedResourcePositions,
+} from "../lib/utils";
 
 export const PLACEABLES = (state: GameState) => {
   const island: GameState["island"] = state.island;
   const biome: LandBiomeName = getCurrentBiome(island);
 
   return {
-    Chicken: () => <Chicken x={0} y={0} id="123" />, // Temp id for placing, when placed action will assign a random UUID and the temp one will be overridden.
     ...READONLY_COLLECTIBLES,
     ...READONLY_RESOURCE_COMPONENTS(),
     ...READONLY_BUILDINGS(state),
@@ -106,8 +107,8 @@ interface Props {
 export const Placeable: React.FC<Props> = ({ location }) => {
   const { scale } = useContext(ZoomContext);
 
-  const nodeRef = useRef(null);
-  const { gameService } = useContext(Context);
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const { gameService, showTimers } = useContext(Context);
 
   const { island, season } = gameService.getSnapshot().context.state;
 
@@ -120,20 +121,28 @@ export const Placeable: React.FC<Props> = ({ location }) => {
   const [machine, send] = useActor(child);
   const { placeable, collisionDetected, origin, coordinates } = machine.context;
 
-  const grid = getGameGrid(gameState.context.state);
+  const cropPositions = getSortedResourcePositions(
+    gameState.context.state.crops,
+  );
+  const collectiblePositions = getSortedCollectiblePositions(
+    gameState.context.state.collectibles,
+  );
+  const grid = getGameGrid({ cropPositions, collectiblePositions });
 
   const { t } = useAppTranslation();
 
   let dimensions = { width: 0, height: 0 };
-  if (isBudName(placeable)) {
+  if (placeable?.name === "Bud") {
     dimensions = { width: 1, height: 1 };
-  } else if (placeable) {
+  } else if (placeable?.name === "Pet") {
+    dimensions = { width: 2, height: 2 };
+  } else if (placeable?.name) {
     dimensions = {
       ...BUILDINGS_DIMENSIONS,
       ...COLLECTIBLES_DIMENSIONS,
       ...ANIMAL_DIMENSIONS,
       ...RESOURCE_DIMENSIONS,
-    }[placeable];
+    }[placeable.name];
   }
 
   const detect = useCallback(
@@ -142,7 +151,7 @@ export const Placeable: React.FC<Props> = ({ location }) => {
         state: gameService.getSnapshot().context.state,
         position: { x, y, width: dimensions.width, height: dimensions.height },
         location,
-        name: placeable as CollectibleName,
+        name: placeable?.name as CollectibleName,
       });
 
       send({ type: "UPDATE", coordinates: { x, y }, collisionDetected });
@@ -222,9 +231,12 @@ export const Placeable: React.FC<Props> = ({ location }) => {
     return null;
   }
 
-  const Collectible = isBudName(placeable)
-    ? PLACEABLES(gameState.context.state)["Bud"]
-    : PLACEABLES(gameState.context.state)[placeable];
+  const Collectible =
+    placeable?.name === "Bud"
+      ? PLACEABLES(gameState.context.state)["Bud"]
+      : placeable?.name === "Pet"
+        ? PLACEABLES(gameState.context.state)["PetNFT"]
+        : PLACEABLES(gameState.context.state)[placeable.name];
 
   return (
     <>
@@ -232,7 +244,7 @@ export const Placeable: React.FC<Props> = ({ location }) => {
         id="bg-overlay "
         className=" bg-black opacity-40 fixed inset-0"
         style={{
-          zIndex: 1999,
+          zIndex: 99,
           height: "200%",
           right: "-1000px",
           left: "-1000px",
@@ -241,10 +253,10 @@ export const Placeable: React.FC<Props> = ({ location }) => {
           bottom: "1000px",
         }}
       />
-      <div className="fixed left-1/2 top-1/2" style={{ zIndex: 2000 }}>
+      <div className="fixed left-1/2 top-1/2" style={{ zIndex: 100 }}>
         <Draggable
           key={`${origin?.x}-${origin?.y}`}
-          nodeRef={nodeRef}
+          nodeRef={nodeRef as React.RefObject<HTMLElement>}
           grid={[GRID_WIDTH_PX * scale.get(), GRID_WIDTH_PX * scale.get()]}
           scale={scale.get()}
           onStart={() => {
@@ -313,10 +325,15 @@ export const Placeable: React.FC<Props> = ({ location }) => {
                 island={island}
                 season={season.season}
                 grid={grid}
-                game={gameState.context.state}
-                id={isBudName(placeable) ? placeable.split("-")[1] : "123"}
+                showTimers={showTimers}
+                skills={gameState.context.state.bumpkin.skills}
+                id={
+                  placeable?.name === "Bud" || placeable?.name === "Pet"
+                    ? placeable.id
+                    : "123"
+                }
                 location="farm"
-                name={placeable as CollectibleName}
+                name={placeable?.name as CollectibleName}
               />
             </div>
           </div>

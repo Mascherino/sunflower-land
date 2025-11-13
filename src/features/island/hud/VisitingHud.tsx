@@ -25,8 +25,10 @@ import choreIcon from "assets/icons/chores.webp";
 import { VisitorGuide } from "./components/VisitorGuide";
 import { Modal } from "components/ui/Modal";
 import { CloseButtonPanel } from "features/game/components/CloseablePanel";
-import { getHelpRequired } from "features/game/types/monuments";
-import { hasHitHelpLimit } from "features/game/events/landExpansion/increaseHelpLimit";
+import {
+  getHelpRequired,
+  hasHitHelpLimit,
+} from "features/game/types/monuments";
 import { Feed } from "features/social/Feed";
 import { WorldFeedButton } from "features/social/components/WorldFeedButton";
 import classNames from "classnames";
@@ -43,8 +45,12 @@ const _autosaving = (state: MachineState) => state.matches("autosaving");
  */
 export const VisitingHud: React.FC = () => {
   const { gameService, fromRoute } = useContext(Context);
-
   const [gameState] = useActor(gameService);
+
+  const [initialHelpRequired, setInitialHelpRequired] = useState({
+    farm: 0,
+    home: 0,
+  });
 
   const [showVisitorGuide, setShowVisitorGuide] = useState(() => {
     const hasHitLimit = hasHitHelpLimit({
@@ -70,7 +76,15 @@ export const VisitingHud: React.FC = () => {
   const handleEndVisit = () => {
     gameService.send("END_VISIT");
 
-    const target = fromRoute && !fromRoute.includes("visit") ? fromRoute : "/";
+    const target =
+      fromRoute &&
+      !fromRoute.includes("visit") &&
+      !fromRoute.includes("home") &&
+      !fromRoute.includes("barn") &&
+      !fromRoute.includes("hen-house") &&
+      !fromRoute.includes("greenhouse")
+        ? fromRoute
+        : "/";
 
     navigate(target, { replace: true });
   };
@@ -81,6 +95,13 @@ export const VisitingHud: React.FC = () => {
   const helpRequired = getHelpRequired({
     game: gameState.context.state,
   });
+
+  useEffect(() => {
+    setInitialHelpRequired({
+      farm: helpRequired.tasks.farm.count,
+      home: helpRequired.tasks.home.count,
+    });
+  }, []);
 
   const handleCloseVisitorGuide = () => {
     // Store acknowledgment in local storage
@@ -102,13 +123,17 @@ export const VisitingHud: React.FC = () => {
 
   return (
     <HudContainer>
-      <Feed type="local" showFeed={showFeed} setShowFeed={setShowFeed} />
+      <Feed type="world" showFeed={showFeed} setShowFeed={setShowFeed} />
       <Modal show={showVisitorGuide} onHide={handleCloseVisitorGuide}>
         <CloseButtonPanel
           bumpkinParts={gameState.context.state.bumpkin?.equipped}
           container={OuterPanel}
         >
-          <VisitorGuide onClose={handleCloseVisitorGuide} />
+          <VisitorGuide
+            onClose={handleCloseVisitorGuide}
+            farmHelpRequired={initialHelpRequired.farm}
+            homeHelpRequired={initialHelpRequired.home}
+          />
         </CloseButtonPanel>
       </Modal>
 
@@ -132,7 +157,7 @@ export const VisitingHud: React.FC = () => {
             </div>
           ) : (
             <div className="flex flex-col sm:flex-row items-center space-x-1">
-              <span className="text-md">{`${helpRequired}`}</span>
+              <span className="text-md">{`${helpRequired.totalCount}`}</span>
               <img src={choreIcon} style={{ width: `20px`, margin: `2px` }} />
             </div>
           )}

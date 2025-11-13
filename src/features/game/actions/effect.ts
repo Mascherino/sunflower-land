@@ -37,7 +37,10 @@ type EffectName =
   | "moderation.unmuted"
   | "blessing.offered"
   | "blessing.seeked"
+  | "roninPack.claimed"
+  | "twitter.roninPosted"
   | "nft.assigned"
+  | "admin.NFTAssigned"
   | "marketplace.bulkListingsCancelled"
   | "marketplace.bulkOffersCancelled"
   | "farm.followed"
@@ -47,7 +50,10 @@ type EffectName =
   | "project.completed"
   | "farm.helped"
   | "pet.wakeUp"
-  | "auction.claimed";
+  | "auction.claimed"
+  | "auction.bidPlaced"
+  | "auction.bidCancelled"
+  | "marketplace.buyBulkResources";
 
 type VisitEffectName = "farm.helped" | "farm.cheered" | "farm.followed";
 
@@ -92,6 +98,7 @@ export type StateMachineStateName =
   | "claimingBlockchainBox"
   | "offeringBlessing"
   | "seekingBlessing"
+  | "claimingRoninPack"
   | "marketplaceBulkListingsCancelling"
   | "marketplaceBulkOffersCancelling"
   | "linkingWallet"
@@ -101,7 +108,10 @@ export type StateMachineStateName =
   | "completingProject"
   | "helpingFarm"
   | "claimingAuction"
-  | "wakingPet";
+  | "wakingPet"
+  | "auctionBidding"
+  | "auctionCancelling"
+  | "marketplaceBuyingBulkResources";
 
 export type StateMachineVisitStateName =
   | "helpingFarm"
@@ -134,6 +144,8 @@ export const STATE_MACHINE_EFFECTS: Record<
   "telegram.joined": "joiningTelegram",
   "twitter.followed": "followingTwitter",
   "twitter.posted": "postingTwitter",
+  "roninPack.claimed": "claimingRoninPack",
+  "twitter.roninPosted": "postingTwitter",
   "gems.bought": "buyingGems",
   "vip.bought": "buyingVIP",
   "username.assigned": "assigningUsername",
@@ -146,12 +158,16 @@ export const STATE_MACHINE_EFFECTS: Record<
   "marketplace.bulkOffersCancelled": "marketplaceBulkOffersCancelling",
   "wallet.linked": "linkingWallet",
   "nft.assigned": "assigningNFT",
+  "admin.NFTAssigned": "assigningNFT",
   "farm.cheered": "cheeringFarm",
   "farm.followed": "followingFarm",
   "project.completed": "completingProject",
   "farm.helped": "helpingFarm",
   "auction.claimed": "claimingAuction",
   "pet.wakeUp": "wakingPet",
+  "auction.bidPlaced": "auctionBidding",
+  "auction.bidCancelled": "auctionCancelling",
+  "marketplace.buyBulkResources": "marketplaceBuyingBulkResources",
 };
 
 export const STATE_MACHINE_VISIT_EFFECTS: Record<

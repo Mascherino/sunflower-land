@@ -1,6 +1,8 @@
 import type { GameState } from "features/game/types/game";
 import { CONFIG } from "lib/config";
 
+export const RONIN_AIRDROP_ENDDATE = new Date("2025-11-04T00:00:00Z");
+
 export const adminFeatureFlag = ({ wardrobe, inventory }: GameState) =>
   CONFIG.NETWORK === "amoy" ||
   (!!((wardrobe["Gift Giver"] ?? 0) > 0) && !!inventory["Beta Pass"]?.gt(0));
@@ -12,10 +14,12 @@ const usernameFeatureFlag = (game: GameState) => {
       "adam",
       "tango",
       "elias",
+      "Aeon",
       "dcol",
       "birb",
       "Celinhotv",
       "LittleEins",
+      "Labochi",
       "Craig",
       "Spencer",
     ]
@@ -86,6 +90,12 @@ const FEATURE_FLAGS = {
   // For testing
   JEST_TEST: defaultFeatureFlag,
 
+  RONIN_AIRDROP: (game: GameState) => {
+    if (Date.now() > RONIN_AIRDROP_ENDDATE.getTime()) return false;
+
+    return betaTimeBasedFeatureFlag(new Date("2025-10-21T00:00:00Z"))(game);
+  },
+
   // Permanent Feature Flags
   AIRDROP_PLAYER: adminFeatureFlag,
   HOARDING_CHECK: defaultFeatureFlag,
@@ -97,6 +107,10 @@ const FEATURE_FLAGS = {
   LEDGER: testnetLocalStorageFeatureFlag("ledger"),
 
   EASTER: () => false,
+
+  HALLOWEEN: (game) =>
+    betaTimeBasedFeatureFlag(new Date("2025-10-28T00:00:00Z"))(game) &&
+    Date.now() < new Date("2025-11-05T00:00:00Z").getTime(),
 
   STREAM_STAGE_ACCESS: adminFeatureFlag,
 
@@ -110,17 +124,30 @@ const FEATURE_FLAGS = {
 
   BLESSING: () => true,
 
-  PETS: testnetFeatureFlag,
-  FLOWER_INSTA_GROW: defaultFeatureFlag,
-  OBSIDIAN_SHRINE: defaultFeatureFlag,
+  PETS: (game) =>
+    betaTimeBasedFeatureFlag(new Date("2025-11-03T00:00:00Z"))(game),
+  PET_HOUSE: testnetFeatureFlag,
+  FLOWER_INSTA_GROW: (game) =>
+    betaTimeBasedFeatureFlag(new Date("2025-11-03T00:00:00Z"))(game),
 
   API_PERFORMANCE: () => true,
 
-  OBSIDIAN_EXCHANGE: testnetFeatureFlag,
+  OBSIDIAN_EXCHANGE: () =>
+    timeBasedFeatureFlag(new Date("2025-11-03T00:00:00Z"))(),
   GASLESS_AUCTIONS: () => true,
-  NODE_FORGING: defaultFeatureFlag,
-  DEPOSIT_SFL: adminTimeBasedFeatureFlag(new Date("2025-08-28T00:00:00.000Z")),
-  BETA_ACCESS: defaultFeatureFlag,
+  NODE_FORGING: (game) =>
+    betaTimeBasedFeatureFlag(new Date("2025-11-03T00:00:00Z"))(game),
+  DEPOSIT_SFL: () =>
+    Date.now() < new Date("2025-10-28T00:00:00.000Z").getTime(),
+  RONIN_FLOWER: betaTimeBasedFeatureFlag(new Date("2025-10-21T00:00:00Z")),
+  MEMORY_BETA: defaultFeatureFlag,
+  PET_NFT_DEPOSIT: () =>
+    timeBasedFeatureFlag(new Date("2025-11-03T00:00:00Z"))(),
+  PET_NFT_MARKETPLACE: () =>
+    timeBasedFeatureFlag(new Date("2025-11-03T00:00:00Z"))(),
+  BUILDING_FRIENDSHIPS: betaTimeBasedFeatureFlag(
+    new Date("2025-10-13T00:00:00Z"),
+  ),
 } satisfies Record<string, FeatureFlag>;
 
 export type FeatureName = keyof typeof FEATURE_FLAGS;

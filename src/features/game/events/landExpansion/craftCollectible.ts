@@ -1,7 +1,6 @@
 import Decimal from "decimal.js-light";
 import {
   COLLECTIBLES_DIMENSIONS,
-  CollectibleName,
   getKeys,
 } from "features/game/types/craftables";
 
@@ -25,13 +24,7 @@ import { ExoticCropName } from "features/game/types/beans";
 import { isExoticCrop } from "features/game/types/crops";
 import { PET_SHOP_ITEMS, PetShopItemName } from "features/game/types/petShop";
 import { hasFeatureAccess } from "lib/flags";
-
-export const COLLECTIBLE_CRAFT_SECONDS: Partial<
-  Record<CollectibleName, number>
-> = {
-  Bale: 60,
-  "Scary Mike": 60,
-};
+import { Coordinates } from "features/game/expansion/components/MapPlacement";
 
 type CraftableCollectibleItem =
   | HeliosBlacksmithItem
@@ -44,10 +37,7 @@ export type CraftCollectibleAction = {
   type: "collectible.crafted";
   name: CraftableCollectibleItem;
   id?: string;
-  coordinates?: {
-    x: number;
-    y: number;
-  };
+  coordinates?: Coordinates;
 };
 
 type Options = {
@@ -108,12 +98,8 @@ export function craftCollectible({
       throw new Error("Pet Shop is not available");
     }
 
-    if (stateCopy.stock[action.name]?.lt(1)) {
-      throw new Error("Not enough stock");
-    }
-
-    if (bumpkin === undefined) {
-      throw new Error("You do not have a Bumpkin!");
+    if (item.disabled) {
+      throw new Error("Item is disabled");
     }
 
     if (item.from && item.from?.getTime() > createdAt) {
@@ -198,14 +184,9 @@ export function craftCollectible({
         throw new Error("ID already exists");
       }
 
-      const seconds = COLLECTIBLE_CRAFT_SECONDS[action.name] ?? 0;
-
       stateCopy.collectibles[action.name] = previous.concat({
         id: action.id,
         coordinates: { x: action.coordinates.x, y: action.coordinates.y },
-        readyAt: createdAt + seconds * 1000,
-
-        createdAt: createdAt,
       });
     }
 
@@ -221,7 +202,6 @@ export function craftCollectible({
       ...subtractedInventory,
       [action.name]: oldAmount.add(1) as Decimal,
     };
-    stateCopy.stock[action.name] = stateCopy.stock[action.name]?.minus(1);
 
     if (isKey(action.name)) {
       const keyBoughtAt =

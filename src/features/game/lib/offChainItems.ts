@@ -7,6 +7,8 @@ import { TREASURE_TOOLS } from "../types/tools";
 import { SELLABLE_TREASURE } from "../types/treasure";
 import { PET_SHRINES } from "../types/pets";
 import { HOURGLASSES } from "../events/landExpansion/burnCollectible";
+import { RESOURCES } from "../types/resources";
+import { WORM } from "../types/composters";
 
 export const OFFCHAIN_ITEMS: InventoryItemName[] = [
   "Mark",
@@ -24,4 +26,7 @@ export const OFFCHAIN_ITEMS: InventoryItemName[] = [
   ...HOURGLASSES,
   "Time Warp Totem",
   "Super Totem",
+  ...getKeys(RESOURCES),
+  ...getKeys(WORM),
+  "Basic Land",
 ];

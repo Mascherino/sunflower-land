@@ -6,10 +6,7 @@ import { InnerPanel } from "components/ui/Panel";
 import { FactionName, InventoryItemName } from "../types/game";
 import Decimal from "decimal.js-light";
 import { formatNumber } from "lib/utils/formatNumber";
-import token from "assets/icons/flower_token.webp";
-import levelup from "assets/icons/level_up.png";
 import { HudContainer } from "components/ui/HudContainer";
-import coins from "assets/icons/coins.webp";
 import { FACTION_POINT_ICONS } from "features/world/ui/factions/FactionDonationPanel";
 import { MachineState } from "../lib/gameMachine";
 import { useSelector } from "@xstate/react";
@@ -18,6 +15,12 @@ import { Bud } from "../types/buds";
 import { KNOWN_IDS } from "../types";
 import { getTradeableDisplay } from "features/marketplace/lib/tradeables";
 import { useVisiting } from "lib/utils/visitUtils";
+import { PetNFT } from "../types/pets";
+
+import token from "assets/icons/flower_token.webp";
+import levelup from "assets/icons/level_up.png";
+import coins from "assets/icons/coins.webp";
+import { getPetImage } from "features/island/pets/lib/petShared";
 
 const MAX_TOAST = 6;
 
@@ -58,6 +61,10 @@ const getToastIcon = (item: ToastItem, faction?: FactionName) => {
     }).image;
   }
 
+  if (item.startsWith("Pet #")) {
+    return getPetImage("happy", Number(item.split("#")[1]));
+  }
+
   return "";
 };
 
@@ -77,6 +84,7 @@ export const ToastPanel: React.FC = () => {
     setFactionPoints,
     setWardrobe,
     setBuds,
+    setPetNFTs,
   } = useContext(ToastContext);
   const [visibleToasts, setVisibleToasts] = useState<Toast[]>([]);
   const [showToasts, setShowToasts] = useState<boolean>(false);
@@ -84,20 +92,24 @@ export const ToastPanel: React.FC = () => {
 
   const faction = useSelector(gameService, _faction);
 
-  const oldInventory = useRef<Partial<Record<InventoryItemName, Decimal>>>();
-  const newInventory = useRef<Partial<Record<InventoryItemName, Decimal>>>();
-  const oldSflBalance = useRef<Decimal>();
-  const newSflBalance = useRef<Decimal>();
-  const oldExperience = useRef<Decimal>();
-  const newExperience = useRef<Decimal>();
-  const oldCoinBalance = useRef<number>();
-  const newCoinBalance = useRef<number>();
-  const oldFactionPoints = useRef<number>();
-  const newFactionPoints = useRef<number>();
-  const oldWardrobe = useRef<Partial<Record<BumpkinItem, number>>>();
-  const newWardrobe = useRef<Partial<Record<BumpkinItem, number>>>();
-  const oldBuds = useRef<Partial<Record<number, Bud>>>();
-  const newBuds = useRef<Partial<Record<number, Bud>>>();
+  const oldInventory =
+    useRef<Partial<Record<InventoryItemName, Decimal>>>(undefined);
+  const newInventory =
+    useRef<Partial<Record<InventoryItemName, Decimal>>>(undefined);
+  const oldSflBalance = useRef<Decimal>(undefined);
+  const newSflBalance = useRef<Decimal>(undefined);
+  const oldExperience = useRef<Decimal>(undefined);
+  const newExperience = useRef<Decimal>(undefined);
+  const oldCoinBalance = useRef<number>(undefined);
+  const newCoinBalance = useRef<number>(undefined);
+  const oldFactionPoints = useRef<number>(undefined);
+  const newFactionPoints = useRef<number>(undefined);
+  const oldWardrobe = useRef<Partial<Record<BumpkinItem, number>>>(undefined);
+  const newWardrobe = useRef<Partial<Record<BumpkinItem, number>>>(undefined);
+  const oldBuds = useRef<Partial<Record<number, Bud>>>(undefined);
+  const newBuds = useRef<Partial<Record<number, Bud>>>(undefined);
+  const oldPetNFTs = useRef<Partial<Record<number, PetNFT>>>(undefined);
+  const newPetNFTs = useRef<Partial<Record<number, PetNFT>>>(undefined);
 
   /**
    * Listens to game state transitions.
@@ -124,6 +136,8 @@ export const ToastPanel: React.FC = () => {
     newWardrobe.current = state.context.state.wardrobe;
     oldBuds.current = newBuds.current;
     newBuds.current = state.context.state.buds;
+    oldPetNFTs.current = newPetNFTs.current;
+    newPetNFTs.current = state.context.state.pets?.nfts ?? {};
 
     // inventory is set and changed
     if (
@@ -173,6 +187,11 @@ export const ToastPanel: React.FC = () => {
     // buds is set and changed
     if (!!newBuds.current && oldBuds.current !== newBuds.current) {
       setBuds(newBuds.current);
+    }
+
+    // pet nfts is set and changed
+    if (!!newPetNFTs.current && oldPetNFTs.current !== newPetNFTs.current) {
+      setPetNFTs(newPetNFTs.current);
     }
   });
 

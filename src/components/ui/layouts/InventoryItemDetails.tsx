@@ -8,7 +8,7 @@ import {
   TemperateSeasonName,
 } from "features/game/types/game";
 import { ITEM_DETAILS } from "features/game/types/images";
-import React from "react";
+import React, { type JSX } from "react";
 import { RequirementLabel } from "../RequirementsLabel";
 import { SquareIcon } from "../SquareIcon";
 import { isCollectibleBuilt } from "features/game/lib/collectibleBuilt";
@@ -116,7 +116,10 @@ export const InventoryItemDetails: React.FC<Props> = ({
       }
     }
 
-    const boost = COLLECTIBLE_BUFF_LABELS(game)[details.item];
+    const boost = COLLECTIBLE_BUFF_LABELS[details.item]?.({
+      skills: game.bumpkin.skills,
+      collectibles: game.collectibles,
+    });
 
     return (
       <>

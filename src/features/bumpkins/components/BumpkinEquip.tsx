@@ -4,7 +4,7 @@ import {
   BumpkinPart,
   ITEM_IDS,
 } from "features/game/types/bumpkin";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { DynamicNFT } from "./DynamicNFT";
 import { NPCIcon } from "features/island/bumpkin/components/NPC";
 import { OuterPanel, InnerPanel } from "components/ui/Panel";
@@ -23,7 +23,6 @@ import {
   SPECIAL_ITEM_LABELS,
 } from "features/game/types/bumpkinItemBuffs";
 import { BumpkinParts } from "lib/utils/tokenUriBuilder";
-import { GameState } from "features/game/types/game";
 import { availableWardrobe } from "features/game/events/landExpansion/equip";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import {
@@ -32,15 +31,15 @@ import {
   pixelVibrantBorderStyle,
 } from "features/game/lib/style";
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
+import { MachineState } from "features/game/lib/gameMachine";
+import { Context } from "features/game/GameProvider";
+import { useSelector } from "@xstate/react";
 
-const REQUIRED: BumpkinPart[] = [
-  "background",
-  "body",
-  "hair",
-  "shirt",
-  "pants",
-  "shoes",
-  "tool",
+const REQUIRED: BumpkinPart[] = ["background", "body", "hair", "shoes", "tool"];
+
+const REQUIRED_BUT_INCOMPATIBLE: BumpkinPart[][] = [
+  ["shirt", "pants"],
+  ["dress"],
 ];
 
 const NOTREQUIRED: BumpkinPart[] = [
@@ -48,7 +47,6 @@ const NOTREQUIRED: BumpkinPart[] = [
   "beard",
   "necklace",
   "coat",
-  "dress",
   "wings",
   "suit",
   "onesie",
@@ -59,10 +57,12 @@ const NOTREQUIRED: BumpkinPart[] = [
 interface Props {
   onEquip: (equipment: BumpkinParts) => void;
   equipment: BumpkinParts;
-  game: GameState;
 }
 
-export const BumpkinEquip: React.FC<Props> = ({ equipment, onEquip, game }) => {
+const _game = (state: MachineState) => state.context.state;
+
+export const BumpkinEquip: React.FC<Props> = ({ equipment, onEquip }) => {
+  const { gameService } = useContext(Context);
   const [equipped, setEquipped] = useState(equipment);
   const [selectedBumpkinPart, setSelectedBumpkinPart] = useState(REQUIRED[0]);
   const [selectedBumpkinItem, setSelectedBumpkinItem] = useState(
@@ -71,6 +71,8 @@ export const BumpkinEquip: React.FC<Props> = ({ equipment, onEquip, game }) => {
   const [filteredWardrobeNames, setFilteredWardrobeNames] = useState<
     BumpkinItem[]
   >([]);
+
+  const game = useSelector(gameService, _game);
 
   /**
    * Show available wardrobe and currently equipped items
@@ -134,41 +136,7 @@ export const BumpkinEquip: React.FC<Props> = ({ equipment, onEquip, game }) => {
   const isMissingShirt = !equipped.shirt && !equipped.dress;
   const isMissingPants = !equipped.pants && !equipped.dress;
 
-  const warn =
-    isMissingHair ||
-    isMissingBody ||
-    isMissingShoes ||
-    isMissingShirt ||
-    isMissingBackground ||
-    isMissingPants;
-
   const { t } = useAppTranslation();
-  const warning = () => {
-    if (isMissingHair) {
-      return t("equip.missingHair");
-    }
-
-    if (isMissingBody) {
-      return t("equip.missingBody");
-    }
-
-    if (isMissingShoes) {
-      return t("equip.missingShoes");
-    }
-
-    if (isMissingShirt) {
-      return t("equip.missingShirt");
-    }
-
-    if (isMissingPants) {
-      return t("equip.missingPants");
-    }
-
-    if (isMissingBackground) {
-      return t("equip.missingBackground");
-    }
-    return "";
-  };
 
   const sortedWardrobeNames = getKeys(wardrobe).sort((a, b) =>
     a.localeCompare(b),
@@ -185,12 +153,12 @@ export const BumpkinEquip: React.FC<Props> = ({ equipment, onEquip, game }) => {
     );
     setFilteredWardrobeNames(filteredWardrobe);
     setSelectedBumpkinItem(equipped[selectedBumpkinPart]);
-  }, [selectedBumpkinPart]);
+  }, [selectedBumpkinPart, equipped, wardrobeSortedByBuff]);
 
   return (
     <div className="p-2">
-      <div className="flex flex-wrap justify-center">
-        <div className="w-1/3 flex flex-col justify-center">
+      <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-2">
+        <div className="w-full sm:w-1/3 flex flex-col justify-center">
           <div className="w-full relative rounded-xl overflow-hidden mr-2 mb-1">
             <DynamicNFT
               showBackground
@@ -201,12 +169,11 @@ export const BumpkinEquip: React.FC<Props> = ({ equipment, onEquip, game }) => {
               <NPCIcon parts={equipped} key={JSON.stringify(equipped)} />
             </div>
           </div>
-          <Button disabled={!isDirty || warn} onClick={() => finish(equipped)}>
+          <Button disabled={!isDirty} onClick={() => finish(equipped)}>
             <div className="flex">{t("save")}</div>
           </Button>
-          {warn && <Label type="warning">{warning()}</Label>}
         </div>
-        <div className="w-2/3 sm:w-[32%] flex flex-col gap-2 mt-1 pl-2 mb-2 sm:pr-2 sm:mb-0">
+        <div className="w-full sm:w-1/3 flex flex-col gap-2">
           <Label type="default">{t("required")}</Label>
           <BumpkinPartGroup
             bumpkinParts={REQUIRED}
@@ -214,6 +181,30 @@ export const BumpkinEquip: React.FC<Props> = ({ equipment, onEquip, game }) => {
             selected={selectedBumpkinPart}
             onSelect={(bumpkinPart) => setSelectedBumpkinPart(bumpkinPart)}
           />
+          <Label type="default">{t("equip.chooseDressOrShirt&Pants")}</Label>
+          <div className="flex divide-x-2 divide-white mb-2 w-full">
+            {REQUIRED_BUT_INCOMPATIBLE.map((parts, index) => (
+              <div
+                key={parts.join(",")}
+                className={classNames("md:w-1/2", {
+                  "pl-2": index > 0,
+                  "pr-2": index === 0,
+                  "w-2/5 sm:w-2/3": index === 0,
+                  "w-3/5 sm:w-1/3": index === 1,
+                })}
+              >
+                <BumpkinPartGroup
+                  bumpkinParts={parts}
+                  equipped={equipped}
+                  selected={selectedBumpkinPart}
+                  onSelect={(bumpkinPart) =>
+                    setSelectedBumpkinPart(bumpkinPart)
+                  }
+                  gridStyling={`grid ${index === 1 ? "grid-cols-3 sm:grid-cols-1 md:grid-cols-2" : "grid-cols-2"} gap-2`}
+                />
+              </div>
+            ))}
+          </div>
           <Label type="default">{t("optional")}</Label>
           <BumpkinPartGroup
             bumpkinParts={NOTREQUIRED}
@@ -236,7 +227,7 @@ export const BumpkinEquip: React.FC<Props> = ({ equipment, onEquip, game }) => {
                   <p>{t("empty")}</p>
                 </div>
               ) : (
-                <div className="w-full grid grid-cols-5 sm:grid-cols-4 py-1 px-1 gap-2">
+                <div className="w-full grid grid-cols-5 sm:grid-cols-3 md:grid-cols-4 py-1 px-1 gap-2">
                   {filteredWardrobeNames.map((name) => {
                     const boostLabel =
                       BUMPKIN_ITEM_BUFF_LABELS[name] &&

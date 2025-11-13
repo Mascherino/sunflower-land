@@ -1,17 +1,21 @@
 import { useSelector } from "@xstate/react";
+import { SUNNYSIDE } from "assets/sunnyside";
 import { Box } from "components/ui/Box";
 import { Button } from "components/ui/Button";
 import { Label } from "components/ui/Label";
 import { CraftingRequirements } from "components/ui/layouts/CraftingRequirements";
 import { SplitScreenView } from "components/ui/SplitScreenView";
+import Decimal from "decimal.js-light";
 import { getObjectEntries } from "features/game/expansion/lib/utils";
 import { Context } from "features/game/GameProvider";
+import { EXPIRY_COOLDOWNS } from "features/game/lib/collectibleBuilt";
 import { getKeys } from "features/game/lib/crafting";
 import { COLLECTIBLE_BUFF_LABELS } from "features/game/types/collectibleItemBuffs";
 import { GameState, Inventory } from "features/game/types/game";
 import { ITEM_DETAILS } from "features/game/types/images";
 import { PET_SHOP_ITEMS, PetShopItemName } from "features/game/types/petShop";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
+import { secondsToString } from "lib/utils/time";
 import React, { useContext, useState } from "react";
 
 export const PetShopModal: React.FC = () => {
@@ -34,12 +38,15 @@ export const PetShopModal: React.FC = () => {
     (state) =>
       state.context.state.bumpkin.activity[`${selectedItem} Crafted`] ?? 0,
   );
-  const { ingredients, coins, limit, inventoryLimit } = selectedItemDetails;
+  const { ingredients, coins, limit, inventoryLimit, disabled } =
+    selectedItemDetails;
 
   const hasReachedInventoryLimit =
     !!inventoryLimit && (inventory[selectedItem]?.gte(inventoryLimit) ?? false);
 
   const canBuy = () => {
+    if (disabled) return false;
+
     if (coinBalance < (coins ?? 0)) return false;
 
     if (limit && craftedCount >= limit) return false;
@@ -48,7 +55,8 @@ export const PetShopModal: React.FC = () => {
 
     const hasIngredients = getObjectEntries(ingredients).every(
       ([name, amount]) => {
-        const hasAmount = inventory[name]?.greaterThan(amount ?? 0) ?? false;
+        const hasAmount =
+          inventory[name]?.gte(amount ?? new Decimal(0)) ?? false;
         return hasAmount;
       },
     );
@@ -57,9 +65,7 @@ export const PetShopModal: React.FC = () => {
   };
 
   const buy = () => {
-    gameService.send("collectible.crafted", {
-      name: selectedItem,
-    });
+    gameService.send("collectible.crafted", { name: selectedItem });
   };
 
   return (
@@ -95,13 +101,15 @@ const PetShopContent: React.FC<{
   inventory: Inventory;
 }> = ({ selectedItem, setSelectedItem, inventory }) => (
   <div className="flex flex-wrap">
-    {getKeys(PET_SHOP_ITEMS).map((name) => (
+    {getObjectEntries(PET_SHOP_ITEMS).map(([name, item]) => (
       <Box
         key={name}
         image={ITEM_DETAILS[name].image}
         isSelected={selectedItem === name}
         onClick={() => setSelectedItem(name)}
         count={inventory[name]}
+        secondaryImage={item.disabled ? SUNNYSIDE.icons.lock : undefined}
+        showOverlay={item.disabled}
       />
     ))}
   </div>
@@ -169,11 +177,29 @@ const PetShopActionView: React.FC<{
   gameState,
 }) => {
   const { t } = useAppTranslation();
-  const boostDescription = COLLECTIBLE_BUFF_LABELS(gameState)[petItem];
+  const boostDescription = [
+    ...(COLLECTIBLE_BUFF_LABELS[petItem]?.({
+      skills: gameState.bumpkin.skills,
+      collectibles: gameState.collectibles,
+    }) ?? []), // Spread to prevent mutations
+  ];
+  const isPetEgg = (petItem: PetShopItemName): petItem is "Pet Egg" =>
+    petItem === "Pet Egg";
+  const cooldown = !isPetEgg(petItem) ? EXPIRY_COOLDOWNS[petItem] : undefined;
+
+  if (cooldown) {
+    boostDescription.push({
+      labelType: "danger",
+      boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+      shortDescription: t("shrine.expiryLabel", {
+        time: secondsToString(cooldown / 1000, { length: "short" }),
+      }),
+    });
+  }
 
   return (
     <div className="flex flex-col sm:items-center gap-2">
-      {boostDescription &&
+      {boostDescription.length > 0 &&
         Object.values(boostDescription).map(
           (
             { labelType, boostTypeIcon, boostedItemIcon, shortDescription },

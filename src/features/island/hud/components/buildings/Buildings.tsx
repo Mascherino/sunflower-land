@@ -105,7 +105,7 @@ export const Buildings: React.FC<Props> = ({ onClose }) => {
   const craft = () => {
     gameService.send("LANDSCAPE", {
       action: "building.constructed",
-      placeable: selectedName,
+      placeable: { name: selectedName },
       requirements: {
         coins,
         ingredients,
@@ -179,7 +179,10 @@ export const Buildings: React.FC<Props> = ({ onClose }) => {
           details={{
             item: selectedName,
           }}
-          boost={COLLECTIBLE_BUFF_LABELS(state)[selectedName]}
+          boost={COLLECTIBLE_BUFF_LABELS[selectedName]?.({
+            skills: state.bumpkin.skills,
+            collectibles: state.collectibles,
+          })}
           requirements={{
             coins,
             resources: buildingBlueprints[
@@ -199,7 +202,7 @@ export const Buildings: React.FC<Props> = ({ onClose }) => {
         <>
           {[
             ...getValidBuildings(),
-            ...((hasFeatureAccess(state, "PETS")
+            ...((hasFeatureAccess(state, "PET_HOUSE")
               ? ["Pet House"]
               : []) as BuildingName[]),
           ].map((name: BuildingName) => {

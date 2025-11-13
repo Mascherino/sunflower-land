@@ -5,7 +5,7 @@ import Spritesheet, {
 } from "components/animation/SpriteAnimator";
 
 import golemSheet from "assets/sfts/rock_golem.png";
-import { canMine } from "features/game/events/landExpansion/stoneMine";
+import { canMine } from "features/game/lib/resourceNodes";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 import { useActor } from "@xstate/react";
 import { Context } from "features/game/GameProvider";
@@ -21,11 +21,11 @@ export const RockGolem: React.FC = () => {
   const state = gameState.context.state;
 
   const someStonesMined = Object.values(state.stones).some(
-    (stone) => !canMine(stone),
+    (stone) => !canMine(stone, stone.name ?? "Stone Rock"),
   );
 
-  const golemGif = useRef<SpriteSheetInstance>();
-  const golemClosingGif = useRef<SpriteSheetInstance>();
+  const golemGif = useRef<SpriteSheetInstance>(undefined);
+  const golemClosingGif = useRef<SpriteSheetInstance>(undefined);
 
   return (
     <SFTDetailPopover name="Rock Golem">

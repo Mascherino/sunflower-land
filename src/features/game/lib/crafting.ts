@@ -61,7 +61,7 @@ export const DOLLS: Record<DollName, object> = {
 };
 
 export type RecipeCollectibleName = Extract<
-  RecipeCraftableName | Exclude<BedName, "Double Bed"> | DollName,
+  RecipeCraftableName | Exclude<BedName, "Double Bed" | "Messy Bed"> | DollName,
   InventoryItemName
 >;
 
@@ -78,6 +78,7 @@ export type RecipeIngredient =
 export type Recipe = {
   ingredients: (RecipeIngredient | null)[];
   time: number;
+  seed?: number; // seed to determine prng for crafting time
 } & (
   | { name: RecipeCollectibleName; type: "collectible" }
   | { name: BumpkinItem; type: "wearable" }

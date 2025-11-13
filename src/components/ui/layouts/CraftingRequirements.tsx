@@ -1,10 +1,10 @@
 import Decimal from "decimal.js-light";
 import { INVENTORY_LIMIT } from "features/game/lib/constants";
 import { getBumpkinLevel } from "features/game/lib/level";
-import { CollectibleName, getKeys } from "features/game/types/craftables";
+import { getKeys } from "features/game/types/craftables";
 import { GameState, InventoryItemName } from "features/game/types/game";
 import { ITEM_DETAILS } from "features/game/types/images";
-import React, { useState } from "react";
+import React, { useState, type JSX } from "react";
 import { Label } from "../Label";
 import { RequirementLabel } from "../RequirementsLabel";
 import { SquareIcon } from "../SquareIcon";
@@ -23,13 +23,16 @@ import { IngredientsPopover } from "../IngredientsPopover";
 import { BuffLabel } from "features/game/types";
 import { isSeed } from "features/game/types/seeds";
 import { getCurrentBiome } from "features/island/biomes/biomes";
-import { EXPIRY_COOLDOWNS } from "features/game/lib/collectibleBuilt";
 import {
-  BASIC_RESOURCES_UPGRADES_TO,
+  EXPIRY_COOLDOWNS,
+  TemporaryCollectibleName,
+} from "features/game/lib/collectibleBuilt";
+import {
+  RESOURCES_UPGRADES_TO,
   ADVANCED_RESOURCES,
-  RESOURCE_STATE_ACCESSORS,
-  ResourceName,
   RESOURCES,
+  UpgradedResourceName,
+  RESOURCE_STATE_ACCESSORS,
 } from "features/game/types/resources";
 
 /**
@@ -241,8 +244,14 @@ export const CraftingRequirements: React.FC<Props> = ({
 
   const getBoost = () => {
     if (!boost) return <></>;
+    let expiry: number | undefined;
 
-    const expiry = EXPIRY_COOLDOWNS[details.item as CollectibleName];
+    const isTemporaryCollectible = (
+      item: InventoryItemName,
+    ): item is TemporaryCollectibleName => item in EXPIRY_COOLDOWNS;
+    if (details.item && isTemporaryCollectible(details.item)) {
+      expiry = EXPIRY_COOLDOWNS[details.item];
+    }
 
     return (
       <div className="flex flex-wrap sm:flex-col gap-x-3 sm:gap-x-0 gap-y-1 mb-2 items-center">
@@ -303,13 +312,13 @@ export const CraftingRequirements: React.FC<Props> = ({
               if (ingredientName in RESOURCES) {
                 const stateAccessor =
                   RESOURCE_STATE_ACCESSORS[
-                    ingredientName as Exclude<ResourceName, "Boulder">
+                    ingredientName as UpgradedResourceName
                   ];
                 const nodes = Object.values(
                   stateAccessor(gameState) ?? {},
                 ).filter((resource) => {
                   if (
-                    ingredientName in BASIC_RESOURCES_UPGRADES_TO ||
+                    ingredientName in RESOURCES_UPGRADES_TO ||
                     ingredientName in ADVANCED_RESOURCES
                   ) {
                     // If node is upgradeable, check if it has the same name as the current item
@@ -318,7 +327,7 @@ export const CraftingRequirements: React.FC<Props> = ({
                     }
 
                     // If it has no name, it probably means it's a base resource
-                    return ingredientName in BASIC_RESOURCES_UPGRADES_TO;
+                    return ingredientName in RESOURCES_UPGRADES_TO;
                   }
 
                   return true;

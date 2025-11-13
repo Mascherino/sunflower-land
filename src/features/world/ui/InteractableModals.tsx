@@ -34,8 +34,6 @@ import { PirateChestModal } from "./chests/PirateChest";
 import { ExampleDonations } from "./donations/ExampleDonations";
 import { WorldMap } from "features/island/hud/components/deliveries/WorldMap";
 import { Halloween } from "./portals/Halloween";
-import { ChristmasPortal } from "./portals/ChristmasPortal";
-import { ChristmasReward } from "./npcs/Santa";
 import { WeatherShop } from "features/game/expansion/components/temperateSeason/WeatherShop";
 import { PortalChooser } from "./portals/PortalChooser";
 import { EasterEggstravaganza } from "./portals/EasterEggstravaganza";
@@ -49,6 +47,7 @@ import { EventMegaStore } from "./eventmegastore/EventMegaStore";
 import { EventNoticeboard } from "./EventNoticeboard";
 import { PotionMaster } from "features/helios/components/potions/component/PotionHouseShopItems";
 import { PetShop } from "features/pets/PetShop";
+import { LoveIslandNoticeboard } from "./loveRewardShop/LoveIslandNoticeboard";
 
 type InteractableName =
   | "guardian"
@@ -95,6 +94,7 @@ type InteractableName =
   | "petal_clue"
   | "plaza_orange_book"
   | "plaza_green_book"
+  | "pet_grave"
   | "mega_bounty_board"
   | "potion_house"
   | "clubhouse_reward"
@@ -334,15 +334,7 @@ export const InteractableModals: React.FC<Props> = ({ id, scene }) => {
         />
       </Modal>
       <Modal show={interactable === "petal_clue"} onHide={closeModal}>
-        <SpeakingModal
-          onClose={closeModal}
-          bumpkinParts={NPC_WEARABLES["rocket man"]}
-          message={[
-            {
-              text: t("interactableModals.petalClue.message1"),
-            },
-          ]}
-        />
+        <LoveIslandNoticeboard onClose={closeModal} />
       </Modal>
       <Modal show={interactable === "basic_chest"} onHide={closeModal}>
         <TreasureChest
@@ -447,6 +439,17 @@ export const InteractableModals: React.FC<Props> = ({ id, scene }) => {
             },
             {
               text: t("interactableModals.plazaGreenBook.message2"),
+            },
+          ]}
+        />
+      </Modal>
+      <Modal show={interactable === "pet_grave"} onHide={closeModal}>
+        <SpeakingModal
+          onClose={closeModal}
+          bumpkinParts={NPC_WEARABLES.chase}
+          message={[
+            {
+              text: t("pet.grave.message"),
             },
           ]}
         />
@@ -570,12 +573,6 @@ export const InteractableModals: React.FC<Props> = ({ id, scene }) => {
           bumpkinParts={NPC_WEARABLES.luna}
         >
           <Halloween onClose={closeModal} />
-        </CloseButtonPanel>
-      </Modal>
-
-      <Modal show={interactable === "christmas_portal"} onHide={closeModal}>
-        <CloseButtonPanel onClose={closeModal} bumpkinParts={NPC_WEARABLES.elf}>
-          <ChristmasPortal onClose={closeModal} />
         </CloseButtonPanel>
       </Modal>
 
@@ -914,9 +911,7 @@ export const InteractableModals: React.FC<Props> = ({ id, scene }) => {
           <EasterEggstravaganza onClose={closeModal} />
         </CloseButtonPanel>
       </Modal>
-      <Modal show={interactable === "christmas_reward"}>
-        <ChristmasReward onClose={closeModal} />
-      </Modal>
+
       <Modal show={interactable === "event_store"} onHide={closeModal}>
         <EventMegaStore onClose={closeModal} />
       </Modal>

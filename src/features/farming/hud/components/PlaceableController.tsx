@@ -22,8 +22,8 @@ import { ITEM_DETAILS } from "features/game/types/images";
 import Decimal from "decimal.js-light";
 import { detectCollision } from "features/game/expansion/placeable/lib/collisionDetection";
 import {
-  COLLECTIBLES_DIMENSIONS,
   CollectibleName,
+  COLLECTIBLES_DIMENSIONS,
   getKeys,
 } from "features/game/types/craftables";
 import {
@@ -32,7 +32,6 @@ import {
   Dimensions,
 } from "features/game/types/buildings";
 import { ANIMAL_DIMENSIONS } from "features/game/types/craftables";
-import { isBudName } from "features/game/types/buds";
 import { PlaceableLocation } from "features/game/types/collectibles";
 import { Label } from "components/ui/Label";
 import { RESOURCE_DIMENSIONS } from "features/game/types/resources";
@@ -48,6 +47,7 @@ import {
 import { getCurrentBiome } from "features/island/biomes/biomes";
 import { EXPIRY_COOLDOWNS } from "features/game/lib/collectibleBuilt";
 import { Coordinates } from "features/game/expansion/components/MapPlacement";
+import { COMPETITION_POINTS } from "features/game/types/competitions";
 
 interface Props {
   location: PlaceableLocation;
@@ -116,15 +116,17 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
   >();
 
   const dimensions = useMemo(() => {
-    if (isBudName(placeable)) {
+    if (placeable?.name === "Bud") {
       return { width: 1, height: 1 };
-    } else if (placeable) {
+    } else if (placeable?.name === "Pet") {
+      return { width: 2, height: 2 };
+    } else if (placeable?.name) {
       return {
         ...BUILDINGS_DIMENSIONS,
         ...COLLECTIBLES_DIMENSIONS,
         ...ANIMAL_DIMENSIONS,
         ...RESOURCE_DIMENSIONS,
-      }[placeable];
+      }[placeable.name];
     }
     return { width: 0, height: 0 };
   }, [placeable]);
@@ -141,9 +143,10 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
 
     const items = getChestItems(state);
 
-    const available = isBudName(placeable)
-      ? new Decimal(1)
-      : items[placeable] ?? new Decimal(0);
+    const available =
+      placeable?.name === "Bud" || placeable?.name === "Pet"
+        ? new Decimal(1)
+        : items[placeable.name] ?? new Decimal(0);
 
     let hasRequirements = false;
     if (requirements) {
@@ -165,14 +168,14 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
     }
 
     // Prevents accidental multiple placements
-    if (placeable && placeable in EXPIRY_COOLDOWNS) {
+    if (placeable?.name && placeable.name in EXPIRY_COOLDOWNS) {
       placeMore = false;
     }
 
-    if (isBudName(placeable)) {
+    if (placeable?.name === "Bud" || placeable?.name === "Pet") {
       placeMore = false;
     } else {
-      const previous = state.inventory[placeable] ?? new Decimal(0);
+      const previous = state.inventory[placeable.name] ?? new Decimal(0);
 
       if (maximum && previous.gte(maximum - 1)) {
         placeMore = false;
@@ -186,7 +189,7 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
         dimensions,
       });
       const collisionDetected = detectCollision({
-        name: placeable as CollectibleName,
+        name: placeable.name,
         state,
         position: {
           ...nextPosition,
@@ -260,9 +263,9 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
   );
 
   const buildingLevel = useSelector(gameService, (state) =>
-    isBuildingUpgradable(placeable as BuildingName)
+    isBuildingUpgradable(placeable?.name as BuildingName)
       ? state.context.state[
-          makeUpgradableBuildingKey(placeable as UpgradableBuildingType)
+          makeUpgradableBuildingKey(placeable?.name as UpgradableBuildingType)
         ].level
       : undefined,
   );
@@ -273,7 +276,7 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
     season: TemperateSeasonName,
     level?: number,
   ) => {
-    if (placeable && isBudName(placeable)) {
+    if (placeable && (placeable === "Bud" || placeable === "Pet")) {
       return "";
     }
     if (!placeable) return "";
@@ -286,11 +289,17 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
   if (!placeable) return null;
 
   const items = getChestItems(state);
-  const available = isBudName(placeable)
-    ? new Decimal(1)
-    : items[placeable] ?? new Decimal(0);
+  const available =
+    placeable?.name === "Bud" || placeable?.name === "Pet"
+      ? new Decimal(1)
+      : items[placeable.name] ?? new Decimal(0);
 
-  const image = getPlaceableImage(placeable, island, season, buildingLevel);
+  const image = getPlaceableImage(
+    placeable.name,
+    island,
+    season,
+    buildingLevel,
+  );
 
   const Hint = () => {
     if (!requirements) {
@@ -324,10 +333,14 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
 
   const isWrongLocation =
     location === "home" &&
-    ((!COLLECTIBLES_DIMENSIONS[placeable as CollectibleName] &&
-      !isBudName(placeable)) ||
-      placeable in LANDSCAPING_DECORATIONS ||
-      placeable === "Magic Bean");
+    ((!COLLECTIBLES_DIMENSIONS[placeable.name as CollectibleName] &&
+      placeable.name !== "Bud") ||
+      placeable.name in LANDSCAPING_DECORATIONS ||
+      placeable.name === "Magic Bean");
+
+  const isFoxShrineDisabled =
+    placeable.name === "Fox Shrine" &&
+    Date.now() < COMPETITION_POINTS.BUILDING_FRIENDSHIPS.endAt;
 
   return (
     <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
@@ -341,6 +354,17 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
             {t("error.cannotPlaceInside")}
           </Label>
         )}
+
+        {isFoxShrineDisabled && (
+          <Label
+            icon={SUNNYSIDE.icons.cancel}
+            className="mx-auto my-1"
+            type="danger"
+          >
+            {t("error.cannotPlaceFoxShrine")}
+          </Label>
+        )}
+
         <Hint />
 
         <div
@@ -356,7 +380,9 @@ export const PlaceableController: React.FC<Props> = ({ location }) => {
           </Button>
 
           <Button
-            disabled={collisionDetected || isWrongLocation}
+            disabled={
+              collisionDetected || isWrongLocation || isFoxShrineDisabled
+            }
             onClick={handleConfirmPlacement}
           >
             <img
