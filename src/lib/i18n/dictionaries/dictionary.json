@@ -6704,7 +6704,6 @@
   "memory.unlockUnlimited": "Would you like to unlock unlimited attempts for today?",
   "memory.unlockUnlimitedAttempts": "Unlock unlimited attempts today for {{cost}} Flower",
   "memory.buyAttempts": "Buy {{attempts}} attempts for {{cost}} Flower",
-  "memory.portal.title": "Minigame - Memory",
   "memory.missionFailed": "Mission failed",
   "memory.missionSuccess": "Mission success",
   "memory.score": "Score: {{score}}",
