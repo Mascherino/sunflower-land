@@ -10,9 +10,9 @@ import classNames from "classnames";
 export const Changelog: React.FC = () => {
   const { t } = useAppTranslation();
 
-  function wrapEmoji(text: string): (string | JSX.Element)[] {
+  function wrapEmoji(text: string): (string | React.JSX.Element)[] {
     const regex = /\p{Extended_Pictographic}/gu;
-    const parts: (string | JSX.Element)[] = [];
+    const parts: (string | React.JSX.Element)[] = [];
     for (const part of text.split(" ")) {
       if (part.match(regex)) {
         parts.push(
