@@ -148,6 +148,7 @@ const FEATURE_FLAGS = {
   BUILDING_FRIENDSHIPS: betaTimeBasedFeatureFlag(
     new Date("2025-10-13T00:00:00Z"),
   ),
+  BETA_ACCESS: defaultFeatureFlag,
 } satisfies Record<string, FeatureFlag>;
 
 export type FeatureName = keyof typeof FEATURE_FLAGS;
