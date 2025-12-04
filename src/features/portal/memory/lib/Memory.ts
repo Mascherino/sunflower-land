@@ -50,7 +50,7 @@ export class Memory {
   private flippedCards: MemoryCard[] = [];
   private solvedCards: MemoryCard[] = [];
   private scale = 0.8;
-  private moveMultiplier = 1.2;
+  private scoreMultiplier = 10;
   private targetScore = 0;
   private maxScore = 0;
   private hintListener: ((event: EventObject) => void) | null = null;
@@ -151,44 +151,51 @@ export class Memory {
     const prize = this.scene.gameState.minigames.prizes.memory;
     this.options.rows = DEFAULT_GAME_ROWS;
     this.options.columns = DEFAULT_GAME_COLUMNS;
-    this.maxScore = (this.options.rows * this.options.columns) / 2;
-    this.targetScore = this.maxScore;
     switch (prize?.score) {
       // 20 marks
-      case 1000:
+      case 150:
         this.duration = 110 * 1000; // 1:50
         this.totalMoves = 90;
+        this.scoreMultiplier = 10;
         break;
 
       // 30 marks
-      case 2000:
+      case 300:
         this.duration = 105 * 1000; // 1:45
         this.totalMoves = 85;
+        this.scoreMultiplier = 20;
         break;
 
       // 40 marks
-      case 3000:
+      case 450:
         this.duration = 100 * 1000; // 1:40
         this.totalMoves = 80;
+        this.scoreMultiplier = 30;
         break;
 
       // 50 marks
-      case 4000:
+      case 600:
         this.duration = 95 * 1000; // 1:35
         this.totalMoves = 75;
+        this.scoreMultiplier = 40;
         break;
 
       // 60 marks
-      case 5000:
+      case 750:
         this.duration = 90 * 1000; // 1:30
         this.totalMoves = 72;
+        this.scoreMultiplier = 50;
         break;
 
       case undefined:
       default:
         this.duration = DEFAULT_GAME_DURATION * 1000;
         this.totalMoves = 72;
+        this.scoreMultiplier = 50;
     }
+    this.maxScore =
+      ((this.options.rows * this.options.columns) / 2) * this.scoreMultiplier;
+    this.targetScore = this.maxScore;
     this.scene.locked = false;
 
     this.cleanGame();
@@ -445,7 +452,7 @@ export class Memory {
           this.flippedCards[0].image.texture.key ==
           this.flippedCards[1].image.texture.key
         ) {
-          score = score + 1;
+          score = score + this.scoreMultiplier;
           this.solvedCards = this.solvedCards.concat(this.flippedCards);
           this.scene.SOUNDS.match_found?.play();
 
