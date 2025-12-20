@@ -1,7 +1,7 @@
 import React, { useContext, useLayoutEffect, useState } from "react";
 import { Label } from "components/ui/Label";
 import { SUNNYSIDE } from "assets/sunnyside";
-import { millisecondsToString } from "lib/utils/time";
+import { secondsToString } from "lib/utils/time";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { getWeekKey, weekResetsAt } from "features/game/lib/factions";
 import { CloseButtonPanel } from "features/game/components/CloseablePanel";
@@ -9,15 +9,19 @@ import { NPC_WEARABLES } from "lib/npcs";
 import classNames from "classnames";
 import { Context } from "features/game/GameProvider";
 import { useSelector } from "@xstate/react";
-import { BountyRequest, InventoryItemName } from "features/game/types/game";
+import {
+  Bounties,
+  BountyRequest,
+  InventoryItemName,
+} from "features/game/types/game";
 import { ANIMALS, getKeys } from "features/game/types/craftables";
 import { getObjectEntries } from "features/game/expansion/lib/utils";
 import { pixelDarkBorderStyle } from "features/game/lib/style";
 import { SquareIcon } from "components/ui/SquareIcon";
 import {
-  getSeasonalArtefact,
-  getSeasonalTicket,
-} from "features/game/types/seasons";
+  getChapterArtefact,
+  getChapterTicket,
+} from "features/game/types/chapters";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 import { ITEM_DETAILS } from "features/game/types/images";
 import { ModalOverlay } from "components/ui/ModalOverlay";
@@ -33,6 +37,8 @@ import confetti from "canvas-confetti";
 import flowerIcon from "assets/icons/flower_token.webp";
 import { NO_BONUS_BOUNTIES_WEEK } from "features/game/events/landExpansion/claimBountyBonus";
 import { getCountAndType } from "features/island/hud/components/inventory/utils/inventory";
+import { useCountdown } from "lib/utils/hooks/useCountdown";
+import { useNow } from "lib/utils/hooks/useNow";
 
 export const MegaBountyBoard: React.FC<{ onClose: () => void }> = ({
   onClose,
@@ -47,20 +53,35 @@ export const MegaBountyBoard: React.FC<{ onClose: () => void }> = ({
   </CloseButtonPanel>
 );
 
+const isBonusClaimed = (exchange: Bounties) => {
+  const now = Date.now();
+  const currentWeek = getWeekKey();
+  const weekStart = new Date(currentWeek).getTime();
+  const weekEnd = weekResetsAt();
+  const lastClaim = exchange.bonusClaimedAt ?? 0;
+
+  return lastClaim > weekStart && lastClaim < now && now < weekEnd;
+};
+
 export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
   readonly,
 }) => {
   const { t } = useAppTranslation();
   const { gameService } = useContext(Context);
+  const now = useNow();
+
   const [selectedBounty, setSelectedBounty] = useState<BountyRequest>();
+
   const state = useSelector(gameService, (state) => state.context.state);
   const exchange = useSelector(
     gameService,
     (state) => state.context.state.bounties,
   );
+  const [bonusClaimed, setBonusClaimed] = useState(isBonusClaimed(exchange));
+
   const endTime = weekResetsAt();
-  const timeRemaining = endTime - Date.now();
-  const showDanger = timeRemaining < 1000 * 60 * 60 * 24;
+  const { totalSeconds: secondsRemaining } = useCountdown(endTime);
+  const showDanger = secondsRemaining < 60 * 60 * 24;
 
   const getBountiesByCategory = () => {
     const result: Record<
@@ -97,8 +118,8 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
 
     // Otherwise handle item rewards
     const items = bounty.items ?? {};
-    const seasonalTicket = getSeasonalTicket();
-    const seasonalArtefact = getSeasonalArtefact();
+    const chapterTicket = getChapterTicket(now);
+    const seasonalArtefact = getChapterArtefact(now);
 
     // Calculate bounty tickets if needed
     const bountyTickets = generateBountyTicket({
@@ -109,8 +130,8 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
     // Determine which reward currency to show, prioritizing seasonal items
     // First check seasonal ticket, then seasonal artefact, then fallback to first item
     let currency: InventoryItemName;
-    if ((items[seasonalTicket] ?? 0) > 0) {
-      currency = seasonalTicket;
+    if ((items[chapterTicket] ?? 0) > 0) {
+      currency = chapterTicket;
     } else if ((items[seasonalArtefact] ?? 0) > 0) {
       currency = seasonalArtefact;
     } else {
@@ -120,7 +141,7 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
     // Return amount (using bountyTickets for seasonal tickets) and icon
     return {
       amount:
-        currency === seasonalTicket ? bountyTickets : items[currency] ?? 0,
+        currency === chapterTicket ? bountyTickets : (items[currency] ?? 0),
       icon: ITEM_DETAILS[currency]?.image ?? "",
     };
   };
@@ -129,21 +150,13 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
     exchange.completed.find((completed) => completed.id === bounty.id),
   );
 
-  const currentWeek = getWeekKey();
-  const noBonusBountiesWeek = NO_BONUS_BOUNTIES_WEEK.includes(currentWeek);
-  const seasonalTicket = getSeasonalTicket();
+  const noBonusBountiesWeek = NO_BONUS_BOUNTIES_WEEK.includes(getWeekKey());
+  const chapterTicket = getChapterTicket(now);
 
-  const isBonusClaimed = () => {
-    const now = Date.now();
-    const weekStart = new Date(currentWeek).getTime();
-    const weekEnd = weekResetsAt();
-    const lastClaim = exchange.bonusClaimedAt ?? 0;
-    return lastClaim > weekStart && lastClaim < now && now < weekEnd;
+  const handleBonusClaim = () => {
+    gameService.send("claim.bountyBoardBonus");
+    setBonusClaimed(true);
   };
-
-  const bonusClaimed = isBonusClaimed();
-
-  const handleBonusClaim = () => gameService.send("claim.bountyBoardBonus");
 
   return (
     <>
@@ -162,6 +175,7 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
               )
             }
             readonly={readonly}
+            now={now}
           />
         </ModalOverlay>
       )}
@@ -176,7 +190,7 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
             className="mb-1"
           >
             {t("megaStore.timeRemaining", {
-              timeRemaining: millisecondsToString(timeRemaining, {
+              timeRemaining: secondsToString(secondsRemaining, {
                 length: "medium",
                 removeTrailingZeros: true,
               }),
@@ -205,7 +219,7 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
                 ([category, { categoryName, bounties }], index) => {
                   if (bounties.length === 0) return null;
                   return (
-                    <div key={`${category}-${index}`}>
+                    <div key={`${category}-${index}-bounty-board`}>
                       <Label type="default" className="mb-2">
                         {categoryName}
                       </Label>
@@ -217,7 +231,7 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
                           );
                           return (
                             <div
-                              key={bounty.name}
+                              key={`${bounty.name}-${bounty.id}-bounty-card`}
                               className="flex flex-col space-y-1"
                             >
                               <div
@@ -275,7 +289,7 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
             <Label
               type="default"
               className="ml-1"
-              icon={ITEM_DETAILS[seasonalTicket].image}
+              icon={ITEM_DETAILS[chapterTicket].image}
             >
               {`Bounty Bonus`}
             </Label>
@@ -292,14 +306,14 @@ export const MegaBountyBoardContent: React.FC<{ readonly?: boolean }> = ({
             )}
           </div>
           <p className="text-xs ml-1">
-            {t("bounties.bonus.getBonus", { seasonalTicket })}
+            {t("bounties.bonus.getBonus", { chapterTicket })}
           </p>
           {!readonly && (
             <Button
               onClick={handleBonusClaim}
               disabled={bonusClaimed || !isAllBountiesCompleted || readonly}
             >
-              {t("bounties.bonus.clickToClaim", { seasonalTicket })}
+              {t("bounties.bonus.clickToClaim", { chapterTicket })}
             </Button>
           )}
         </InnerPanel>
@@ -314,7 +328,8 @@ const Deal: React.FC<{
   onSold: () => void;
   isSold: boolean;
   readonly?: boolean;
-}> = ({ bounty, onClose, onSold, isSold, readonly }) => {
+  now: number;
+}> = ({ bounty, onClose, onSold, isSold, readonly, now }) => {
   const [imageWidth, setImageWidth] = useState(0);
   const [confirmExchange, setConfirmExchange] = useState(false);
   const { t } = useAppTranslation();
@@ -421,7 +436,7 @@ const Deal: React.FC<{
                 {getKeys(bounty.items ?? {}).map((name) => {
                   return (
                     <Label
-                      key={name}
+                      key={`${name}-${bounty.id}-reward-label`}
                       type={isSold ? "success" : "warning"}
                       icon={ITEM_DETAILS[name].image}
                       secondaryIcon={
@@ -429,7 +444,7 @@ const Deal: React.FC<{
                       }
                     >
                       {`Reward: ${
-                        name !== getSeasonalTicket()
+                        name !== getChapterTicket(now)
                           ? bounty.items?.[name]
                           : generateBountyTicket({
                               game: state,

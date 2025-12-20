@@ -12,7 +12,7 @@ import { GOLD_RECOVERY_TIME } from "features/game/lib/constants";
 import { FACTION_ITEMS } from "features/game/lib/factions";
 import { getBudYieldBoosts } from "features/game/lib/getBudYieldBoosts";
 import { isWearableActive } from "features/game/lib/wearables";
-import { trackActivity } from "features/game/types/bumpkinActivity";
+import { trackFarmActivity } from "features/game/types/farmActivity";
 import { COLLECTIBLES_DIMENSIONS } from "features/game/types/craftables";
 import {
   AOE,
@@ -30,6 +30,8 @@ import {
   isCollectibleOnFarm,
   setAOELastUsed,
 } from "features/game/lib/aoe";
+import { prngChance } from "lib/prng";
+import { KNOWN_IDS } from "features/game/types";
 
 export type LandExpansionMineGoldAction = {
   type: "goldRock.mined";
@@ -39,6 +41,7 @@ export type LandExpansionMineGoldAction = {
 type Options = {
   state: Readonly<GameState>;
   action: LandExpansionMineGoldAction;
+  farmId: number;
   createdAt?: number;
 };
 
@@ -54,18 +57,43 @@ export enum EVENT_ERRORS {
 type GetMinedAtArgs = {
   createdAt: number;
   game: GameState;
+  farmId: number;
+  itemId: number;
+  counter: number;
 };
 
 const getBoostedTime = ({
   game,
+  farmId,
+  itemId,
+  counter,
 }: {
   game: GameState;
+  farmId: number;
+  itemId: number;
+  counter: number;
 }): {
   boostedTime: number;
   boostsUsed: BoostName[];
 } => {
   let totalSeconds = GOLD_RECOVERY_TIME;
   const boostsUsed: BoostName[] = [];
+
+  if (
+    isWearableActive({ name: "Pickaxe Shark", game }) &&
+    prngChance({
+      farmId,
+      itemId,
+      counter,
+      chance: 10,
+      criticalHitName: "Pickaxe Shark",
+    })
+  ) {
+    return {
+      boostedTime: GOLD_RECOVERY_TIME * 1000,
+      boostsUsed: ["Pickaxe Shark"],
+    };
+  }
 
   const superTotemActive = isTemporaryCollectibleActive({
     name: "Super Totem",
@@ -114,11 +142,22 @@ const getBoostedTime = ({
 /**
  * Set a mined in the past to make it replenish faster
  */
-export function getMinedAt({ createdAt, game }: GetMinedAtArgs): {
+export function getMinedAt({
+  createdAt,
+  game,
+  farmId,
+  itemId,
+  counter,
+}: GetMinedAtArgs): {
   time: number;
   boostsUsed: BoostName[];
 } {
-  const { boostedTime, boostsUsed } = getBoostedTime({ game });
+  const { boostedTime, boostsUsed } = getBoostedTime({
+    game,
+    farmId,
+    itemId,
+    counter,
+  });
 
   return { time: createdAt - boostedTime, boostsUsed };
 }
@@ -263,6 +302,7 @@ export function mineGold({
   state,
   action,
   createdAt = Date.now(),
+  farmId,
 }: Options): GameState {
   return produce(state, (stateCopy) => {
     const { bumpkin } = stateCopy;
@@ -313,21 +353,37 @@ export function mineGold({
     stateCopy.aoe = aoe;
 
     const amountInInventory = stateCopy.inventory.Gold || new Decimal(0);
+    const goldRockName = goldRock.name ?? "Gold Rock";
+    const counter = stateCopy.farmActivity[`${goldRockName} Mined`] ?? 0;
+    const itemId = KNOWN_IDS[goldRockName];
+
     const { time: minedAt, boostsUsed: minedAtBoostsUsed } = getMinedAt({
       createdAt,
       game: stateCopy,
+      farmId,
+      itemId,
+      counter,
     });
     const { boostedTime, boostsUsed: boostedTimeBoostsUsed } = getBoostedTime({
       game: stateCopy,
+      farmId,
+      itemId,
+      counter,
     });
+
     goldRock.stone = {
       minedAt,
       boostedTime,
     };
-    bumpkin.activity = trackActivity(
+    stateCopy.farmActivity = trackFarmActivity(
       "Gold Mined",
-      bumpkin.activity,
+      stateCopy.farmActivity,
       new Decimal(goldRock.multiplier ?? 1),
+    );
+
+    stateCopy.farmActivity = trackFarmActivity(
+      `${goldRockName} Mined`,
+      stateCopy.farmActivity,
     );
 
     stateCopy.inventory["Iron Pickaxe"] = toolAmount.sub(requiredToolAmount);

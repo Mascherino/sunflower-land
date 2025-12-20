@@ -16,6 +16,9 @@ import { canMine } from "features/game/lib/resourceNodes";
 import { useSound } from "lib/utils/hooks/useSound";
 import { getGoldDropAmount } from "features/game/events/landExpansion/mineGold";
 import { GoldRockName } from "features/game/types/resources";
+import { useNow } from "lib/utils/hooks/useNow";
+import { Transition } from "@headlessui/react";
+import lightning from "assets/icons/lightning.png";
 
 const HITS = 3;
 const tool = "Iron Pickaxe";
@@ -42,6 +45,10 @@ const selectSkills = (state: MachineState) =>
 const compareSkills = (prev: Skills, next: Skills) =>
   (prev["Tap Prospector"] ?? false) === (next["Tap Prospector"] ?? false);
 
+const _selectSeason = (state: MachineState) =>
+  state.context.state.season.season;
+const _selectIsland = (state: MachineState) => state.context.state.island;
+
 interface Props {
   id: string;
 }
@@ -53,6 +60,7 @@ export const Gold: React.FC<Props> = ({ id }) => {
 
   // When to hide the resource that pops out
   const [collecting, setCollecting] = useState(false);
+
   const harvested = useRef<number>(0);
 
   const divRef = useRef<HTMLDivElement>(null);
@@ -86,10 +94,44 @@ export const Gold: React.FC<Props> = ({ id }) => {
   );
   const skills = useSelector(gameService, selectSkills, compareSkills);
   const state = useSelector(gameService, selectGame);
+  const season = useSelector(gameService, _selectSeason);
+  const island = useSelector(gameService, _selectIsland);
+
+  const readyAt = resource.stone.minedAt + GOLD_RECOVERY_TIME * 1000;
+  const now = useNow({ live: true, autoEndAt: readyAt });
+
   const hasTool = HasTool(inventory, resource);
   const goldRockName = (resource.name ?? "Gold Rock") as GoldRockName;
-  const timeLeft = getTimeLeft(resource.stone.minedAt, GOLD_RECOVERY_TIME);
+  const timeLeft = getTimeLeft(resource.stone.minedAt, GOLD_RECOVERY_TIME, now);
   const mined = !canMine(resource, goldRockName);
+
+  const [isAnimationRunning, setIsAnimationRunning] = useState(false);
+  const [isRecentlyMined, setIsRecentlyMined] = useState(false);
+  const minedAtRef = useRef(resource.stone.minedAt);
+
+  useEffect(() => {
+    if (minedAtRef.current !== resource.stone.minedAt) {
+      // Important: update the ref so this change is only handled once.
+      minedAtRef.current = resource.stone.minedAt;
+      setIsRecentlyMined(true);
+
+      const timeout = setTimeout(() => {
+        setIsRecentlyMined(false);
+        setIsAnimationRunning(true);
+      }, 1900);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [resource.stone.minedAt]);
+
+  useEffect(() => {
+    if (isAnimationRunning) {
+      const timeout = setTimeout(() => {
+        setIsAnimationRunning(false);
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [isAnimationRunning]);
 
   useUiRefresher({ active: mined });
 
@@ -145,10 +187,25 @@ export const Gold: React.FC<Props> = ({ id }) => {
 
   return (
     <div className="relative w-full h-full">
+      <Transition
+        show={!mined && isAnimationRunning}
+        enter="transition-opacity transition-transform duration-200"
+        enterFrom="opacity-0 translate-y-4"
+        enterTo="opacity-100 -translate-y-0"
+        leave="transition-opacity duration-100"
+        leaveFrom="opacity-100"
+        leaveTo="opacity-0"
+        className="flex -top-2 right-0 absolute z-40 pointer-events-none"
+        as="div"
+      >
+        <img src={lightning} className="h-6 img-highlight-heavy" />
+      </Transition>
       {/* Resource ready to collect */}
-      {!mined && (
+      {!mined && !isRecentlyMined && (
         <div ref={divRef} className="absolute w-full h-full" onClick={strike}>
           <RecoveredGold
+            season={season}
+            island={island}
             hasTool={hasTool}
             touchCount={touchCount}
             goldRockName={goldRockName}
@@ -162,7 +219,14 @@ export const Gold: React.FC<Props> = ({ id }) => {
       {collecting && <DepletingGold resourceAmount={harvested.current} />}
 
       {/* Depleted resource */}
-      {mined && <DepletedGold timeLeft={timeLeft} name={goldRockName} />}
+      {(mined || isRecentlyMined) && (
+        <DepletedGold
+          season={season}
+          island={island}
+          timeLeft={timeLeft}
+          name={goldRockName}
+        />
+      )}
     </div>
   );
 };

@@ -7,7 +7,7 @@ import {
   WORKBENCH_TOOLS,
   LOVE_ANIMAL_TOOLS,
 } from "features/game/types/tools";
-import { trackActivity } from "features/game/types/bumpkinActivity";
+import { trackFarmActivity } from "features/game/types/farmActivity";
 import cloneDeep from "lodash.clonedeep";
 
 import { GameState, IslandType } from "../../types/game";
@@ -134,16 +134,16 @@ export function craftTool({ state, action }: Options) {
 
   const oldAmount = stateCopy.inventory[action.tool] || new Decimal(0);
 
-  bumpkin.activity = trackActivity(
+  stateCopy.farmActivity = trackFarmActivity(
     `${action.tool} Crafted`,
-    bumpkin.activity,
+    stateCopy.farmActivity,
     new Decimal(amount),
   );
 
   stateCopy.coins = stateCopy.coins - price;
-  bumpkin.activity = trackActivity(
+  stateCopy.farmActivity = trackFarmActivity(
     "Coins Spent",
-    bumpkin.activity,
+    stateCopy.farmActivity,
     new Decimal(price),
   );
 
@@ -151,7 +151,11 @@ export function craftTool({ state, action }: Options) {
     ...subtractedInventory,
     [action.tool]: oldAmount.add(amount) as Decimal,
   };
-  stateCopy.stock[action.tool] = stateCopy.stock[action.tool]?.minus(amount);
+
+  const stock = stateCopy.stock[action.tool];
+  if (stock !== undefined) {
+    stateCopy.stock[action.tool] = stock.minus(amount);
+  }
 
   return stateCopy;
 }

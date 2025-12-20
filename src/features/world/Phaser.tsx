@@ -2,12 +2,11 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Game, AUTO } from "phaser";
 import { useSelector } from "@xstate/react";
-import NinePatchPlugin from "phaser3-rex-plugins/plugins/ninepatch-plugin.js";
+import NinePatch2Plugin from "phaser3-rex-plugins/plugins/ninepatch2-plugin.js";
 import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-plugin.js";
 import { PhaserNavMeshPlugin } from "phaser-navmesh";
 
 import * as AuthProvider from "features/auth/lib/Provider";
-import { Message } from "features/pumpkinPlaza/components/ChatUI";
 
 import { Kicked } from "./ui/moderationTools/components/Kicked";
 import {
@@ -66,6 +65,9 @@ import { PlayerModal } from "features/social/PlayerModal";
 import { MachineState as GameMachineState } from "features/game/lib/gameMachine";
 import { RewardModal } from "features/social/RewardModal";
 import { Discovery } from "features/social/Discovery";
+import { SPAWNS } from "./lib/spawn";
+import { PlayerInteractionMenu } from "./ui/player/PlayerInteractionMenu";
+import { HolidaysIslandScene } from "./scenes/HolidayIslandScene";
 
 const _roomState = (state: MachineState) => state.value;
 const _scene = (state: MachineState) => state.context.sceneId;
@@ -83,6 +85,15 @@ type Player = {
   moderation?: Moderation;
   experience: number;
   sceneId: SceneId;
+};
+
+export type Message = {
+  farmId: number;
+  username: string;
+  sessionId: string;
+  text: string;
+  sceneId: SceneId;
+  sentAt: number;
 };
 
 export type ModerationEvent = {
@@ -143,6 +154,7 @@ export const PhaserComponent: React.FC<Props> = ({ mmoService, route }) => {
     InfernosScene,
     StreamScene,
     LoveIslandScene,
+    HolidaysIslandScene,
   ];
 
   useEffect(() => {
@@ -165,7 +177,7 @@ export const PhaserComponent: React.FC<Props> = ({ mmoService, route }) => {
       pixelArt: true,
       plugins: {
         global: [
-          { key: "rexNinePatchPlugin", plugin: NinePatchPlugin, start: true },
+          { key: "rexNinePatch2Plugin", plugin: NinePatch2Plugin, start: true },
           {
             key: "rexVirtualJoystick",
             plugin: VirtualJoystickPlugin,
@@ -248,12 +260,19 @@ export const PhaserComponent: React.FC<Props> = ({ mmoService, route }) => {
       // Corn maze pauses when game is over so we need to filter for active and paused scenes.
       .filter((s) => s.scene.isActive() || s.scene.isPaused())[0];
 
+    const previousSceneId =
+      (game.current?.scene.getScenes(true)[0]?.scene.key as SceneId) ?? scene;
+    const spawn = SPAWNS()[route][previousSceneId] ?? SPAWNS()[route].default;
+
     if (activeScene && activeScene.scene.key !== route) {
       activeScene.scene.start(route);
       mmoService.send("SWITCH_SCENE", {
         sceneId: route,
-        previousSceneId:
-          game.current?.scene.getScenes(true)[0]?.scene.key ?? scene,
+        previousSceneId,
+        playerCoordinates: {
+          x: spawn.x,
+          y: spawn.y,
+        },
       });
     }
   }, [route]);
@@ -446,6 +465,7 @@ export const PhaserComponent: React.FC<Props> = ({ mmoService, route }) => {
         )}
 
         <CommunityToasts />
+        <PlayerInteractionMenu />
 
         {mmoState === "connecting" && (
           <Label

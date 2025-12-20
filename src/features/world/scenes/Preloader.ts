@@ -63,6 +63,11 @@ export abstract class Preloader extends Phaser.Scene {
         `${CONFIG.PROTECTED_IMAGE_URL}/world/easter-map-extruded.png`,
       );
 
+      this.load.image(
+        "holidays_island_tileset",
+        `world/holiday_island_assets/holidays_island_tileset.png`,
+      );
+
       this.load.image("speech_bubble", "world/speech_bubble.png");
       this.load.image("alert", SUNNYSIDE.icons.expression_alerted);
       this.load.image("label", "world/label.png");
@@ -70,6 +75,15 @@ export abstract class Preloader extends Phaser.Scene {
       this.load.image("hammer", SUNNYSIDE.icons.hammer);
       this.load.image("disc", SUNNYSIDE.icons.disc);
       this.load.image("gift_icon", "world/gift.png");
+      this.load.image("round_button", SUNNYSIDE.ui.round_button);
+      this.load.image(
+        "round_button_pressed",
+        SUNNYSIDE.ui.round_button_pressed,
+      );
+      this.load.image("player_small", SUNNYSIDE.icons.player_small);
+      this.load.image("chat_icon", SUNNYSIDE.icons.expression_chat);
+      this.load.image("hand_wave", "world/hand_wave.png");
+      this.load.image("cheer", "world/cheer.png");
       this.load.image("charm_icon", ITEM_DETAILS["Love Charm"].image); // TODO: Replace with actual charm icon
       this.load.image("shadow", "world/shadow.png");
       this.load.spritesheet("poof", "world/poof.png", {

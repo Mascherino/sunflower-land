@@ -19,7 +19,8 @@ export type BumpkinBackground =
   | "Pumpkin Plaza Background"
   | "Goblin Retreat Background"
   | "Kingdom Background"
-  | "Sky Island Background";
+  | "Sky Island Background"
+  | "Holiday Feast Background";
 
 export type BumpkinBody =
   | "Beige Farmer Potion"
@@ -142,8 +143,9 @@ export type BumpkinShirt =
   | "Paint Splattered Shirt"
   | "Diamond Patterned Vest"
   | "Recycle Shirt"
-  | "AU3"
-  | "Pet Specialist Shirt";
+  | "Chef Shirt"
+  | "Pet Specialist Shirt"
+  | "Comfy Xmas Sweater";
 
 export type BumpkinCoat =
   | "Chef Apron"
@@ -163,8 +165,6 @@ export type BumpkinTool =
   | "Parsnip"
   | "Golden Spatula"
   | "Hammer"
-  | "Cleaver Knife"
-  | "Lunar Weapon"
   | "Ancient War Hammer"
   | "Ancient Goblin Sword"
   | "Pirate Scimitar"
@@ -216,7 +216,10 @@ export type BumpkinTool =
   | "Architect Ruler"
   | "Onion Leek"
   | "Halloween Deathscythe"
-  | "Moonseeker Hand Puppet";
+  | "Moonseeker Hand Puppet"
+  | "Master Chef's Cleaver"
+  | "Luna's Crescent"
+  | "Candy Halbred";
 
 export type BumpkinShoe =
   | "Black Farmer Boots"
@@ -256,10 +259,10 @@ export type BumpkinNecklace =
   | "Nightshade Medallion"
   | "Sunflorian Medallion"
   | "Dream Scarf"
-  | "Training Whistle"
   | "Cowbell Necklace"
   | "Obsidian Necklace"
-  | "Trick and Treat";
+  | "Trick and Treat"
+  | "Training Whistle";
 
 export type BumpkinHat =
   | "Painter's Cap"
@@ -362,7 +365,11 @@ export type BumpkinHat =
   | "Garbage Bin Hat"
   | "Turd Topper"
   | "Sweet Devil Horns"
-  | "Pet Specialist Hat";
+  | "Pet Specialist Hat"
+  | "Xmas Top Hat"
+  | "Reindeer Mask"
+  | "Snowman Mask"
+  | "Cool Glasses";
 
 export type BumpkinPant =
   | "Farmer Overalls"
@@ -403,7 +410,8 @@ export type BumpkinPant =
   | "Fossil Pants"
   | "Bunny Pants"
   | "Paint Splattered Overalls"
-  | "Pet Specialist Pants";
+  | "Pet Specialist Pants"
+  | "Comfy Xmas Pants";
 
 export type BumpkinDress =
   | "Royal Dress"
@@ -448,7 +456,8 @@ export type BumpkinSecondaryTool =
   | "Autumn's Embrace"
   | "Frozen Heart"
   | "Oil Gallon"
-  | "Jack O'Sweets";
+  | "Jack O'Sweets"
+  | "Cookie Shield";
 
 // Goes over clothes + head
 export type BumpkinOnesie =
@@ -476,7 +485,8 @@ export type BumpkinOnesie =
   | "Dino Onesie"
   | "Red Pepper Onesie"
   | "Raccoon Onesie"
-  | "Frank Onesie";
+  | "Frank Onesie"
+  | "Cozy Reindeer Onesie";
 
 // Goes over clothes
 export type BumpkinSuit =
@@ -532,7 +542,8 @@ export type BumpkinAura =
   | "Coin Aura"
   | "Love Puff Aura"
   | "Slime Aura"
-  | "Wisp Aura";
+  | "Wisp Aura"
+  | "Diamond Snow Aura";
 
 export type BumpkinItem =
   | BumpkinBody
@@ -1072,13 +1083,28 @@ export const ITEM_IDS: Record<BumpkinItem, number> = {
   "Underworld Stimpack": 496,
   "Sweet Devil Wings": 497,
   "Wisp Aura": 498,
-  "Lunar Weapon": 499,
-  "Cleaver Knife": 500,
+
+  // Paw Prints Wearables
+  "Luna's Crescent": 499,
+  "Master Chef's Cleaver": 500,
   "Training Whistle": 501,
-  AU3: 502,
+  "Chef Shirt": 502,
   "Pet Specialist Shirt": 503,
   "Pet Specialist Pants": 504,
   "Pet Specialist Hat": 505,
+
+  // Holiday 2025 Event Wearables
+  "Xmas Top Hat": 506,
+  "Reindeer Mask": 507,
+  "Snowman Mask": 508,
+  "Cool Glasses": 509,
+  "Comfy Xmas Pants": 510,
+  "Holiday Feast Background": 511,
+  "Comfy Xmas Sweater": 512,
+  "Candy Halbred": 513,
+  "Cookie Shield": 514,
+  "Cozy Reindeer Onesie": 515,
+  "Diamond Snow Aura": 516,
 };
 
 // The reverse of above
@@ -1638,13 +1664,24 @@ export const BUMPKIN_ITEM_PART: Record<BumpkinItem, keyof Wallet> = {
   "Underworld Stimpack": "wings",
   "Sweet Devil Wings": "wings",
   "Wisp Aura": "aura",
-  "Lunar Weapon": "tool",
-  "Cleaver Knife": "tool",
+  "Luna's Crescent": "tool",
+  "Master Chef's Cleaver": "tool",
   "Training Whistle": "necklace",
-  AU3: "shirt",
+  "Chef Shirt": "shirt",
   "Pet Specialist Shirt": "shirt",
   "Pet Specialist Pants": "pants",
   "Pet Specialist Hat": "hat",
+  "Comfy Xmas Sweater": "shirt",
+  "Comfy Xmas Pants": "pants",
+  "Candy Halbred": "tool",
+  "Xmas Top Hat": "hat",
+  "Reindeer Mask": "hat",
+  "Snowman Mask": "hat",
+  "Cool Glasses": "hat",
+  "Cookie Shield": "secondaryTool",
+  "Holiday Feast Background": "background",
+  "Cozy Reindeer Onesie": "onesie",
+  "Diamond Snow Aura": "aura",
 };
 
 /**Copied from BE just for hoarding checks */

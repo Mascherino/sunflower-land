@@ -71,6 +71,7 @@ export function makeGame(farm: any): GameState {
     auctioneer: farm.auctioneer ?? {},
     minigames: farm.minigames,
     kingdomChores: farm.kingdomChores,
+    buffs: farm.buffs,
     chores: farm.chores,
     tradedAt: farm.tradedAt,
     trees: farm.trees ?? {},
@@ -131,5 +132,6 @@ export function makeGame(farm: any): GameState {
     boostsUsedAt: farm.boostsUsedAt,
     socialFarming: farm.socialFarming,
     pets: farm.pets,
+    prototypes: farm.prototypes,
   };
 }

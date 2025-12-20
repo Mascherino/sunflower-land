@@ -57,7 +57,6 @@ import { MachineState } from "features/game/lib/gameMachine";
 import { gameAnalytics } from "lib/gameAnalytics";
 import { SEASON_ICONS } from "../buildings/components/building/market/SeasonalSeeds";
 import { COLLECTIBLE_BUFF_LABELS } from "features/game/types/collectibleItemBuffs";
-import { hasSeasonEnded } from "features/game/types/seasons";
 import { isCollectible } from "features/game/events/landExpansion/garbageSold";
 
 const host = window.location.host.replace(/^www\./, "");
@@ -239,7 +238,7 @@ const BaitSelection: React.FC<{
                 type="default"
                 className="capitalize"
               >
-                {`${currentSeason}`}
+                {t(`season.${currentSeason}`)}
               </Label>
               {isFishFrenzy(state) && (
                 <Label icon={lightning} type="vibrant">
@@ -312,7 +311,12 @@ const BaitSelection: React.FC<{
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center">
               <img src={ITEM_DETAILS[chum].image} className="h-5 mr-1" />
-              <Label type="default">{`Chum - ${CHUM_AMOUNTS[chum]} ${chum}`}</Label>
+              <Label type="default">
+                {t("fishermanModal.chum", {
+                  count: CHUM_AMOUNTS[chum],
+                  type: chum,
+                })}
+              </Label>
             </div>
             <img
               src={SUNNYSIDE.icons.cancel}
@@ -547,9 +551,7 @@ const BoostReelItems: (
       skills: state.bumpkin.skills,
       collectibles: state.collectibles,
     }) as BuffLabel[],
-    location: hasSeasonEnded("Better Together")
-      ? "Marketplace"
-      : "Stella's Megastore",
+    location: "Marketplace",
   },
   "Angler Waders": {
     buff: BUMPKIN_ITEM_BUFF_LABELS["Angler Waders"] as BuffLabel[],
@@ -566,6 +568,10 @@ const BoostReelItems: (
   "More With Less": {
     buff: Object.values(BUMPKIN_REVAMP_SKILL_TREE["More With Less"].boosts),
     location: "Fishing Skill Tree",
+  },
+  "Saw Fish": {
+    buff: BUMPKIN_ITEM_BUFF_LABELS["Saw Fish"] as BuffLabel[],
+    location: "Stella's Megastore",
   },
 });
 
@@ -680,7 +686,7 @@ const FishermanExtras: React.FC<{
               {t("fishing.lookingMoreReels")}
             </span>
           </InnerPanel>
-          <InnerPanel className="flex flex-col mb-1 overflow-y-scroll overflow-x-hidden scrollable max-h-[330px] sm:max-h-max sm:overflow-y-hidden">
+          <InnerPanel className="flex flex-col mb-1 overflow-y-scroll overflow-x-hidden scrollable max-h-[330px]">
             {Object.entries(BoostReelItems(state)).map(([name, item]) => (
               <div key={name} className="flex -ml-1">
                 {getItemIcon(

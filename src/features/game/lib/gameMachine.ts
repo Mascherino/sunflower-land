@@ -45,7 +45,6 @@ import {
   LandscapingPlaceableType,
   SaveEvent,
 } from "../expansion/placeable/landscapingMachine";
-import { Context } from "../GameProvider";
 import { isSwarming } from "../events/detectBot";
 import { generateTestLand } from "../expansion/actions/generateLand";
 
@@ -108,9 +107,10 @@ import { NetworkOption } from "features/island/hud/components/deposit/DepositFlo
 import { blessingIsReady } from "./blessings";
 import { hasReadNews } from "features/farming/mail/components/News";
 import { depositSFL } from "lib/blockchain/DepositSFL";
-import { hasFeatureAccess } from "lib/flags";
-import { COMPETITION_POINTS } from "../types/competitions";
 import { getBumpkinLevel } from "./level";
+import { hasFeatureAccess } from "lib/flags";
+import { isDailyRewardReady } from "../events/landExpansion/claimDailyReward";
+import { getDailyRewardLastAcknowledged } from "../components/DailyReward";
 
 // Run at startup in case removed from query params
 const portalName = new URLSearchParams(window.location.search).get("portal");
@@ -125,6 +125,22 @@ const getError = () => {
   const error = new URLSearchParams(window.location.search).get("error");
 
   return error;
+};
+
+const shouldShowLeagueResults = (context: Context) => {
+  // Don't show league results for visitors
+  if (context.visitorId !== undefined) {
+    return false;
+  }
+
+  const hasLeaguesAccess = hasFeatureAccess(context.state, "LEAGUES");
+  const currentLeagueStartDate =
+    context.state.prototypes?.leagues?.currentLeagueStartDate;
+
+  return (
+    hasLeaguesAccess &&
+    currentLeagueStartDate !== new Date().toISOString().split("T")[0]
+  );
 };
 
 export type PastAction = GameEvent & {
@@ -177,6 +193,7 @@ export interface Context {
   hasHelpedPlayerToday?: boolean;
   totalHelpedToday?: number;
   apiKey?: string;
+  method?: "google" | "wallet" | "wechat" | "fsl";
 }
 
 export type Moderation = {
@@ -635,12 +652,6 @@ const VISIT_EFFECT_STATES = Object.values(STATE_MACHINE_VISIT_EFFECTS).reduce(
 
           const { visitedFarmState, ...rest } = data;
 
-          // if you don't have access to pets, delete pets object from their gameState
-          const hasPetsAccess = hasFeatureAccess(gameState, "PETS");
-          if (!hasPetsAccess) {
-            visitedFarmState.pets = undefined;
-          }
-
           return {
             state: makeGame(visitedFarmState),
             data: rest,
@@ -707,7 +718,6 @@ export type BlockchainState = {
     | "visiting"
     | "gameRules"
     | "blessing"
-    | "roninAirdrop"
     | "FLOWERTeaser"
     | "portalling"
     | "introduction"
@@ -715,6 +725,7 @@ export type BlockchainState = {
     | "gems"
     | "communityCoin"
     | "referralRewards"
+    | "dailyReward"
     | "playing"
     | "autosaving"
     | "buyingSFL"
@@ -750,10 +761,10 @@ export type BlockchainState = {
     | "seasonChanged"
     | "randomising"
     | "competition"
-    | "cheers"
     | "news"
-    | "roninAirdrop"
     | "jinAirdrop"
+    | "leagueResults"
+    | "linkWallet"
     | StateMachineStateName
     | StateMachineVisitStateName
     | StateNameWithStatus; // TEST ONLY
@@ -874,7 +885,7 @@ export function startGame(authContext: AuthContext) {
         discordId: "123",
         farmId:
           CONFIG.NETWORK === "mainnet"
-            ? authContext.user.token?.farmId ?? 0
+            ? (authContext.user.token?.farmId ?? 0)
             : Math.floor(Math.random() * 1000),
         rawToken: authContext.user.rawToken,
         actions: [],
@@ -1058,12 +1069,6 @@ export function startGame(authContext: AuthContext) {
                 authContext.user.rawToken as string,
               );
 
-              const hasPetsAccess = hasFeatureAccess(visitorFarmState, "PETS");
-              // if you don't have access to pets, delete pets object from their gameState
-              if (!hasPetsAccess) {
-                visitedFarmState.pets = undefined;
-              }
-
               return {
                 state: visitedFarmState,
                 farmId,
@@ -1195,16 +1200,6 @@ export function startGame(authContext: AuthContext) {
               },
             },
             {
-              target: "roninAirdrop",
-              cond: (context) => {
-                return (
-                  !!context.linkedWallet &&
-                  !context.state.roninRewards?.onchain &&
-                  hasFeatureAccess(context.state, "RONIN_AIRDROP")
-                );
-              },
-            },
-            {
               target: "vip",
               cond: (context) => {
                 const isNew = context.state.bumpkin.experience < 100;
@@ -1255,6 +1250,7 @@ export function startGame(authContext: AuthContext) {
                 return !!context.state.referrals?.rewards;
               },
             },
+
             {
               target: "somethingArrived",
               cond: (context) => !!context.revealed,
@@ -1294,27 +1290,7 @@ export function startGame(authContext: AuthContext) {
 
             {
               target: "competition",
-              cond: (context) => {
-                if (!hasFeatureAccess(context.state, "BUILDING_FRIENDSHIPS"))
-                  return false;
-
-                const hasStarted =
-                  Date.now() > COMPETITION_POINTS.BUILDING_FRIENDSHIPS.startAt;
-
-                const hasEnded =
-                  Date.now() > COMPETITION_POINTS.BUILDING_FRIENDSHIPS.endAt;
-                if (!hasStarted || hasEnded) return false;
-
-                const level = getBumpkinLevel(
-                  context.state.bumpkin?.experience ?? 0,
-                );
-                if (level <= 5) return false;
-
-                const competition =
-                  context.state.competitions.progress.BUILDING_FRIENDSHIPS;
-
-                return !competition;
-              },
+              cond: () => false,
             },
             {
               target: "news",
@@ -1327,23 +1303,35 @@ export function startGame(authContext: AuthContext) {
                 return !hasReadNews();
               },
             },
+
             {
-              target: "cheers",
+              target: "linkWallet",
               cond: (context) => {
-                // Do not show if they are under level 5
-                const level = getBumpkinLevel(
-                  context.state.bumpkin?.experience ?? 0,
-                );
-                if (level < 5) return false;
-
-                const now = Date.now();
-
-                const today = new Date(now).toISOString().split("T")[0];
-
                 return (
-                  context.state.socialFarming.cheers?.freeCheersClaimedAt <
-                  new Date(today).getTime()
+                  (context.method === "fsl" || context.method === "wechat") &&
+                  !context.linkedWallet
                 );
+              },
+            },
+
+            {
+              target: "dailyReward",
+              cond: (context) => {
+                // If already acknowledged in last 24 hours, don't show
+                const lastAcknowledged = getDailyRewardLastAcknowledged();
+                if (
+                  lastAcknowledged &&
+                  lastAcknowledged.toISOString().slice(0, 10) ===
+                    new Date().toISOString().slice(0, 10)
+                ) {
+                  return false;
+                }
+
+                return isDailyRewardReady({
+                  bumpkinExperience: context.state.bumpkin?.experience ?? 0,
+                  dailyRewards: context.state.dailyRewards,
+                  now: Date.now(),
+                });
               },
             },
 
@@ -1409,6 +1397,10 @@ export function startGame(authContext: AuthContext) {
               cond: (context) =>
                 !!context.state.nfts?.ronin?.acknowledgedAt &&
                 (context.state.inventory["Jin"] ?? new Decimal(0)).lt(1),
+            },
+            {
+              target: "leagueResults",
+              cond: shouldShowLeagueResults,
             },
             {
               target: "playing",
@@ -1483,19 +1475,6 @@ export function startGame(authContext: AuthContext) {
             ],
             "blessing.seeked": {
               target: STATE_MACHINE_EFFECTS["blessing.seeked"],
-            },
-            ACKNOWLEDGE: {
-              target: "notifying",
-            },
-          },
-        },
-        roninAirdrop: {
-          on: {
-            // "roninPack.claimed": (GAME_EVENT_HANDLERS as any)[
-            //   "roninPack.claimed"
-            // ],
-            "roninPack.claimed": {
-              target: STATE_MACHINE_EFFECTS["roninPack.claimed"],
             },
             ACKNOWLEDGE: {
               target: "notifying",
@@ -1638,6 +1617,16 @@ export function startGame(authContext: AuthContext) {
             "specialEvent.taskCompleted": (GAME_EVENT_HANDLERS as any)[
               "specialEvent.taskCompleted"
             ],
+            CLOSE: {
+              target: "playing",
+            },
+          },
+        },
+        leagueResults: {
+          on: {
+            "leagues.updated": {
+              target: STATE_MACHINE_EFFECTS["leagues.updated"],
+            },
             CLOSE: {
               target: "playing",
             },
@@ -1851,6 +1840,13 @@ export function startGame(authContext: AuthContext) {
 
                   return !isAcknowledged;
                 },
+                actions: assign((context: Context, event) =>
+                  handleSuccessfulSave(context, event),
+                ),
+              },
+              {
+                target: "leagueResults",
+                cond: shouldShowLeagueResults,
                 actions: assign((context: Context, event) =>
                   handleSuccessfulSave(context, event),
                 ),
@@ -2416,9 +2412,8 @@ export function startGame(authContext: AuthContext) {
           },
         },
 
-        cheers: {
+        linkWallet: {
           on: {
-            "cheers.claimed": (GAME_EVENT_HANDLERS as any)["cheers.claimed"],
             ACKNOWLEDGE: {
               target: "notifying",
             },
@@ -2456,6 +2451,17 @@ export function startGame(authContext: AuthContext) {
             },
             "referral.rewardsClaimed": (GAME_EVENT_HANDLERS as any)[
               "referral.rewardsClaimed"
+            ],
+          },
+        },
+
+        dailyReward: {
+          on: {
+            CONTINUE: {
+              target: "notifying",
+            },
+            "dailyReward.claimed": (GAME_EVENT_HANDLERS as any)[
+              "dailyReward.claimed"
             ],
           },
         },
@@ -2612,6 +2618,7 @@ export function startGame(authContext: AuthContext) {
           oauthNonce: (_, event) => event.data.oauthNonce,
           prices: (_, event) => event.data.prices,
           apiKey: (_, event) => event.data.apiKey,
+          method: (_, event) => event.data.method,
         }),
         setTransactionId: assign<Context, any>({
           transactionId: () => randomID(),

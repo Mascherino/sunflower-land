@@ -6,6 +6,7 @@ import { hasVipAccess } from "../lib/vipAccess";
 import { isTemporaryCollectibleActive } from "../lib/collectibleBuilt";
 import { PetNFTName } from "./pets";
 import { setPrecision } from "lib/utils/formatNumber";
+import Decimal from "decimal.js-light";
 
 // 10% tax on sales
 export const MARKETPLACE_TAX = 0.1;
@@ -115,16 +116,10 @@ export type Marketplace = {
   items: Tradeable[];
 };
 
-type TrendingItem = {
-  id: number;
-  collection: CollectionName;
-};
-
 export type MarketplaceTrends = {
   volume: number;
   trades: number;
   owners: number;
-  items: TrendingItem[];
   topTrades: {
     buyer: {
       id: number;
@@ -222,25 +217,39 @@ export function getPriceHistory({
   // Sort by most recent date first
   dates.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  // For any dates that have no price, use the previous date's price
-  for (let i = 1; i < dates.length; i++) {
-    if (dates[i].low === 0) {
-      dates[i].low = dates[i - 1].low;
-      dates[i].high = dates[i - 1].high;
+  // For any dates that have no price, use the next older *non-zero* date's price.
+  // Since array is sorted newest-first, we iterate from oldest -> newest and carry
+  // forward the last known non-zero price to avoid propagating zeros.
+  let lastNonZeroLow = 0;
+  let lastNonZeroHigh = 0;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    if (dates[i].low > 0) {
+      lastNonZeroLow = dates[i].low;
+      lastNonZeroHigh = dates[i].high;
+      continue;
+    }
+
+    if (lastNonZeroLow > 0) {
+      dates[i].low = lastNonZeroLow;
+      dates[i].high = lastNonZeroHigh;
     }
   }
 
-  const currentPrice = price ?? dates[0].high;
+  const currentPrice = price ?? dates[0]?.high ?? 0;
 
-  const sevenDayPrice = dates[6].low;
+  const sevenDayPrice = dates[6]?.low ?? 0;
   const sevenDayPriceChange = currentPrice - sevenDayPrice;
   const sevenDayChange =
-    sevenDayPriceChange === 0 ? 0 : (sevenDayPriceChange / sevenDayPrice) * 100;
+    sevenDayPrice === 0 || sevenDayPriceChange === 0
+      ? 0
+      : (sevenDayPriceChange / sevenDayPrice) * 100;
 
-  const oneDayPrice = dates[1].low;
+  const oneDayPrice = dates[1]?.low ?? 0;
   const oneDayPriceChange = currentPrice - oneDayPrice;
   const oneDayChange =
-    oneDayPriceChange === 0 ? 0 : (oneDayPriceChange / oneDayPrice) * 100;
+    oneDayPrice === 0 || oneDayPriceChange === 0
+      ? 0
+      : (oneDayPriceChange / oneDayPrice) * 100;
 
   return {
     dates,
@@ -300,16 +309,16 @@ const ISLAND_RESOURCE_TAXES: Record<IslandType, number> = {
   volcano: 0.15,
 };
 
-export function getResourceTax({ game }: { game: GameState }): number {
-  let tax = ISLAND_RESOURCE_TAXES[game.island.type];
-
-  if (isTemporaryCollectibleActive({ name: "Trading Shrine", game })) {
-    tax -= 0.025;
-  }
+export function getResourceTax({ game }: { game: GameState }) {
+  let tax = new Decimal(ISLAND_RESOURCE_TAXES[game.island.type]);
 
   if (hasVipAccess({ game })) {
-    tax *= 0.5;
+    tax = tax.mul(0.5);
   }
 
-  return setPrecision(tax, 4).toNumber();
+  if (isTemporaryCollectibleActive({ name: "Trading Shrine", game })) {
+    tax = tax.sub(0.025);
+  }
+
+  return setPrecision(tax, 4);
 }

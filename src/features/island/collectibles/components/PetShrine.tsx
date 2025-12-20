@@ -3,7 +3,7 @@ import React, { useContext, useState } from "react";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 import { CollectibleProps } from "../Collectible";
 import { SUNNYSIDE } from "assets/sunnyside";
-import { LiveProgressBar } from "components/ui/ProgressBar";
+import { ProgressBar } from "components/ui/ProgressBar";
 import { Context } from "features/game/GameProvider";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
@@ -18,7 +18,11 @@ import { ITEM_DETAILS } from "features/game/types/images";
 import { EXPIRY_COOLDOWNS } from "features/game/lib/collectibleBuilt";
 import { PetShrineName } from "features/game/types/pets";
 import { getObjectEntries } from "features/game/expansion/lib/utils";
-import { COMPETITION_POINTS } from "features/game/types/competitions";
+import { useCountdown } from "lib/utils/hooks/useCountdown";
+import { RenewPetShrine } from "features/game/components/RenewPetShrine";
+import { useVisiting } from "lib/utils/visitUtils";
+import { useSelector } from "@xstate/react";
+import { hasFeatureAccess } from "lib/flags";
 
 const PET_SHRINE_DIMENSIONS: Record<
   PetShrineName,
@@ -72,63 +76,79 @@ export const PetShrine: React.FC<
 > = ({ createdAt, id, location, name }) => {
   const { t } = useAppTranslation();
   const { gameService, showTimers } = useContext(Context);
+  const [showRenewalModal, setShowRenewalModal] = useState(false);
+  const { isVisiting } = useVisiting();
 
-  const [, setRender] = useState(0);
+  const hasAccess = useSelector(gameService, (state) =>
+    hasFeatureAccess(state.context.state, "RENEW_PET_SHRINES"),
+  );
 
   const expiresAt = createdAt + (EXPIRY_COOLDOWNS[name] ?? 0);
 
-  const hasExpired = Date.now() > expiresAt;
+  const { totalSeconds: secondsToExpire } = useCountdown(expiresAt);
+  const durationSeconds = EXPIRY_COOLDOWNS[name] ?? 0;
+  const percentage = 100 - (secondsToExpire / durationSeconds) * 100;
+  const hasExpired = secondsToExpire <= 0;
 
+  const handleRenewClick = () => {
+    setShowRenewalModal(true);
+  };
   const handleRemove = () => {
-    gameService.send("collectible.burned", {
-      name,
-      location,
-      id,
-    });
+    gameService.send("collectible.burned", { name, location, id });
   };
 
   if (hasExpired) {
     return (
-      <div
-        onClick={handleRemove}
-        className="absolute"
-        style={{ ...PET_SHRINE_DIMENSIONS_STYLES[name], bottom: 0 }}
-      >
-        {showTimers && (
-          <div
-            className="absolute left-1/2"
-            style={{
-              width: `${PIXEL_SCALE * 15}px`,
-              transform: "translateX(-50%)",
-            }}
-          >
-            <LiveProgressBar
-              startAt={createdAt}
-              endAt={expiresAt}
-              formatLength="medium"
-              type="error"
-              onComplete={() => setRender((r) => r + 1)}
-            />
-          </div>
-        )}
-
-        <img
-          className="absolute cursor-pointer group-hover:img-highlight z-30 animate-pulsate"
-          src={SUNNYSIDE.icons.dig_icon}
-          style={{
-            width: `${PIXEL_SCALE * 18}px`,
-            right: `${PIXEL_SCALE * -8}px`,
-            top: `${PIXEL_SCALE * -8}px`,
-          }}
-        />
-
-        <img
-          src={ITEM_DETAILS[name].image}
+      <>
+        <div
+          onClick={
+            isVisiting ? undefined : hasAccess ? handleRenewClick : handleRemove
+          }
+          className="absolute"
           style={{ ...PET_SHRINE_DIMENSIONS_STYLES[name], bottom: 0 }}
-          className="absolute cursor-pointer"
-          alt={name}
+        >
+          {showTimers && (
+            <div
+              className="absolute left-1/2"
+              style={{
+                width: `${PIXEL_SCALE * 15}px`,
+                transform: "translateX(-50%)",
+              }}
+            >
+              <ProgressBar
+                seconds={secondsToExpire}
+                formatLength="medium"
+                type="error"
+                percentage={percentage}
+              />
+            </div>
+          )}
+
+          <img
+            className="absolute cursor-pointer group-hover:img-highlight z-30 animate-pulsate"
+            src={SUNNYSIDE.icons.dig_icon}
+            style={{
+              width: `${PIXEL_SCALE * 18}px`,
+              right: `${PIXEL_SCALE * -8}px`,
+              top: `${PIXEL_SCALE * -8}px`,
+            }}
+          />
+
+          <img
+            src={ITEM_DETAILS[name].image}
+            style={{ ...PET_SHRINE_DIMENSIONS_STYLES[name], bottom: 0 }}
+            className="absolute cursor-pointer"
+            alt={name}
+          />
+        </div>
+        <RenewPetShrine
+          show={showRenewalModal}
+          onHide={() => setShowRenewalModal(false)}
+          name={name}
+          id={id}
+          location={location}
         />
-      </div>
+      </>
     );
   }
 
@@ -147,12 +167,11 @@ export const PetShrine: React.FC<
                 transform: "translateX(-50%)",
               }}
             >
-              <LiveProgressBar
-                startAt={createdAt}
-                endAt={expiresAt}
+              <ProgressBar
+                seconds={secondsToExpire}
                 formatLength="medium"
                 type={"buff"}
-                onComplete={() => setRender((r) => r + 1)}
+                percentage={percentage}
               />
             </div>
           )}
@@ -176,7 +195,7 @@ export const PetShrine: React.FC<
           >
             <span className="text-xs">
               {t("time.remaining", {
-                time: secondsToString((expiresAt - Date.now()) / 1000, {
+                time: secondsToString(secondsToExpire, {
                   length: "medium",
                   isShortFormat: true,
                   removeTrailingZeros: true,
@@ -185,12 +204,6 @@ export const PetShrine: React.FC<
             </span>
           </Label>
           <SFTDetailPopoverBuffs name={name} />
-          {name === "Fox Shrine" &&
-            Date.now() < COMPETITION_POINTS.BUILDING_FRIENDSHIPS.endAt && (
-              <Label type="danger" icon={SUNNYSIDE.icons.cancel}>
-                {t("error.cannotPlaceFoxShrine")}
-              </Label>
-            )}
         </SFTDetailPopoverInnerPanel>
       </PopoverPanel>
     </Popover>

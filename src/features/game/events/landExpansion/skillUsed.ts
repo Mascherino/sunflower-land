@@ -27,6 +27,8 @@ import { getCurrentCookingItem, recalculateQueue } from "./cancelQueuedRecipe";
 import { AOEItemName } from "features/game/expansion/placeable/lib/collisionDetection";
 import { FLOWER_SEEDS, FLOWERS } from "features/game/types/flowers";
 import { updateBeehives } from "features/game/lib/updateBeehives";
+import { isWearableActive } from "features/game/lib/wearables";
+import { getPlotsToFertilise } from "./bulkFertilisePlot";
 
 export type SkillUseAction = {
   type: "skill.used";
@@ -211,6 +213,20 @@ function useBarnyardRouse({
   return game;
 }
 
+export function getSkillCooldown({
+  cooldown,
+  state,
+}: {
+  cooldown: number;
+  state: GameState;
+}) {
+  let boostedCooldown = new Decimal(cooldown);
+  if (isWearableActive({ name: "Luna's Crescent", game: state })) {
+    boostedCooldown = boostedCooldown.mul(0.5);
+  }
+  return boostedCooldown.toNumber();
+}
+
 export function powerSkillDisabledConditions({
   state,
   skillTree,
@@ -243,9 +259,12 @@ export function powerSkillDisabledConditions({
   } & BumpkinSkillRevamp;
   const { cooldown, items } = requirements;
 
-  const nextSkillUse = (previousPowerUseAt?.[skillName] ?? 0) + (cooldown ?? 0);
+  const boostedCooldown = getSkillCooldown({ cooldown: cooldown ?? 0, state });
 
-  const powerSkillReady = nextSkillUse < createdAt;
+  const nextSkillUse = (previousPowerUseAt?.[skillName] ?? 0) + boostedCooldown;
+
+  const powerSkillReady = nextSkillUse <= createdAt;
+
   const itemsRequired =
     !items ||
     Object.entries(items).every(([item, quantity]) =>
@@ -265,22 +284,23 @@ export function powerSkillDisabledConditions({
     // Crop fertiliser skills
     case "Sprout Surge":
     case "Root Rocket": {
-      const unfertilisedPlots = Object.values(crops).filter(
-        (plot) => !plot.fertiliser,
-      ).length;
+      const unfertilisedPlots = getPlotsToFertilise(state, createdAt);
       const fertiliser =
         skillName === "Sprout Surge" ? "Sprout Mix" : "Rapid Root";
       const fertiliserCount = inventory[fertiliser] ?? new Decimal(0);
-
-      if (fertiliserCount.lt(unfertilisedPlots)) {
-        return {
-          disabled: true,
-        };
-      }
-      if (unfertilisedPlots === 0) {
+      if (unfertilisedPlots.length === 0) {
         return {
           disabled: true,
           reason: translate("powerSkills.reason.allPlotsFertilised"),
+        };
+      }
+
+      if (fertiliserCount.lt(unfertilisedPlots.length)) {
+        return {
+          disabled: true,
+          reason: translate("powerSkills.reason.insufficientFertiliser", {
+            fertiliser,
+          }),
         };
       }
       break;

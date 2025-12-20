@@ -604,9 +604,17 @@ export const STATIC_OFFLINE_FARM: GameState = {
   shipments: {},
   gems: {},
   flower: {},
+  prototypes: {
+    leagues: {
+      id: "Sunflower 1-2025-01-01",
+      currentLeague: "Sunflower 1",
+      points: 0,
+      currentLeagueStartDate: new Date().toISOString().split("T")[0],
+    },
+  },
   bumpkin: {
     equipped: INITIAL_EQUIPMENT as Equipped,
-    experience: 10,
+    experience: 150000,
 
     id: 1,
     skills: {
@@ -622,8 +630,6 @@ export const STATIC_OFFLINE_FARM: GameState = {
       "Instant Gratification": Date.now() - 1000 * 60,
       "Instant Growth": Date.now() - 1000 * 60,
     },
-
-    activity: {},
   },
 
   minigames: {
@@ -881,13 +887,23 @@ export const STATIC_OFFLINE_FARM: GameState = {
       },
     ],
   },
+  farmActivity: {
+    "Daily Reward Collected": 10,
+  },
+  dailyRewards: {
+    chest: {
+      code: 1,
+      collectedAt: Date.now() - 24 * 60 * 60 * 1000,
+    },
+    streaks: 4,
+  },
 
   conversations: [],
 
   fishing: {
     dailyAttempts: {},
     wharf: {
-      castedAt: 0,
+      castedAt: 100,
       bait: "Fishing Lure",
       chum: "Carrot",
       caught: {
@@ -1377,7 +1393,7 @@ export const STATIC_OFFLINE_FARM: GameState = {
       },
     },
   },
-  farmActivity: {},
+
   milestones: {},
   specialEvents: {
     history: {},
@@ -1581,6 +1597,10 @@ export const STATIC_OFFLINE_FARM: GameState = {
           type: "Trash",
         },
       },
+    },
+    waves: {
+      date: new Date().toISOString().split("T")[0],
+      farms: [],
     },
   },
   pets: {

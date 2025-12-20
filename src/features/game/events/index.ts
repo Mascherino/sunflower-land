@@ -24,6 +24,8 @@ import {
   LandExpansionIronMineAction,
 } from "./landExpansion/ironMine";
 
+import { bumpkinWave, BumpkinWaveAction } from "./landExpansion/bumpkinWave";
+
 import { GameState } from "../types/game";
 import { claimAirdrop, ClaimAirdropAction } from "./claimAirdrop";
 import {
@@ -162,6 +164,10 @@ import {
 } from "./landExpansion/burnCollectible";
 import { claimBonus, ClaimBonusAction } from "./landExpansion/claimBonus";
 import {
+  claimDailyReward,
+  ClaimDailyRewardAction,
+} from "./landExpansion/claimDailyReward";
+import {
   accelerateComposter,
   AccelerateComposterAction,
 } from "./landExpansion/accelerateComposter";
@@ -205,10 +211,6 @@ import {
   upgrade as upgrade,
   UpgradeFarmAction,
 } from "./landExpansion/upgradeFarm";
-import {
-  purchaseBanner,
-  PurchaseBannerAction,
-} from "./landExpansion/bannerPurchased";
 import {
   placeSunstone,
   PlaceSunstoneAction,
@@ -366,9 +368,9 @@ import {
 import { claimProduce, ClaimProduceAction } from "./landExpansion/claimProduce";
 import { sellBounty, SellBountyAction } from "./landExpansion/sellBounty";
 import {
-  buySeasonalItem,
-  BuySeasonalItemAction,
-} from "./landExpansion/buySeasonalItem";
+  buyChapterItem,
+  BuyChapterItemAction,
+} from "./landExpansion/buyChapterItem";
 
 import {
   unlockFarmhand,
@@ -503,11 +505,8 @@ import {
 } from "./landExpansion/removeBeehive";
 import { removeAll, RemoveAllAction } from "./landExpansion/removeAll";
 import { wakeAnimal, WakeUpAnimalAction } from "./landExpansion/wakeUpAnimal";
-import {
-  ClaimCheersAction,
-  claimDailyCheers,
-} from "./landExpansion/claimDailyCheers";
 
+import { retryFish, RetryFishAction } from "./landExpansion/retryFish";
 import {
   flipCollectible,
   FlipCollectibleAction,
@@ -541,9 +540,17 @@ import { fetchPet, FetchPetAction } from "./pets/fetchPet";
 import { helpPets, HelpPetsAction } from "./visiting/helpPets";
 import { BulkPlantAction, bulkPlant } from "./landExpansion/bulkPlant";
 import { bulkHarvest, BulkHarvestAction } from "./landExpansion/bulkHarvest";
+import {
+  bulkFertilisePlot,
+  BulkFertilisePlotAction,
+} from "./landExpansion/bulkFertilisePlot";
 import { clearTrades, ClearTradesAction } from "./clearTrades";
 import { placeNFT, PlaceNFTAction } from "./landExpansion/placeNFT";
 import { walkPet, WalkPetAction } from "./pets/walkPet";
+import {
+  renewPetShrine,
+  RenewPetShrineAction,
+} from "./landExpansion/renewPetShrine";
 
 export type PlayingEvent =
   | ObsidianExchangedAction
@@ -621,6 +628,7 @@ export type PlayingEvent =
   | BurnCollectibleAction
   | ClaimReferralRewardsAction
   | ClaimBonusAction
+  | ClaimDailyRewardAction
   | AccelerateComposterAction
   | BuyFarmHandAction
   | EquipFarmHandAction
@@ -628,7 +636,6 @@ export type PlayingEvent =
   | PlantFlowerAction
   | HarvestFlowerAction
   | UpgradeFarmAction
-  | PurchaseBannerAction
   | FlowerShopTradedAction
   | CompleteSpecialEventTaskAction
   | GiftFlowersAction
@@ -669,7 +676,7 @@ export type PlayingEvent =
   | CollectCraftingAction
   | CompleteNPCChoreAction
   | ClaimProduceAction
-  | BuySeasonalItemAction
+  | BuyChapterItemAction
   | UnlockFarmhandAction
   | ClaimPurchaseAction
   | RedeemTradeRewardsAction
@@ -693,14 +700,17 @@ export type PlayingEvent =
   | BuyBiomeAction
   | ApplyBiomeAction
   | WakeUpAnimalAction
-  | ClaimCheersAction
+  | RetryFishAction
   | BurnClutterAction
   | InstantGrowProjectAction
   | InstaGrowFlowerAction
   | UpgradeRockAction
   | UpgradeTreeAction
   | BulkPlantAction
-  | BulkHarvestAction;
+  | BulkHarvestAction
+  | BumpkinWaveAction
+  | BulkFertilisePlotAction
+  | RenewPetShrineAction;
 
 export type LocalVisitingEvent =
   | CollectGarbageAction
@@ -782,7 +792,7 @@ type Handlers<T> = {
     // Extract the correct event payload from the list of events
     action: Extract<GameEventName<T>, { type: Name }>;
     announcements?: Announcements;
-    farmId?: number;
+    farmId: number;
     visitorState?: GameState;
     createdAt: number;
   }) => GameState | [GameState, GameState];
@@ -818,6 +828,7 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "crop.harvested": landExpansionHarvest,
   "crops.bulkHarvested": bulkHarvest,
   "plot.fertilised": landExpansionFertilise,
+  "plots.bulkFertilised": bulkFertilisePlot,
   "crop.removed": landExpansionRemoveCrop,
   "stoneRock.mined": landExpansionMineStone,
   "ironRock.mined": landExpansionIronMine,
@@ -870,6 +881,7 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "land.revealed": revealLand,
   "collectible.burned": burnCollectible,
   "bonus.claimed": claimBonus,
+  "dailyReward.claimed": claimDailyReward,
   "compost.accelerated": accelerateComposter,
   "farmHand.bought": buyFarmhand,
   "farmHand.equipped": equipFarmhand,
@@ -878,7 +890,6 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "flower.harvested": harvestFlower,
   "flower.instaGrown": instaGrowFlower,
   "farm.upgraded": upgrade,
-  "banner.purchased": purchaseBanner,
   "flowerShop.traded": tradeFlowerShop,
   "specialEvent.taskCompleted": completeSpecialEventTask,
   "flowers.gifted": giftFlowers,
@@ -913,7 +924,7 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "crafting.collected": collectCrafting,
   "chore.fulfilled": completeNPCChore,
   "produce.claimed": claimProduce,
-  "seasonalItem.bought": buySeasonalItem,
+  "chapterItem.bought": buyChapterItem,
   "farmHand.unlocked": unlockFarmhand,
   "fishing.reelsBought": buyMoreReels,
   "purchase.claimed": claimPurchase,
@@ -939,13 +950,15 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "biome.bought": buyBiome,
   "biome.applied": applyBiome,
   "animal.wakeUp": wakeAnimal,
-  "cheers.claimed": claimDailyCheers,
+  "bumpkin.wave": bumpkinWave,
   "clutter.burned": burnClutter,
   "project.instantGrow": instantGrowProject,
   "rock.upgraded": upgradeRock,
   "tree.upgraded": upgradeTree,
+  "fish.retried": retryFish,
   "pet.pet": petPet,
   "trades.cleared": clearTrades,
+  "petShrine.renewed": renewPetShrine,
 };
 
 export const LOCAL_VISITING_EVENTS: Handlers<LocalVisitingEvent> = {

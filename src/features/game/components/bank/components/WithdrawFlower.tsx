@@ -1,5 +1,5 @@
 import { useSelector } from "@xstate/react";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import Decimal from "decimal.js-light";
 import { toWei } from "web3-utils";
 import { Button } from "components/ui/Button";
@@ -19,7 +19,6 @@ import { hasReputation, Reputation } from "features/game/lib/reputation";
 import { RequiredReputation } from "features/island/hud/components/reputation/Reputation";
 import { isFaceVerified } from "features/retreat/components/personhood/lib/faceRecognition";
 import { FaceRecognition } from "features/retreat/components/personhood/FaceRecognition";
-import { hasFeatureAccess } from "lib/flags";
 import { useAccount } from "wagmi";
 import { ModalOverlay } from "components/ui/ModalOverlay";
 import { InnerPanel } from "components/ui/Panel";
@@ -33,6 +32,8 @@ interface Props {
 const _state = (state: MachineState) => state.context.state;
 const _autosaving = (state: MachineState) => state.matches("autosaving");
 
+const MIN_FLOWER_WITHDRAW_AMOUNT = new Decimal(5);
+
 export const WithdrawFlower: React.FC<Props> = ({ onWithdraw }) => {
   const { t } = useAppTranslation();
   const { gameService } = useContext(Context);
@@ -41,27 +42,14 @@ export const WithdrawFlower: React.FC<Props> = ({ onWithdraw }) => {
   const { chain } = useAccount();
 
   const [amount, setAmount] = useState<Decimal>(new Decimal(0));
-  const [tax, setTax] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const { balance } = state;
 
-  useEffect(() => {
-    const _tax = getTax({
-      amount: typeof amount !== "string" ? amount : new Decimal(0),
-      game: state,
-    });
-
-    setTax(_tax);
-  }, [amount]);
-
-  const withdraw = (chainId: number) => {
-    if (amount > new Decimal(0)) {
-      onWithdraw(toWei(amount.toString()), chainId);
-    } else {
-      setAmount(new Decimal(0));
-    }
-  };
+  const tax = getTax({
+    amount: typeof amount !== "string" ? amount : new Decimal(0),
+    game: state,
+  });
 
   const hasAccess = hasReputation({
     game: state,
@@ -77,7 +65,13 @@ export const WithdrawFlower: React.FC<Props> = ({ onWithdraw }) => {
   }
 
   const disableWithdraw =
-    amount.greaterThan(balance) || amount.lessThanOrEqualTo(0);
+    amount.greaterThan(balance) || amount.lessThan(MIN_FLOWER_WITHDRAW_AMOUNT);
+
+  const withdraw = () => {
+    if (disableWithdraw || autosaving || !chain) return;
+
+    onWithdraw(toWei(amount.toString()), chain!.id);
+  };
 
   return (
     <>
@@ -122,7 +116,10 @@ export const WithdrawFlower: React.FC<Props> = ({ onWithdraw }) => {
             <Button onClick={() => setShowConfirmation(false)}>
               {t("back")}
             </Button>
-            <Button onClick={() => chain && withdraw(chain.id)}>
+            <Button
+              disabled={disableWithdraw || autosaving || !chain}
+              onClick={withdraw}
+            >
               {t("confirm")}
             </Button>
           </div>
@@ -130,14 +127,12 @@ export const WithdrawFlower: React.FC<Props> = ({ onWithdraw }) => {
       </ModalOverlay>
       <div className="p-2 mb-2">
         <div className="flex flex-col items-start gap-2">
-          {hasFeatureAccess(state, "WITHDRAWAL_THRESHOLD") && (
-            <Label type="warning">{t("withdraw.flower.limited")}</Label>
-          )}
           <p className="text-xs">
             {t("withdraw.sfl.available", {
               flower: formatNumber(balance, { decimalPlaces: 4 }),
             })}
           </p>
+          <p className="text-xs">{t("withdraw.flower.minimumWithdrawal")}</p>
         </div>
 
         <div>
