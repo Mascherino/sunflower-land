@@ -42,5 +42,9 @@
   {
     "date": "24-09-2025",
     "text": ["Added support for different difficulty levels."]
+  },
+  {
+    "date": "26-12-2025",
+    "text": ["Game now starts after flipping first card."]
   }
 ]

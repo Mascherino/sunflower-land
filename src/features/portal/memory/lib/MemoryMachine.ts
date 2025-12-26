@@ -36,6 +36,7 @@ export interface Context {
   movesMade: number;
   startAt: number;
   endAt: number;
+  duration: number;
   solved: boolean;
   attemptsRemaining: number;
   score: number;
@@ -73,7 +74,8 @@ export type PortalEvent =
   | { type: "END_GAME_EARLY" }
   | GameStartEvent
   | GameOverEvent
-  | MoveEvent;
+  | MoveEvent
+  | { type: "FIRST_MOVE" };
 
 export type PortalState = {
   value:
@@ -116,6 +118,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
     solved: false,
     startAt: 0,
     endAt: 0,
+    duration: 0,
     score: 0,
     canBuyHint: false,
     health: 0,
@@ -237,9 +240,8 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
         START: {
           target: "playing",
           actions: assign<Context, any>({
-            startAt: (context: any) => Date.now(),
-            endAt: (context: Context, event: GameStartEvent) => {
-              return Date.now() + event.duration;
+            duration: (context: Context, event: GameStartEvent) => {
+              return event.duration;
             },
             maxMoves: (context: Context, event: GameStartEvent) => {
               return event.totalMoves;
@@ -290,6 +292,23 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             },
           }),
           target: "gameOver",
+        },
+        FIRST_MOVE: {
+          actions: assign<Context, any>({
+            startAt: (context: Context) => Date.now(),
+            endAt: (context: Context) => Date.now() + context.duration,
+            solved: (context: Context) => false,
+            movesMade: (context: Context) => {
+              return (context.movesMade = context.movesMade + 1);
+            },
+            score: (context: Context) => 0,
+            canBuyHint: (context: Context) => {
+              return context.movesMade % 2 != 0;
+            },
+            health: (context: Context) => {
+              return (context.health = context.health - 1);
+            },
+          }),
         },
         MAKE_MOVE: {
           actions: assign<Context, any>({

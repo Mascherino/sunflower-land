@@ -140,8 +140,8 @@ export class MemoryScene extends Phaser.Scene {
     if (this.isPlaying) {
       const endAt = this.portalService?.state.context.endAt
         ? this.portalService?.state.context.endAt
-        : 0;
-      if (Date.now() > endAt) {
+        : Infinity;
+      if (Date.now() >= endAt) {
         const currentScore = this.score;
         this.endGame(currentScore);
       }

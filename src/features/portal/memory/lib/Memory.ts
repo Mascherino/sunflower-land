@@ -519,12 +519,16 @@ export class Memory {
 
         health = Math.max(health - 1, 0);
 
-        this.scene.portalService?.send("MAKE_MOVE", {
-          solved: solvedBefore,
-          score: score,
-          flippedCard: this.flippedCards[0].name,
-          health: health,
-        });
+        if (this.scene.movesMade == 0) {
+          this.scene.portalService?.send("FIRST_MOVE");
+        } else {
+          this.scene.portalService?.send("MAKE_MOVE", {
+            solved: solvedBefore,
+            score: score,
+            flippedCard: this.flippedCards[0].name,
+            health: health,
+          });
+        }
 
         this.scene.locked = false;
 
