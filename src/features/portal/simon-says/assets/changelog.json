@@ -1,0 +1,46 @@
+[
+  {
+    "date": "02-09-2025",
+    "text": ["Testnet release. 🚀"]
+  },
+  {
+    "date": "08-09-2025",
+    "text": ["Moved buy hint button to top right"]
+  },
+  {
+    "date": "10-09-2025",
+    "text": ["Replaced moves made with healthbar"]
+  },
+  {
+    "date": "11-09-2025",
+    "text": [
+      "Card animations for pregame and game starting",
+      "Added sound effects",
+      "Guide and Changelog added",
+      "Seasonal maps"
+    ]
+  },
+  {
+    "date": "12-09-2025",
+    "text": ["Replaced bumpkin placeholder", "Added background music"]
+  },
+  {
+    "date": "13-09-2025",
+    "text": [
+      "Added adjustable settings for background music, sound effects and animations."
+    ]
+  },
+  {
+    "date": "18-09-2025",
+    "text": [
+      "Moved hint button to bottom middle.",
+      "Reduced cost of hint to 0.25 Flower.",
+      "Removed extra health when finding match.",
+      "Added time limit."
+    ]
+  },
+  {
+    "date": "24-09-2025",
+    "text": ["Added support for different difficulty levels."]
+  }
+]

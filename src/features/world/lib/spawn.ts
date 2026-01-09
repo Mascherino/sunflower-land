@@ -185,4 +185,10 @@ export const SPAWNS: () => SpawnLocation = () => ({
       y: 420,
     },
   },
+  simon_says: {
+    default: {
+      x: 100,
+      y: 100,
+    },
+  },
 });
