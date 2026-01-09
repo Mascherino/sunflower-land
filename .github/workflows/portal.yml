@@ -2,9 +2,7 @@
 name: Portal deploy
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
