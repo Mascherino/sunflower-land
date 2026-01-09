@@ -1,6 +1,6 @@
 import { Equipped } from "features/game/types/bumpkin";
 
-export const MINIGAME_NAME = "simon_says";
+export const MINIGAME_NAME = "chaacs-temple";
 
 export const UNLIMITED_ATTEMPTS_COST = 3;
 export const RESTOCK_ATTEMPTS_COST = 1;
@@ -10,7 +10,7 @@ export const RESTOCK_ATTEMPTS = 3;
 
 export const DEFAULT_SEQUENCE_LENGTH = 3;
 
-export const LS_PREFIX = "minigames.simon_says";
+export const LS_PREFIX = `minigames.${MINIGAME_NAME}`;
 
 export const defaultBgmMuted = false;
 export const defaultBgmVolume = 0.25;

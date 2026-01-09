@@ -185,7 +185,7 @@ export const SPAWNS: () => SpawnLocation = () => ({
       y: 420,
     },
   },
-  simon_says: {
+  "chaacs-temple": {
     default: {
       x: 100,
       y: 100,

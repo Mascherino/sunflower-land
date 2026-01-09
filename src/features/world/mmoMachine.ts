@@ -36,7 +36,7 @@ export type Scenes = {
   love_island: Room<PlazaRoomState> | undefined;
   memory: Room<PlazaRoomState> | undefined;
   holidays_island: Room<PlazaRoomState> | undefined;
-  simon_says: Room<PlazaRoomState> | undefined;
+  "chaacs-temple": Room<PlazaRoomState> | undefined;
 };
 
 export type SceneId = keyof Scenes;

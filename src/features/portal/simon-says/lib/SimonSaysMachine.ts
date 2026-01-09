@@ -148,7 +148,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             token: context.jwt as string,
           });
 
-          const minigame = game.minigames.games["simon-says"];
+          const minigame = game.minigames.games["chaacs-temple"];
           const attemptsRemaining = getAttemptsLeft(minigame);
 
           return { game, farmId, attemptsRemaining };
@@ -182,7 +182,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
               purchaseMinigameItem({
                 state: context.state!,
                 action: {
-                  id: "simon-says",
+                  id: "chaacs-temple",
                   sfl: RESTOCK_ATTEMPTS_COST,
                   type: "minigame.itemPurchased",
                   items: {},
@@ -197,7 +197,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
               purchaseMinigameItem({
                 state: context.state!,
                 action: {
-                  id: "simon-says",
+                  id: "chaacs-temple",
                   sfl: UNLIMITED_ATTEMPTS_COST,
                   type: "minigame.itemPurchased",
                   items: {},
@@ -213,7 +213,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
         {
           target: "noAttempts",
           cond: (context) => {
-            const minigame = context.state?.minigames.games["simon-says"];
+            const minigame = context.state?.minigames.games["chaacs-temple"];
             const attemptsRemaining = getAttemptsLeft(minigame);
             return attemptsRemaining <= 0;
           },
@@ -255,7 +255,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
                 state: context.state,
                 action: {
                   type: "minigame.attemptStarted",
-                  id: "simon-says",
+                  id: "chaacs-temple",
                 },
               });
             },
@@ -284,7 +284,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
                 action: {
                   type: "minigame.scoreSubmitted",
                   score: context.score,
-                  id: "simon-says",
+                  id: "chaacs-temple",
                 },
               });
             },
@@ -322,7 +322,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
                 action: {
                   type: "minigame.scoreSubmitted",
                   score: Math.round(context.score),
-                  id: "simon-says",
+                  id: "chaacs-temple",
                 },
               });
             },
@@ -334,7 +334,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
               purchaseMinigameItem({
                 state: context.state!,
                 action: {
-                  id: "simon-says",
+                  id: "chaacs-temple",
                   sfl: HINT_COST,
                   type: "minigame.itemPurchased",
                   items: {},
@@ -353,7 +353,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
           cond: (context) => {
             const dateKey = new Date().toISOString().slice(0, 10);
 
-            const minigame = context.state?.minigames.games["simon-says"];
+            const minigame = context.state?.minigames.games["chaacs-temple"];
             const history = minigame?.history ?? {};
 
             return !!history[dateKey]?.prizeClaimedAt;

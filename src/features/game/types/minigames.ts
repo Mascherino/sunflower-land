@@ -17,7 +17,7 @@ export type MinigameName =
   | "festival-of-colors-2025"
   | "holiday-puzzle-2025"
   | "memory"
-  | "simon-says";
+  | "chaacs-temple";
 
 export const SUPPORTED_MINIGAMES: MinigameName[] = [
   "crop-boom",
@@ -38,5 +38,5 @@ export const SUPPORTED_MINIGAMES: MinigameName[] = [
   "festival-of-colors-2025",
   "holiday-puzzle-2025",
   "memory",
-  "simon-says",
+  "chaacs-temple",
 ];

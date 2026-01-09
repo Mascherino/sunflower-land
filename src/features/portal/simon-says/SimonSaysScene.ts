@@ -145,7 +145,8 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
     this.lightGlow = glow;
     this.rawLights = lights;
 
-    const map = (this.game.scene.getScene("simon_says") as SimonSaysScene).map;
+    const map = (this.game.scene.getScene("chaacs-temple") as SimonSaysScene)
+      .map;
     this.map.height = map.height * SQUARE_WIDTH;
     this.map.width = map.width * SQUARE_WIDTH;
   }

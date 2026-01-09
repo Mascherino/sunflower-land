@@ -8,7 +8,7 @@ export const PortalApp: React.FC = () => {
   switch (CONFIG.PORTAL_APP) {
     case "memory":
       return <MemoryApp />;
-    case "simon_says":
+    case "chaacs-temple":
       return <SimonSaysApp />;
   }
 };
