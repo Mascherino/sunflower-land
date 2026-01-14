@@ -42,6 +42,8 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
   lightGlow: number[] = [];
   rawLights: Record<LightName, Light> = {} as Record<string, Light>;
   map = { width: 0, height: 0 };
+  cam: Phaser.Cameras.Scene2D.Camera | undefined;
+  debugEnabled = false;
   constructor(game: Phaser.Game) {
     super({
       game: game,
@@ -56,6 +58,7 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
       uniform float uLightEnabled[20];
       uniform float uLightGlow[20];
       uniform int uLightCount;
+      uniform bool uDebugEnabled;
 
       uniform vec3 uLightColor;
       uniform float uGlowStrength;
@@ -74,8 +77,20 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
               vec2 diff = outTexCoord - uLightPositions[i];
               diff.x *= uAspect;
               float dist = length(diff);
+              if (uDebugEnabled) {
+                if (dist < 0.00125) {
+                  color.rgb = vec3(1.0, 0.0, 0.0);
+                  gl_FragColor = color;
+                  continue;
+                }
+              }
 
-              float stepSize = 0.00390625;
+              float stepSize = 0.0;
+              if (uDebugEnabled) {
+                stepSize = 0.1;
+              } else {
+                stepSize = 0.00390625;
+              }
               float qDist = floor(dist / stepSize) * stepSize;
               float qRadius = floor(uLightRadii[i] / stepSize) * stepSize;
 
@@ -107,6 +122,7 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
   }
 
   onPreRender(): void {
+    const view = this.cam!.worldView;
     this.set1f("uDarkness", this.darkness);
     this.set3f("uLightColor", 1.0, 0.95, 0.7);
     this.set1f("uGlowStrength", 1.0);
@@ -114,7 +130,11 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
     const radii = [];
     for (let i = 0; i < this.lightPositions.length; i++) {
       const pos = this.lightPositions[i];
-      positions.push(pos.x / this.map.width, pos.y / this.map.height);
+      positions.push(
+        (pos.x - view.x) / view?.width,
+        (pos.y - view?.y) / view?.height,
+      );
+      // positions.push(pos.x / this.map.width, pos.y / this.map.height);
       radii.push(
         this.lightRadii[i] / Math.max(this.map.width, this.map.height),
       );
@@ -126,6 +146,7 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
     this.set1fv("uLightEnabled", this.lightEnabled);
     this.set1fv("uLightGlow", this.lightGlow);
     this.set1i("uLightCount", this.lightPositions.length);
+    this.setBoolean("uDebugEnabled", this.debugEnabled);
   }
 
   setLights(lights: Record<LightName, Light>): void {
@@ -145,31 +166,12 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
     this.lightGlow = glow;
     this.rawLights = lights;
 
-    const map = (this.game.scene.getScene("chaacs-temple") as SimonSaysScene)
-      .map;
+    const scene = this.game.scene.getScene("chaacs-temple") as SimonSaysScene;
+    const map = scene.map;
     this.map.height = map.height * SQUARE_WIDTH;
     this.map.width = map.width * SQUARE_WIDTH;
+    this.cam = scene.cameras.main;
   }
-
-  // async fadeDarkness(
-  //   destDarkness: number,
-  //   duration: number,
-  //   stepSize: number = 0.0,
-  // ) {
-  //   if (destDarkness == this.darkness) return;
-  //   const darknessDiff = this.darkness - destDarkness;
-  //   if (destDarkness < this.darkness && stepSize > 0) {
-  //     stepSize = -stepSize;
-  //   }
-  //   if (stepSize == 0.0) {
-  //     stepSize = darknessDiff / duration;
-  //   }
-  //   const stepDuration = duration / stepSize;
-  //   while (true) {
-  //     this.darkness = this.darkness + stepSize;
-  //     await delay(stepDuration);
-  //   }
-  // }
 
   async fadeDarkness(
     destDarkness: number,
