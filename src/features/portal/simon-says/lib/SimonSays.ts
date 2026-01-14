@@ -234,12 +234,6 @@ export class SimonSays {
     });
 
     placeBraziers(this.scene);
-    // const brazier = this.scene.add.sprite(
-    //   (this.scene.map.width / 2 - 10) * SQUARE_WIDTH,
-    //   (this.scene.map.height / 2 - 6) * SQUARE_WIDTH - 1,
-    //   "brazier",
-    // );
-    // brazier.play({ key: "brazier_anim", randomFrame: true });
 
     let i = -1;
     while (i < this.lives - 1) {
@@ -334,12 +328,12 @@ export class SimonSays {
         if (this.scene.lives <= 0) {
           await delay(500);
           await this.turnOffBraziers();
-          await delay(1000);
+          await delay(750);
           shader.setLights({
             ...shader.rawLights,
             game: { ...shader.rawLights.game, enabled: 0.0 },
           });
-          await shader.fadeDarkness(1.0, 3000);
+          await shader.fadeDarkness(1.0, 2000);
 
           await delay(1000);
           this.lightningStrike();
@@ -358,25 +352,16 @@ export class SimonSays {
     rawLights.brazier_lefttop.enabled = 0.0;
     rawLights.brazier_righttop.enabled = 0.0;
     shader.setLights(rawLights);
-    await delay(1000);
+    await delay(750);
 
     rawLights.brazier_leftbottom.enabled = 0.0;
     rawLights.brazier_rightbottom.enabled = 0.0;
     shader.setLights(rawLights);
-    await delay(1000);
+    await delay(750);
 
     rawLights.brazier_bottomleft.enabled = 0.0;
     rawLights.brazier_bottomright.enabled = 0.0;
     shader.setLights(rawLights);
-  }
-
-  private turnOnAll() {
-    this.pieces.forEach((piece) => {
-      piece.image.disableInteractive(true);
-      const active = piece.config.stem + "_active";
-
-      piece.image.setTexture(active);
-    });
   }
 
   /**
@@ -452,10 +437,10 @@ export class SimonSays {
     glowCam.setZoom(this.scene.cameras.main.zoom);
     glowCam.ignore(this.scene.children.list.filter((obj) => obj !== lightning));
     this.camera = glowCam;
-    // only render the sprite in the second camera
 
-    // Optional: glow shader for sprite
-    // sprite.setPipeline("GlowPipeline"); // or leave default if additive
+    const shader = this.scene.cameras.main.getPostPipeline(
+      "grayScale",
+    ) as GrayScalePipeline;
 
     lightning
       .on(
@@ -464,6 +449,9 @@ export class SimonSays {
           _anim: Phaser.Animations.Animation,
           frame: Phaser.Animations.AnimationFrame,
         ) => {
+          if (frame.index === 2) {
+            shader.fadeDarkness(0.3, 125, 0.05);
+          }
           if (frame.index === 3) {
             bumpkin?.setVisible(false);
             this.deathSprite = this.scene.add.sprite(
@@ -482,6 +470,7 @@ export class SimonSays {
       )
       .on("animationcomplete", () => {
         lightning.destroy(true);
+        shader.fadeDarkness(1.0, 125, 0.075);
       });
     lightning.play("thunder_anim");
   }
