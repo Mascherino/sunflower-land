@@ -6,7 +6,7 @@ import simonMap from "./assets/SimonSays.json";
 import { SQUARE_WIDTH } from "features/game/lib/constants";
 import { MachineInterpreter, PortalMachineState } from "./lib/SimonSaysMachine";
 import { GameState } from "features/game/types/game";
-import { isMobile } from "mobile-device-detect";
+import { isMobile, isTablet } from "mobile-device-detect";
 import { CONFIG } from "lib/config";
 import { EventBus } from "./lib/EventBus";
 import { getAnimationUrl } from "features/world/lib/animations";
@@ -327,8 +327,14 @@ export class SimonSaysScene extends Phaser.Scene {
       window.innerWidth < window.innerHeight
         ? window.innerWidth
         : window.innerHeight;
-    if (isMobile) this.ZOOM = baseZoom / (12 * SQUARE_WIDTH);
-    else this.ZOOM = baseZoom / (18.5 * SQUARE_WIDTH);
+    // if (isMobile) this.ZOOM = baseZoom / (12 * SQUARE_WIDTH);
+    if (isTablet) this.ZOOM = baseZoom / (14 * SQUARE_WIDTH);
+    else if (isMobile) {
+      const minZoom = Math.ceil((this.game.canvas.height / 448) * 10) / 10;
+      const gameZoom = Math.ceil((this.game.canvas.width / 176) * 10) / 10;
+      this.ZOOM = Math.max(minZoom, (minZoom + gameZoom) / 2);
+      // console.log(minZoom, gameZoom, (minZoom + gameZoom) / 2);
+    } else this.ZOOM = baseZoom / (18.5 * SQUARE_WIDTH);
     camera.setZoom(this.ZOOM);
     camera.fadeIn();
   }
