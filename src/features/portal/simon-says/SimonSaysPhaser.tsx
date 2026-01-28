@@ -56,6 +56,7 @@ export const MemoryPhaser: React.FC = () => {
       loader: {
         crossOrigin: "anonymous",
       },
+      maxLights: 50,
     };
 
     game.current = new Game({

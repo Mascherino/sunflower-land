@@ -33,10 +33,12 @@ export const DynamicNFT: React.FC<Props> = ({
   if (!showTools) {
     delete parts.tool;
   }
-
-  const imageSrc = getBumpkinImageURL({
-    parts,
-  });
+  const imageSrc =
+    parts.onesie == "Maya Armor"
+      ? "/world/simon-says/Chaac.webp"
+      : getBumpkinImageURL({
+          parts,
+        });
 
   return (
     <div className="relative w-full">

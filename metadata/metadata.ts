@@ -20303,4 +20303,15 @@ export const OPEN_SEA_WEARABLES: Record<BumpkinItem, Metadata> = {
     image: "../public/wearables/images/516.png",
     name: "Diamond Snow Aura",
   },
+  "Maya Armor": {
+    description: "Armor worn by mayan guards.",
+    decimals: 0,
+    attributes: [
+      { trait_type: "Part", value: "Onesie" },
+      { trait_type: "Tradeable", value: "No" },
+    ],
+    external_url: "https://docs.sunflower-land.com/getting-started/about",
+    image: "../public/wearables/images/517.png",
+    name: "Maya Armor",
+  },
 };

@@ -22,18 +22,20 @@ export const midOffset = 1.75;
 export const outerOffset = 4.25;
 export const blinkDuration = 0.5;
 
+export const AMBIENT_COLOR = 0x050505;
+export const IMAGE_SCALE = 0.65;
+
+export const BRAZIER_LIGHT_COLOR = 0xffe685;
+export const BRAZIER_LIGHT_RADIUS = 62.5;
+export const BRAZIER_LIGHT_INTENSITY = 2;
+export const LIFEBRAZER_LIGHT_RADIUS = 65;
+
 export type SimonSaysNPC = "Simon";
 
 export const SIMON_SAYS_NPC_WEARABLES: Record<SimonSaysNPC, Equipped> = {
   Simon: {
     background: "Farm Background",
-    hair: "Greyed Glory",
-    body: "Beige Farmer Potion",
-    shirt: "Blue Blossom Shirt",
-    beard: "Wise Beard",
-    pants: "Blue Suspenders",
-    shoes: "Bumpkin Boots",
-    tool: "Kama",
-    hat: "Straw Hat",
+    body: "Goblin Potion",
+    onesie: "Maya Armor",
   },
 };

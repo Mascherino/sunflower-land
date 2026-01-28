@@ -1,51 +1,55 @@
-import { GrayScalePipeline, SimonSaysScene } from "../SimonSaysScene";
+import { SimonSaysScene } from "../SimonSaysScene";
 import { SQUARE_WIDTH } from "features/game/lib/constants";
 
 import {
+  AMBIENT_COLOR,
   blinkDuration,
+  BRAZIER_LIGHT_COLOR,
+  BRAZIER_LIGHT_INTENSITY,
   DEFAULT_SEQUENCE_LENGTH,
   defaultBgmVolume,
   defaultEffectsVolume,
+  IMAGE_SCALE,
+  LIFEBRAZER_LIGHT_RADIUS,
 } from "../util/Constants";
 import { EventObject } from "xstate";
 import { EventBus } from "./EventBus";
 import { EVENTS } from "./Events";
 import { getMemorySettings } from "../util/useSettings";
 import { MemorySettings } from "./Settings";
-import { PieceConfig, piecesConfig } from "../util/PiecesConfig";
+import { piecesConfig } from "../util/PiecesConfig";
 import { randomInt } from "lib/utils/random";
 import { delay } from "../util/Utils";
 import { BumpkinContainer } from "features/world/containers/BumpkinContainer";
 import { placeBraziers } from "./braziers";
-import { getDefaultLights, LightName } from "./lights";
-
-interface Piece {
-  image: Required<Phaser.GameObjects.Image>;
-  config: Required<PieceConfig>;
-}
+import { LightName } from "./lights";
+// import { SpeechBubble } from "./SpeechBubble";
+// import debounce from "lodash.debounce";
+import { Brazier } from "./Brazier";
+import { GamePiece } from "./GamePiece";
+import { LifeBrazier } from "./LifeBrazier";
 
 export class SimonSays {
-  private pieces: Piece[] = [];
+  private pieces: GamePiece[] = [];
   private scene: SimonSaysScene;
   private duration = 0;
-  private TILE_SIZE;
-  private scale = 0.8;
   private targetScore = 0;
   private lives = 3;
-  private lifeBraziers: Phaser.GameObjects.Sprite[] = [];
+  private braziers: Partial<Record<LightName, Brazier>> = {};
+  private lifeBraziers: Partial<Record<LightName, LifeBrazier>> = {};
+  private lifeBrazierOrder: LightName[] = [];
 
   private bumpkin?: BumpkinContainer | undefined = undefined;
+  private bumpkinPedastal?: Phaser.GameObjects.Sprite | undefined = undefined;
+  private npc: BumpkinContainer | undefined = undefined;
   private deathSprite: Phaser.GameObjects.Sprite | undefined = undefined;
   private currentSequence: number[] = [];
   private hintListener: ((event: EventObject) => void) | null = null;
   static current: SimonSays | null = null;
   public settings: MemorySettings = getMemorySettings();
   private camera: Phaser.Cameras.Scene2D.Camera | undefined;
-
   constructor(scene: SimonSaysScene) {
     this.scene = scene;
-
-    this.TILE_SIZE = SQUARE_WIDTH * 2;
 
     this.setupSounds();
 
@@ -125,12 +129,41 @@ export class SimonSays {
     const gamestate = this.scene.gameState;
     this.bumpkin = new BumpkinContainer({
       scene: this.scene,
-      x: (this.scene.map.width / 2 + 7) * SQUARE_WIDTH,
-      y: (this.scene.map.height / 2 + 4) * SQUARE_WIDTH,
+      x: (this.scene.map.width / 2 + 4) * SQUARE_WIDTH,
+      y: (this.scene.map.height / 2 + 5.75) * SQUARE_WIDTH,
       clothing: { ...gamestate.bumpkin.equipped, updatedAt: Date.now() },
       direction: "left",
       username: gamestate.username,
     });
+
+    this.npc = new BumpkinContainer({
+      scene: this.scene,
+      x: (this.scene.map.width / 2 - 4) * SQUARE_WIDTH,
+      y: (this.scene.map.height / 2 + 5.75) * SQUARE_WIDTH,
+      clothing: {
+        ...gamestate.bumpkin.equipped,
+        onesie: "Maya Armor",
+        updatedAt: Date.now(),
+      },
+      direction: "right",
+    });
+
+    // const speech = new SpeechBubble(this.scene, "Pathetic...", "right");
+    // speech.setVisible(false);
+    // this.scene.cameras.main.ignore([this.npc, this.bumpkin]);
+    // glowCam.ignore(this.npc);
+    // console.log(this.npc, this.npc.cameraFilter.toString(2));
+    // unignoreGameObject(this.scene.cameras.main, this.npc);
+    // console.log(this.npc.cameraFilter.toString(2));
+    // this.npc.label?.setVisible(false);
+    // this.npc.add(speech);
+
+    // speech.setVisible(true);
+
+    // debounce(() => {
+    //   speech.destroy(true);
+    //   this.npc!.label?.setVisible(true);
+    // }, 5000)();
 
     // this.hintListener = (event) => {
     //   if (event.type === "BUY_HINT") {
@@ -186,104 +219,154 @@ export class SimonSays {
 
   public cleanPregame() {
     this.pieces.forEach((piece) => {
-      piece.image.destroy(true);
+      piece.sprite.destroy(true);
     });
     this.pieces = [];
 
-    this.lifeBraziers.forEach((brazier) => {
-      brazier.destroy(true);
-    });
-    this.lifeBraziers = [];
+    Object.values(this.lifeBraziers).forEach((brazier) =>
+      brazier.sprite.destroy(true),
+    );
+    this.lifeBraziers = {};
+    Object.values(this.braziers).forEach((brazier) =>
+      brazier.sprite.destroy(true),
+    );
     this.camera ? this.scene.cameras.remove(this.camera) : null;
-    const shader = this.scene.cameras.main.getPostPipeline(
-      "grayScale",
-    ) as GrayScalePipeline;
-    shader.setLights(getDefaultLights(this.scene.map));
-    shader.fadeDarkness(0.9, 500);
+
+    this.npc?.destroy();
+    this.bumpkin?.destroy();
+    this.deathSprite?.destroy();
+
+    [...this.scene.lights.lights].forEach((light) =>
+      this.scene.lights.removeLight(light),
+    );
   }
 
   drawPregame() {
     Object.values(piecesConfig).forEach((value) => {
-      const img = this.scene.add.image(
-        (this.scene.map.width / 2 + value.xOffset) * SQUARE_WIDTH,
-        (this.scene.map.height / 2 + value.yOffset) * SQUARE_WIDTH,
-        `${value.stem}${value.suffix}`,
-      );
+      const x = (this.scene.map.width / 2 + value.xOffset) * SQUARE_WIDTH;
+      const y = (this.scene.map.height / 2 + value.yOffset) * SQUARE_WIDTH;
+      const img = this.scene.add.sprite(x, y, `${value.stem}${value.suffix}`);
+      const piece = new GamePiece(img, value);
       img
         .setScale(0.65)
         .setInteractive({ useHandCursor: true, pixelPerfect: true })
-        .on(
-          "pointerdown",
-          async () =>
-            await this.handlePointerDown({
-              image: img,
-              config: value,
-            } as Piece),
-        )
-        .on(
-          "pointerup",
-          async () =>
-            await this.handlePointerUp({ image: img, config: value } as Piece),
-        )
-        .on(
-          "pointerout",
-          async () =>
-            await this.handlePointerUp({ image: img, config: value } as Piece),
-        );
-      this.pieces.push({ image: img, config: value } as Piece);
+        .on("pointerdown", async () => await this.handlePointerDown(piece))
+        .on("pointerup", async () => await this.handlePointerUp(piece))
+        .on("pointerout", async () => await this.handlePointerUp(piece))
+        .setDepth(2)
+        .setPipeline("Light2D");
+      this.pieces.push(piece);
+      piece.glow = this.scene.add
+        .sprite(x, y, `${value.stem}_glow`)
+        .setScale(IMAGE_SCALE)
+        .setVisible(false)
+        .setDepth(1)
+        .setBlendMode(Phaser.BlendModes.ADD);
     });
 
-    placeBraziers(this.scene);
+    // Lighting
+    this.scene.lights.enable();
+    this.scene.lights.setAmbientColor(AMBIENT_COLOR);
+    this.scene.lights.addLight(
+      (this.scene.map.width / 2) * SQUARE_WIDTH,
+      (this.scene.map.height / 2) * SQUARE_WIDTH,
+      150,
+      0xeeeeee,
+      1,
+    );
 
+    this.braziers = placeBraziers(this.scene);
+    // LifeBraziers
+    this.lifeBrazierOrder = [
+      "lifeBrazier_left",
+      "lifeBrazier_middle",
+      "lifeBrazier_right",
+    ];
     let i = -1;
     while (i < this.lives - 1) {
-      const lifeBrazier = this.scene.add.sprite(
-        (this.scene.map.width / 2 + 4 * i) * SQUARE_WIDTH,
-        (this.scene.map.height / 2 - 7.5) * SQUARE_WIDTH,
-        "life_brazier_active",
+      const x = (this.scene.map.width / 2 + 4 * i) * SQUARE_WIDTH;
+      const y = (this.scene.map.height / 2 - 7.5) * SQUARE_WIDTH;
+
+      const sprite = this.scene.add
+        .sprite(x, y, "life_brazier_active")
+        .setPipeline("Light2D");
+      const fire = this.scene.add
+        .sprite(x, y - 10, "life_brazier_fire_active")
+        .setPipeline("Light2D")
+        .play({ key: "life_brazier_fire_active_anim", randomFrame: true });
+      const light = this.scene.lights.addLight(
+        x,
+        y,
+        LIFEBRAZER_LIGHT_RADIUS,
+        BRAZIER_LIGHT_COLOR,
+        BRAZIER_LIGHT_INTENSITY,
       );
-      lifeBrazier.play("life_brazier_active_anim");
-      this.lifeBraziers.push(lifeBrazier);
+      sprite.play("life_brazier_active_anim");
+
+      this.lifeBraziers[this.lifeBrazierOrder[i + 1]] = new LifeBrazier(
+        sprite,
+        x,
+        y,
+        fire,
+        light,
+      );
       i++;
     }
-    this.lifeBraziers = this.lifeBraziers.reverse();
 
-    this.scene.add.image(
-      (this.scene.map.width / 2 - 7.5) * SQUARE_WIDTH,
-      (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
-      "bonepile",
-    );
+    this.scene.add
+      .image(
+        (this.scene.map.width / 2 - 7.5) * SQUARE_WIDTH,
+        (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
+        "bonepile",
+      )
+      .setPipeline("Light2D");
 
-    this.scene.add.image(
-      (this.scene.map.width / 2 - 5.5) * SQUARE_WIDTH,
-      (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
-      "headpole",
-    );
+    this.scene.add
+      .image(
+        (this.scene.map.width / 2 - 5.5) * SQUARE_WIDTH,
+        (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
+        "headpole",
+      )
+      .setPipeline("Light2D");
 
-    this.scene.add.image(
-      (this.scene.map.width / 2 + 5.5) * SQUARE_WIDTH,
-      (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
-      "headpole",
-    ).flipX = true;
+    this.scene.add
+      .image(
+        (this.scene.map.width / 2 + 5.5) * SQUARE_WIDTH,
+        (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
+        "headpole",
+      )
+      .setFlipX(true)
+      .setPipeline("Light2D");
 
-    this.scene.add.image(
-      (this.scene.map.width / 2 + 7) * SQUARE_WIDTH,
-      (this.scene.map.width / 2 - 0.5) * SQUARE_WIDTH,
-      "pedastal",
-    );
+    this.bumpkinPedastal = this.scene.add
+      .sprite(
+        (this.scene.map.width / 2 + 4) * SQUARE_WIDTH,
+        (this.scene.map.width / 2 + 1) * SQUARE_WIDTH,
+        "pedastal",
+      )
+      .setPipeline("Light2D");
+
+    this.scene.add
+      .image(
+        (this.scene.map.width / 2 - 4) * SQUARE_WIDTH,
+        (this.scene.map.width / 2 + 1) * SQUARE_WIDTH,
+        "pedastal",
+      )
+      .setFlipX(true)
+      .setPipeline("Light2D");
   }
 
-  private async handlePointerDown(piece: Piece) {
+  private async handlePointerDown(piece: GamePiece) {
     if (this.scene.locked) return;
-    piece.image.setTexture(`${piece.config.stem}_pressed`);
+    piece.press();
   }
 
-  private async handlePointerUp(piece: Piece) {
+  private async handlePointerUp(piece: GamePiece) {
     if (this.scene.locked) return;
 
     // Ignore calls from pointerout event when piece is not pressed
-    if (piece.image.texture.key == `${piece.config.stem}_pressed`) {
-      piece.image.setTexture(`${piece.config.stem}_inactive`);
+    if (piece.sprite.texture.key == `${piece.config.stem}_pressed`) {
+      piece.unpress();
       const idx = this.pieces.findIndex(
         (value) => value.config == piece.config,
       );
@@ -302,40 +385,36 @@ export class SimonSays {
         if (this.currentSequence.length === 0)
           await this.blinkSequence(DEFAULT_SEQUENCE_LENGTH);
       } else {
-        const shader = this.scene.cameras.main.getPostPipeline(
-          "grayScale",
-        ) as GrayScalePipeline;
         lives = lives - 1;
         this.scene.portalService?.send("MAKE_MOVE", {
           score: score,
           lives: lives,
           solved: false,
         });
-        this.lifeBraziers[lives].stop().play("life_brazier_inactive_anim");
-        const order: LightName[] = [
-          "lifeBrazier_left",
-          "lifeBrazier_middle",
-          "lifeBrazier_right",
-        ];
-        const name = order[this.lives - lives - 1];
-        shader.setLights({
-          ...shader.rawLights,
-          [name]: {
-            ...shader.rawLights[order[this.lives - lives - 1]],
-            enabled: 0.0,
-          },
-        });
+
+        const name = this.lifeBrazierOrder[this.lives - lives - 1];
+        // this.lifeBraziers[name]?.sprite
+        //   .stop()
+        //   .play("life_brazier_inactive_anim")
+        //   .on(
+        //     "animationupdate",
+        //     (
+        //       _anim: Phaser.Animations.Animation,
+        //       frame: Phaser.Animations.AnimationFrame,
+        //     ) => {
+        //       if (frame.index === 5) {
+        //         this.lifeBraziers[name]?.turnOff();
+        //         this.lifeBraziers[name]?.sprite.removeListener(
+        //           "animationupdate",
+        //         );
+        //       }
+        //     },
+        //   );
+        this.lifeBraziers[name]?.turnOff();
         if (this.scene.lives <= 0) {
           await delay(500);
           await this.turnOffBraziers();
           await delay(750);
-          shader.setLights({
-            ...shader.rawLights,
-            game: { ...shader.rawLights.game, enabled: 0.0 },
-          });
-          await shader.fadeDarkness(1.0, 2000);
-
-          await delay(1000);
           this.lightningStrike();
           return;
         }
@@ -345,23 +424,16 @@ export class SimonSays {
   }
 
   private async turnOffBraziers() {
-    const shader = this.scene.cameras.main.getPostPipeline(
-      "grayScale",
-    ) as GrayScalePipeline;
-    const rawLights = shader.rawLights;
-    rawLights.brazier_lefttop.enabled = 0.0;
-    rawLights.brazier_righttop.enabled = 0.0;
-    shader.setLights(rawLights);
-    await delay(750);
+    this.braziers.brazier_lefttop?.turnOff();
+    this.braziers.brazier_righttop?.turnOff();
 
-    rawLights.brazier_leftbottom.enabled = 0.0;
-    rawLights.brazier_rightbottom.enabled = 0.0;
-    shader.setLights(rawLights);
     await delay(750);
+    this.braziers.brazier_leftbottom?.turnOff();
+    this.braziers.brazier_rightbottom?.turnOff();
 
-    rawLights.brazier_bottomleft.enabled = 0.0;
-    rawLights.brazier_bottomright.enabled = 0.0;
-    shader.setLights(rawLights);
+    await delay(750);
+    this.braziers.brazier_bottomleft?.turnOff();
+    this.braziers.brazier_bottomright?.turnOff();
   }
 
   /**
@@ -369,7 +441,7 @@ export class SimonSays {
    * @param sequenceLength The length of the sequence to generate.
    */
   private async blinkSequence(sequenceLength: number) {
-    this.pieces.forEach((piece) => piece.image.disableInteractive(true));
+    this.pieces.forEach((piece) => piece.sprite.disableInteractive(true));
     this.currentSequence = [];
     let i = 0;
     while (i < sequenceLength) {
@@ -381,7 +453,7 @@ export class SimonSays {
       i++;
     }
     this.pieces.forEach((piece) =>
-      piece.image.setInteractive({ useHandCursor: true, pixelPerfect: true }),
+      piece.sprite.setInteractive({ useHandCursor: true, pixelPerfect: true }),
     );
   }
 
@@ -393,12 +465,16 @@ export class SimonSays {
     await this.blinkSequence(DEFAULT_SEQUENCE_LENGTH);
   }
 
-  private blinkPiece(piece: Piece) {
+  private blinkPiece(piece: GamePiece) {
     const active = piece.config.stem + "_active";
     const inactive = piece.config.stem + "_inactive";
 
-    piece.image.setTexture(active);
-    setTimeout(() => piece.image.setTexture(inactive), blinkDuration * 1000);
+    piece.sprite.setTexture(active);
+    piece.glow?.setVisible(true);
+    setTimeout(() => {
+      piece.sprite.setTexture(inactive);
+      piece.glow?.setVisible(false);
+    }, blinkDuration * 1000);
   }
 
   /**
@@ -438,10 +514,6 @@ export class SimonSays {
     glowCam.ignore(this.scene.children.list.filter((obj) => obj !== lightning));
     this.camera = glowCam;
 
-    const shader = this.scene.cameras.main.getPostPipeline(
-      "grayScale",
-    ) as GrayScalePipeline;
-
     lightning
       .on(
         "animationupdate",
@@ -449,10 +521,26 @@ export class SimonSays {
           _anim: Phaser.Animations.Animation,
           frame: Phaser.Animations.AnimationFrame,
         ) => {
-          if (frame.index === 2) {
-            shader.fadeDarkness(0.3, 125, 0.05);
-          }
           if (frame.index === 3) {
+            // Bright flash from lightning
+            const start = Phaser.Display.Color.ValueToColor(AMBIENT_COLOR);
+            const end = Phaser.Display.Color.ValueToColor(0xffffff);
+
+            const rgb = { r: start.red, g: start.green, b: start.blue };
+
+            this.scene.tweens.add({
+              targets: rgb,
+              r: end.red,
+              g: end.green,
+              b: end.blue,
+              duration: 100,
+              onUpdate: () =>
+                this.scene.lights.setAmbientColor(
+                  Phaser.Display.Color.GetColor(rgb.r, rgb.g, rgb.b),
+                ),
+            });
+
+            // Bumpkin death animation
             bumpkin?.setVisible(false);
             this.deathSprite = this.scene.add.sprite(
               bumpkin.x,
@@ -460,17 +548,46 @@ export class SimonSays {
               "death",
             );
             this.deathSprite.setFlipX(true);
+            this.deathSprite.setDepth(1);
             this.scene.cameras.main.ignore([lightning, this.deathSprite]);
             this.deathSprite.on("animationcomplete", () => {
               this.scene.endGame(0);
             });
             this.deathSprite.play("death_anim");
+
+            // Pedastal destroy animation
+            const pedastalX = this.bumpkinPedastal!.x;
+            const pedastalY = this.bumpkinPedastal!.y;
+            this.bumpkinPedastal?.destroy();
+            this.bumpkinPedastal = this.scene.add.sprite(
+              pedastalX,
+              pedastalY - 5,
+              "pedastal",
+            );
+            this.bumpkinPedastal?.setDepth(0);
+            this.bumpkinPedastal?.setPipeline("Light2D");
+            this.bumpkinPedastal!.play("pedastal_destroy");
           }
         },
       )
       .on("animationcomplete", () => {
         lightning.destroy(true);
-        shader.fadeDarkness(1.0, 125, 0.075);
+        const end = Phaser.Display.Color.ValueToColor(AMBIENT_COLOR);
+        const start = Phaser.Display.Color.ValueToColor(0xffffff);
+
+        const rgb = { r: start.red, g: start.green, b: start.blue };
+
+        this.scene.tweens.add({
+          targets: rgb,
+          r: end.red,
+          g: end.green,
+          b: end.blue,
+          duration: 350,
+          onUpdate: () =>
+            this.scene.lights.setAmbientColor(
+              Phaser.Display.Color.GetColor(rgb.r, rgb.g, rgb.b),
+            ),
+        });
       });
     lightning.play("thunder_anim");
   }

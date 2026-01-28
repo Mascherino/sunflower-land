@@ -486,7 +486,8 @@ export type BumpkinOnesie =
   | "Red Pepper Onesie"
   | "Raccoon Onesie"
   | "Frank Onesie"
-  | "Cozy Reindeer Onesie";
+  | "Cozy Reindeer Onesie"
+  | "Maya Armor";
 
 // Goes over clothes
 export type BumpkinSuit =
@@ -1105,6 +1106,7 @@ export const ITEM_IDS: Record<BumpkinItem, number> = {
   "Cookie Shield": 514,
   "Cozy Reindeer Onesie": 515,
   "Diamond Snow Aura": 516,
+  "Maya Armor": 517,
 };
 
 // The reverse of above
@@ -1682,6 +1684,7 @@ export const BUMPKIN_ITEM_PART: Record<BumpkinItem, keyof Wallet> = {
   "Holiday Feast Background": "background",
   "Cozy Reindeer Onesie": "onesie",
   "Diamond Snow Aura": "aura",
+  "Maya Armor": "onesie",
 };
 
 /**Copied from BE just for hoarding checks */

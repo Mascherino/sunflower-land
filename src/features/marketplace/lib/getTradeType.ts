@@ -1741,6 +1741,7 @@ export const ITEM_TRADE_TYPES: {
     "Holiday Feast Background": "instant",
     "Cozy Reindeer Onesie": "instant",
     "Diamond Snow Aura": "instant",
+    "Maya Armor": "instant",
   },
 };
 

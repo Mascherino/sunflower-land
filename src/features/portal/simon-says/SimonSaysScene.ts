@@ -10,8 +10,8 @@ import { isMobile, isTablet } from "mobile-device-detect";
 import { CONFIG } from "lib/config";
 import { EventBus } from "./lib/EventBus";
 import { getAnimationUrl } from "features/world/lib/animations";
-import { getDefaultLights, Light, LightName } from "./lib/lights";
 import { delay } from "./util/Utils";
+import { createBrazierAnimations, loadBrazierFiles } from "./lib/braziers";
 
 interface SoundConfig {
   cardflip?:
@@ -40,7 +40,7 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
   lightRadii: number[] = [];
   lightEnabled: number[] = [];
   lightGlow: number[] = [];
-  rawLights: Record<LightName, Light> = {} as Record<string, Light>;
+  // rawLights: Record<LightName, Light> = {} as Record<string, Light>;
   map = { width: 0, height: 0 };
   cam: Phaser.Cameras.Scene2D.Camera | undefined;
   debugEnabled = false;
@@ -149,29 +149,29 @@ export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
     this.setBoolean("uDebugEnabled", this.debugEnabled);
   }
 
-  setLights(lights: Record<LightName, Light>): void {
-    const positions: Phaser.Math.Vector2[] = [];
-    const radii: number[] = [];
-    const enabled: number[] = [];
-    const glow: number[] = [];
-    Object.values(lights).forEach((light) => {
-      positions.push(new Phaser.Math.Vector2(light.x, light.y));
-      radii.push(light.radius);
-      enabled.push(light.enabled);
-      glow.push(light.glow);
-    });
-    this.lightPositions = positions;
-    this.lightRadii = radii;
-    this.lightEnabled = enabled;
-    this.lightGlow = glow;
-    this.rawLights = lights;
+  // setLights(lights: Record<LightName, Light>): void {
+  //   const positions: Phaser.Math.Vector2[] = [];
+  //   const radii: number[] = [];
+  //   const enabled: number[] = [];
+  //   const glow: number[] = [];
+  //   Object.values(lights).forEach((light) => {
+  //     positions.push(new Phaser.Math.Vector2(light.x, light.y));
+  //     radii.push(light.radius);
+  //     enabled.push(light.enabled);
+  //     glow.push(light.glow);
+  //   });
+  //   this.lightPositions = positions;
+  //   this.lightRadii = radii;
+  //   this.lightEnabled = enabled;
+  //   this.lightGlow = glow;
+  //   this.rawLights = lights;
 
-    const scene = this.game.scene.getScene("chaacs-temple") as SimonSaysScene;
-    const map = scene.map;
-    this.map.height = map.height * SQUARE_WIDTH;
-    this.map.width = map.width * SQUARE_WIDTH;
-    this.cam = scene.cameras.main;
-  }
+  //   const scene = this.game.scene.getScene("chaacs-temple") as SimonSaysScene;
+  //   const map = scene.map;
+  //   this.map.height = map.height * SQUARE_WIDTH;
+  //   this.map.width = map.width * SQUARE_WIDTH;
+  //   this.cam = scene.cameras.main;
+  // }
 
   async fadeDarkness(
     destDarkness: number,
@@ -245,6 +245,7 @@ export class SimonSaysScene extends Phaser.Scene {
       "simon_tileset",
       `${CONFIG.PROTECTED_PORTAL_URL}/simon_tileset.png`,
     );
+    this.load.font("monogram", "world/simon-says/monogram.ttf");
   }
 
   async create() {
@@ -261,12 +262,12 @@ export class SimonSaysScene extends Phaser.Scene {
       this.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer
     ).pipelines.addPostPipeline("grayScale", GrayScalePipeline);
 
-    this.cameras.main.setPostPipeline("grayScale");
+    // this.cameras.main.setPostPipeline("Light2D");
 
-    const grayScalePipeline = this.cameras.main.getPostPipeline(
-      "grayScale",
-    ) as GrayScalePipeline;
-    grayScalePipeline.setLights(getDefaultLights(this.map));
+    // const grayScalePipeline = this.cameras.main.getPostPipeline(
+    //   "grayScale",
+    // ) as GrayScalePipeline;
+    // grayScalePipeline.setLights(getDefaultLights(this.map));
 
     if (this.portalService) {
       if (!this.portalService._listeners) {
@@ -315,6 +316,7 @@ export class SimonSaysScene extends Phaser.Scene {
 
   public endGame = (score: number) => {
     this.gameBoard.cleanGame();
+    this.gameBoard.cleanPregame();
     this.gameBoard.drawPregame();
     this.portalService?.send("GAME_OVER", {
       score: score,
@@ -340,11 +342,9 @@ export class SimonSaysScene extends Phaser.Scene {
   }
 
   private loadImages() {
-    this.load.image("demo", "world/simon-says/simon_demo.webp");
-
     const folders = ["mid", "top"];
     const colors = ["blue", "green", "yellow", "red"];
-    const states = ["active", "inactive", "pressed"];
+    const states = ["active", "inactive", "pressed", "glow"];
 
     folders.forEach((part) => {
       colors.forEach((color) => {
@@ -358,6 +358,7 @@ export class SimonSaysScene extends Phaser.Scene {
     this.load.image("core_active", "world/simon-says/core/core_active.png");
     this.load.image("core_inactive", "world/simon-says/core/core_inactive.png");
     this.load.image("core_pressed", "world/simon-says/core/core_pressed.png");
+    this.load.image("core_glow", "world/simon-says/core/core_glow.webp");
 
     this.load.image("bonepile", "world/simon-says/bonepile.webp");
     this.load.image("headpole", "world/simon-says/headpole.webp");
@@ -375,26 +376,23 @@ export class SimonSaysScene extends Phaser.Scene {
       frameWidth: 87,
     });
 
-    this.load.spritesheet("brazier", "world/simon-says/brazier-Sheet.webp", {
-      frameHeight: 30,
-      frameWidth: 16,
-    });
+    loadBrazierFiles(this);
 
     this.load.spritesheet(
-      "life_brazier_active",
-      "world/simon-says/life_brazier_active-Sheet.webp",
+      "pedastal_destroy",
+      "world/simon-says/pedastal_destroy.webp",
       {
-        frameHeight: 32,
-        frameWidth: 32,
+        frameHeight: 35,
+        frameWidth: 46,
       },
     );
 
     this.load.spritesheet(
-      "life_brazier_inactive",
-      "world/simon-says/life_brazier_inactive-Sheet.webp",
+      "32_1_5_13_18_22_23_0_0_0_0_517",
+      "world/simon-says/chaac_idle.webp",
       {
-        frameHeight: 32,
-        frameWidth: 32,
+        frameHeight: 19,
+        frameWidth: 20,
       },
     );
   }
@@ -421,12 +419,9 @@ export class SimonSaysScene extends Phaser.Scene {
       0,
     ) as Phaser.Tilemaps.Tileset;
     this.map.layers.forEach((layerData) => {
-      const layer = this.map.createLayer(
-        layerData.name,
-        [tileset, simonTileset],
-        0,
-        0,
-      );
+      const layer = this.map
+        .createLayer(layerData.name, [tileset, simonTileset], 0, 0)!
+        .setPipeline("Light2D");
       this.layers[layerData.name] = layer as Phaser.Tilemaps.TilemapLayer;
     });
     this.cameras.main.centerOn(
@@ -454,6 +449,8 @@ export class SimonSaysScene extends Phaser.Scene {
   }
 
   initAnimations() {
+    createBrazierAnimations(this);
+
     if (!this.anims.exists("death_anim"))
       this.anims.create({
         key: "death_anim",
@@ -470,28 +467,22 @@ export class SimonSaysScene extends Phaser.Scene {
         repeat: 0,
       });
 
-    if (!this.anims.exists("brazier_anim"))
+    if (!this.anims.exists("pedastal_destroy"))
       this.anims.create({
-        key: "brazier_anim",
-        frames: this.anims.generateFrameNumbers("brazier"),
-        frameRate: 10,
-        repeat: -1,
-      });
-
-    if (!this.anims.exists("life_brazier_active_anim"))
-      this.anims.create({
-        key: "life_brazier_active_anim",
-        frames: this.anims.generateFrameNumbers("life_brazier_active"),
-        frameRate: 10,
-        repeat: -1,
-      });
-
-    if (!this.anims.exists("life_brazier_inactive_anim"))
-      this.anims.create({
-        key: "life_brazier_inactive_anim",
-        frames: this.anims.generateFrameNumbers("life_brazier_inactive"),
+        key: "pedastal_destroy",
+        frames: this.anims.generateFrameNumbers("pedastal_destroy"),
         frameRate: 10,
         repeat: 0,
+      });
+
+    if (!this.anims.exists("32_1_5_13_18_22_23_0_0_0_0_517-bumpkin-idle"))
+      this.anims.create({
+        key: "32_1_5_13_18_22_23_0_0_0_0_517-bumpkin-idle",
+        frames: this.anims.generateFrameNumbers(
+          "32_1_5_13_18_22_23_0_0_0_0_517",
+        ),
+        frameRate: 10,
+        repeat: -1,
       });
   }
 
