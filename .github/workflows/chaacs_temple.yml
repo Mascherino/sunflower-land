@@ -6,7 +6,7 @@ on:
 jobs:
   deploy:
     concurrency: portal-deploy
-    environment: develop
+    environment: "Chaacs Temple"
     runs-on: ubuntu-latest
     steps:
       - name: Get current date
