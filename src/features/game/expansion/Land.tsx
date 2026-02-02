@@ -44,6 +44,7 @@ import {
 } from "./lib/utils";
 import { Clutter } from "features/island/clutter/Clutter";
 import { PetNFT } from "features/island/pets/PetNFT";
+import { WaterTrapSpot } from "features/island/fisherman/WaterTrapSpot";
 
 export const LAND_WIDTH = 6;
 
@@ -227,6 +228,22 @@ const _airdropPositions = (state: MachineState) => {
   };
 };
 
+const _waterTrapPositions = (state: MachineState) => {
+  const waterTraps = state.context.state.crabTraps.trapSpots;
+
+  if (!waterTraps) return { positions: [] };
+
+  return {
+    waterTraps,
+    positions: getObjectEntries(waterTraps).flatMap(([, waterTrap]) => {
+      return {
+        x: waterTrap.x,
+        y: waterTrap.y,
+      };
+    }),
+  };
+};
+
 export const LandComponent: React.FC = () => {
   const { gameService } = useContext(Context);
   const { pathname } = useLocation();
@@ -234,6 +251,7 @@ export const LandComponent: React.FC = () => {
   const showMarketplace = pathname.includes("marketplace");
   const showFlowerDashboard = pathname.includes("flower-dashboard");
   const showEconomyDashboard = pathname.includes("economy-dashboard");
+  const showRetentionDashboard = pathname.includes("retention-dashboard");
 
   const paused = useSelector(gameService, isPaused);
   const island = useSelector(gameService, _island);
@@ -312,6 +330,11 @@ export const LandComponent: React.FC = () => {
   const { airdrops } = useSelector(
     gameService,
     _airdropPositions,
+    comparePositions,
+  );
+  const { waterTraps } = useSelector(
+    gameService,
+    _waterTrapPositions,
     comparePositions,
   );
   const landscaping = useSelector(gameService, isLandscaping);
@@ -876,6 +899,24 @@ export const LandComponent: React.FC = () => {
     );
   }, [airdrops]);
 
+  const waterTrapElements = useMemo(() => {
+    if (!waterTraps) return [];
+
+    return Object.entries(waterTraps).map(([id, waterTrap]) => {
+      return (
+        <MapPlacement
+          key={`water-trap-${id}`}
+          x={waterTrap.x}
+          y={waterTrap.y}
+          height={1}
+          width={1}
+        >
+          <WaterTrapSpot key={`water-trap-${id}`} id={id} />
+        </MapPlacement>
+      );
+    });
+  }, [waterTraps]);
+
   // Memoize island elements with enhanced performance tracking
   const islandElements = useMemo(() => {
     const elements = [
@@ -1008,6 +1049,9 @@ export const LandComponent: React.FC = () => {
 
         {!landscaping && <Fisherman />}
 
+        {/* Water trap spots - rendered after Fisherman to ensure they appear on top */}
+        {!landscaping && waterTrapElements}
+
         {/* Background darkens in landscaping */}
         <div
           className={classNames(
@@ -1026,7 +1070,10 @@ export const LandComponent: React.FC = () => {
 
       {!landscaping && !visiting && <Hud isFarming={true} location="farm" />}
 
-      {(showMarketplace || showFlowerDashboard || showEconomyDashboard) &&
+      {(showMarketplace ||
+        showFlowerDashboard ||
+        showEconomyDashboard ||
+        showRetentionDashboard) &&
         createPortal(
           <div
             data-html2canvas-ignore="true"

@@ -16,7 +16,7 @@ import {
 } from "./landExpansion/stoneMine";
 import {
   mineGold as landExpansionMineGold,
-  LandExpansionMineGoldAction,
+  LandExpansionGoldMineAction,
 } from "./landExpansion/mineGold";
 
 import {
@@ -45,6 +45,18 @@ import {
   collectRecipe,
   CollectRecipeAction,
 } from "./landExpansion/collectRecipe";
+import {
+  cancelProcessedResource,
+  CancelProcessedResourceAction,
+} from "./landExpansion/cancelProcessedResource";
+import {
+  processProcessedResource,
+  ProcessProcessedResourceAction,
+} from "./landExpansion/processResource";
+import {
+  collectProcessedResource,
+  CollectProcessedResourceAction,
+} from "./landExpansion/collectProcessedResource";
 import { feedBumpkin, FeedBumpkinAction } from "./landExpansion/feedBumpkin";
 import { detectBot, DetectBotAction } from "./detectBot";
 import { choseSkill, ChoseSkillAction } from "./landExpansion/choseSkill";
@@ -76,15 +88,6 @@ import {
   removeCollectible,
   RemoveCollectibleAction,
 } from "./landExpansion/removeCollectible";
-import {
-  collectCropReward,
-  CollectCropRewardAction,
-} from "./landExpansion/collectCropReward";
-import {
-  collectTreeReward,
-  CollectTreeRewardAction,
-} from "features/game/events/landExpansion/collectTreeReward";
-
 import { plantFruit, PlantFruitAction } from "./landExpansion/fruitPlanted";
 import {
   harvestFruit,
@@ -152,11 +155,13 @@ import {
 } from "./landExpansion/fertiliseFruitPatch";
 import { castRod, CastRodAction } from "./landExpansion/castRod";
 import { reelRod, ReelRodAction } from "./landExpansion/reelRod";
+import { catchMarvel, CatchMarvelAction } from "./landExpansion/catchMarvel";
 import {
   claimMilestone,
   ClaimMilestoneAction,
 } from "./landExpansion/claimMilestone";
 import { missFish, MissFishAction } from "./landExpansion/missFish";
+import { missMap, MissMapAction } from "./landExpansion/missMap";
 import { revealLand, RevealLandAction } from "./landExpansion/revealLand";
 import {
   burnCollectible,
@@ -229,6 +234,7 @@ import {
 import { claimGift, ClaimGiftAction } from "./landExpansion/claimBumpkinGift";
 import { giftFlowers, GiftFlowersAction } from "./landExpansion/giftFlowers";
 import { enterRaffle, EnterRaffleAction } from "./landExpansion/enterRaffle";
+
 import {
   exchangeSFLtoCoins,
   ExchangeSFLtoCoinsAction,
@@ -310,6 +316,10 @@ import {
 } from "./landExpansion/skipKingdomChore";
 import { leaveFaction, LeaveFactionAction } from "./landExpansion/leaveFaction";
 import { BuyMoreDigsAction, buyMoreDigs } from "./landExpansion/buyMoreDigs";
+import {
+  claimTrackMilestone,
+  ClaimTrackMilestoneAction,
+} from "./landExpansion/claimTrackMilestone";
 
 import {
   startMinigameAttempt,
@@ -380,7 +390,6 @@ import {
   sacrificeBear,
   SacrificeBearAction,
 } from "./landExpansion/sacrificeBear";
-import { buyMoreReels, BuyMoreReelsAction } from "./landExpansion/buyMoreReels";
 import { ClaimPurchaseAction, claimPurchase } from "./claimPurchase";
 import { npcRestock, NPCRestockAction } from "./landExpansion/npcRestock";
 import {
@@ -551,6 +560,18 @@ import {
   renewPetShrine,
   RenewPetShrineAction,
 } from "./landExpansion/renewPetShrine";
+import {
+  placeWaterTrap,
+  PlaceWaterTrapAction,
+} from "./landExpansion/placeWaterTrap";
+import {
+  collectWaterTrap,
+  CollectWaterTrapAction,
+} from "./landExpansion/collectWaterTrap";
+import {
+  speedUpProcessing,
+  SpeedUpProcessingAction,
+} from "./landExpansion/speedUpProcessing";
 
 export type PlayingEvent =
   | ObsidianExchangedAction
@@ -578,12 +599,15 @@ export type PlayingEvent =
   | LandExpansionChopAction
   | LandExpansionStoneMineAction
   | LandExpansionIronMineAction
-  | LandExpansionMineGoldAction
+  | LandExpansionGoldMineAction
   | MineCrimstoneAction
   | MineSunstoneAction
   | ClaimAirdropAction
   | RecipeCookedAction
   | CollectRecipeAction
+  | CancelProcessedResourceAction
+  | ProcessProcessedResourceAction
+  | CollectProcessedResourceAction
   | FeedBumpkinAction
   | DetectBotAction
   | ChoseSkillAction
@@ -594,8 +618,6 @@ export type PlayingEvent =
   | BuyDecorationAction
   | BuyMonumentAction
   | SellCropAction
-  | CollectCropRewardAction
-  | CollectTreeRewardAction
   | PlantFruitAction
   | HarvestFruitAction
   | RemoveFruitTreeAction
@@ -622,8 +644,10 @@ export type PlayingEvent =
   | FertiliseFruitAction
   | CastRodAction
   | ReelRodAction
+  | CatchMarvelAction
   | ClaimMilestoneAction
   | MissFishAction
+  | MissMapAction
   | RevealLandAction
   | BurnCollectibleAction
   | ClaimReferralRewardsAction
@@ -667,7 +691,6 @@ export type PlayingEvent =
   | PetPetAction
   | LeaveFactionAction
   | BuyMoreDigsAction
-  | BuyMoreReelsAction
   | BuyAnimalAction
   | FeedAnimalAction
   | LoveAnimalAction
@@ -710,7 +733,11 @@ export type PlayingEvent =
   | BulkHarvestAction
   | BumpkinWaveAction
   | BulkFertilisePlotAction
-  | RenewPetShrineAction;
+  | RenewPetShrineAction
+  | CollectWaterTrapAction
+  | PlaceWaterTrapAction
+  | SpeedUpProcessingAction
+  | ClaimTrackMilestoneAction;
 
 export type LocalVisitingEvent =
   | CollectGarbageAction
@@ -799,6 +826,7 @@ type Handlers<T> = {
 };
 
 export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
+  "processing.spedUp": speedUpProcessing,
   "onChainAirdrop.acknowledged": acknowledgeOnChainAirdrop,
   "recipe.cancelled": cancelQueuedRecipe,
   "obsidian.exchanged": exchangeObsidian,
@@ -839,7 +867,11 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "timber.chopped": landExpansionChop,
   "recipe.cooked": cook,
   "recipes.collected": collectRecipe,
+  "processedResource.cancelled": cancelProcessedResource,
+  "processedResource.processed": processProcessedResource,
+  "processedResource.collected": collectProcessedResource,
   "bumpkin.feed": feedBumpkin,
+  "trackMilestone.claimed": claimTrackMilestone,
   "skill.chosen": choseSkill,
   "skills.reset": resetSkills,
   "seed.bought": seedBought,
@@ -849,8 +881,6 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "monument.bought": buyMonument,
   "crop.sold": sellCrop,
 
-  "cropReward.collected": collectCropReward,
-  "treeReward.collected": collectTreeReward,
   "fruit.planted": plantFruit,
   "fruit.harvested": harvestFruit,
   "fruitTree.removed": removeFruitTree,
@@ -876,8 +906,10 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "fruitPatch.fertilised": fertiliseFruitPatch,
   "rod.casted": castRod,
   "rod.reeled": reelRod,
+  "marvel.caught": catchMarvel,
   "milestone.claimed": claimMilestone,
   "fish.missed": missFish,
+  "map.missed": missMap,
   "land.revealed": revealLand,
   "collectible.burned": burnCollectible,
   "bonus.claimed": claimBonus,
@@ -926,7 +958,6 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "produce.claimed": claimProduce,
   "chapterItem.bought": buyChapterItem,
   "farmHand.unlocked": unlockFarmhand,
-  "fishing.reelsBought": buyMoreReels,
   "purchase.claimed": claimPurchase,
   "reward.redeemed": redeemTradeReward,
   "daily.reset": dailyReset,
@@ -959,6 +990,8 @@ export const PLAYING_EVENTS: Handlers<PlayingEvent> = {
   "pet.pet": petPet,
   "trades.cleared": clearTrades,
   "petShrine.renewed": renewPetShrine,
+  "waterTrap.placed": placeWaterTrap,
+  "waterTrap.collected": collectWaterTrap,
 };
 
 export const LOCAL_VISITING_EVENTS: Handlers<LocalVisitingEvent> = {

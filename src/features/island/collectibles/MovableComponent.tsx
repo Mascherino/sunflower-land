@@ -2,7 +2,6 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -10,7 +9,6 @@ import classNames from "classnames";
 import { InnerPanel } from "components/ui/Panel";
 
 import {
-  ANIMAL_DIMENSIONS,
   COLLECTIBLES_DIMENSIONS,
   CollectibleName,
 } from "features/game/types/craftables";
@@ -35,7 +33,7 @@ import {
 } from "features/game/types/buildings";
 import { GameEventName, PlacementEvent } from "features/game/events";
 import { RESOURCES, ResourceName } from "features/game/types/resources";
-import { GameState } from "features/game/types/game";
+import { GameState, PlacedItem } from "features/game/types/game";
 import { removePlaceable } from "./lib/placing";
 import { SUNNYSIDE } from "assets/sunnyside";
 import { ITEM_DETAILS } from "features/game/types/images";
@@ -48,6 +46,16 @@ import flipped from "assets/icons/flipped.webp";
 import flipIcon from "assets/icons/flip.webp";
 import debounce from "lodash.debounce";
 import { LIMITED_ITEMS } from "features/game/events/landExpansion/burnCollectible";
+import { PET_SHRINES } from "features/game/types/pets";
+import {
+  EXPIRY_COOLDOWNS,
+  TemporaryCollectibleName,
+} from "features/game/lib/collectibleBuilt";
+import { MachineState as GameMachineState } from "features/game/lib/gameMachine";
+import { getObjectEntries } from "features/game/expansion/lib/utils";
+import { getPetImage } from "../pets/lib/petShared";
+import { budImageDomain } from "./components/Bud";
+import { useNow } from "lib/utils/hooks/useNow";
 
 export const RESOURCE_MOVE_EVENTS: Record<
   ResourceName,
@@ -135,17 +143,17 @@ function getOverlappingCollectibles({
   x: number;
   y: number;
   location: PlaceableLocation;
-  current: { id: string; name: CollectibleName };
-}): { id: string; name: CollectibleName }[] {
+  current: { id: string; name: LandscapingPlaceable };
+}): { id: string; name: LandscapingPlaceable }[] {
   const source =
     location === "home" ? state.home.collectibles : state.collectibles;
-  const results: { id: string; name: CollectibleName }[] = [];
+  const results: { id: string; name: LandscapingPlaceable }[] = [];
 
-  Object.entries(source).forEach(([name, placed]) => {
+  getObjectEntries(source).forEach(([name, placed]) => {
     (placed ?? []).forEach((p) => {
       if (!p.coordinates) return;
       if (p.coordinates.x === x && p.coordinates.y === y) {
-        results.push({ id: p.id, name: name as CollectibleName });
+        results.push({ id: p.id, name });
       }
     });
   });
@@ -161,6 +169,8 @@ function getOverlappingCollectibles({
 
 export function getRemoveAction(
   name: LandscapingPlaceable | undefined,
+  now: number,
+  collectible?: PlacedItem,
 ): GameEventName<PlacementEvent> | null {
   if (!name) {
     return null;
@@ -177,6 +187,14 @@ export function getRemoveAction(
   }
 
   if (LIMITED_ITEMS.includes(name as CollectibleName)) {
+    const isShrine = name in PET_SHRINES || name === "Obsidian Shrine";
+    if (isShrine && collectible) {
+      const cooldown = EXPIRY_COOLDOWNS[name as TemporaryCollectibleName];
+      if (!cooldown || (collectible.createdAt ?? 0) + cooldown > now) {
+        return null;
+      }
+      return "collectible.removed";
+    }
     return null;
   }
 
@@ -287,6 +305,21 @@ const detect = (
 // Keep track of the only one overlap menu open across all MoveableComponent instances
 let closeCurrentOverlapMenu: (() => void) | null = null;
 
+export const getSelectedCollectible =
+  (
+    name: LandscapingPlaceable | undefined,
+    id: string | undefined,
+    location: PlaceableLocation,
+  ) =>
+  (state: GameMachineState) => {
+    if (!name || !isCollectible(name)) return undefined;
+    return (
+      location === "home"
+        ? state.context.state.home.collectibles
+        : state.context.state.collectibles
+    )[name]?.find((collectible) => collectible.id === id);
+  };
+
 export const MoveableComponent: React.FC<
   React.PropsWithChildren<MovableProps>
 > = ({
@@ -314,7 +347,7 @@ export const MoveableComponent: React.FC<
   const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
   const [showOverlapMenu, setShowOverlapMenu] = useState(false);
   const [overlapChoices, setOverlapChoices] = useState<
-    { id: string; name: CollectibleName }[]
+    { id: string; name: LandscapingPlaceable }[]
   >([]);
   const overlapRef = useRef<HTMLDivElement>(null);
   const skipNextOutsideClick = useRef(false);
@@ -372,7 +405,18 @@ export const MoveableComponent: React.FC<
 
   const isSelected = movingItem?.id === id && movingItem?.name === name;
 
-  const removeAction = !isMobile && getRemoveAction(name);
+  const selectedCollectible = useSelector(
+    gameService,
+    getSelectedCollectible(name, id, location),
+  );
+
+  const isShrine = name in PET_SHRINES || name === "Obsidian Shrine";
+
+  const now = useNow({ live: isShrine });
+
+  const removeAction =
+    !isMobile && getRemoveAction(name, now, selectedCollectible);
+
   const hasRemovalAction = !!removeAction;
 
   const hasFlipAction = !isMobile && isCollectible(name);
@@ -423,20 +467,15 @@ export const MoveableComponent: React.FC<
     }
   }, [isSelected, movingItem]);
 
-  const DIMENSIONS_MAP = {
+  const DIMENSIONS_MAP: Record<LandscapingPlaceable, Dimensions> = {
     ...BUILDINGS_DIMENSIONS,
     ...COLLECTIBLES_DIMENSIONS,
-    ...ANIMAL_DIMENSIONS,
     ...RESOURCE_DIMENSIONS,
+    Bud: { width: 1, height: 1 },
+    Pet: { width: 2, height: 2 },
   };
 
-  const dimensions = useMemo(() => {
-    return name === "Bud"
-      ? { width: 1, height: 1 }
-      : name === "Pet"
-        ? { width: 2, height: 2 }
-        : DIMENSIONS_MAP[name];
-  }, [name]);
+  const dimensions = DIMENSIONS_MAP[name];
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onStop = useCallback(
@@ -684,15 +723,14 @@ export const MoveableComponent: React.FC<
     position,
   ]);
 
-  const overlaps = useMemo(() => {
-    return getOverlappingCollectibles({
-      state: gameService.getSnapshot().context.state,
-      x: coordinatesX,
-      y: coordinatesY,
-      location,
-      current: { id, name: name as CollectibleName },
-    });
-  }, [gameService, coordinatesX, coordinatesY, location, id, name]);
+  // Compute overlaps early for determining if we need live time updates
+  const overlaps = getOverlappingCollectibles({
+    state: gameService.getSnapshot().context.state,
+    x: coordinatesX,
+    y: coordinatesY,
+    location,
+    current: { id, name },
+  });
 
   // Disable dragging if there are overlaps and this item is not selected
   const shouldDisableDrag = overlaps.length > 1 && !isSelected;
@@ -845,33 +883,39 @@ export const MoveableComponent: React.FC<
             }}
           >
             <InnerPanel>
-              {overlapChoices.map((choice) => (
-                <div
-                  key={choice.id}
-                  className="flex items-center gap-1 px-2 py-1 hover:brightness-90 cursor-pointer"
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setShowOverlapMenu(false);
-                    dragStartChecked.current = false;
-                    // Prevent the menu from reopening on the next mousedown
-                    suppressNextMenuOpen.current = true;
-                    if (closeCurrentOverlapMenu === localCloserRef.current) {
-                      closeCurrentOverlapMenu = null;
-                    }
-                    landscapingMachine.send("MOVE", {
-                      name: choice.name,
-                      id: choice.id,
-                    });
-                  }}
-                >
-                  <img
-                    src={ITEM_DETAILS[choice.name].image}
-                    className="h-4 w-4"
-                  />
-                  <span className="text-xxs">{choice.name}</span>
-                </div>
-              ))}
+              {overlapChoices.map((choice) => {
+                const image =
+                  choice.name === "Pet"
+                    ? getPetImage("happy", Number(choice.id))
+                    : choice.name === "Bud"
+                      ? `https://${budImageDomain}.sunflower-land.com/images/${choice.id}.webp`
+                      : ITEM_DETAILS[choice.name].image;
+
+                return (
+                  <div
+                    key={choice.id}
+                    className="flex items-center gap-1 px-2 py-1 hover:brightness-90 cursor-pointer"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setShowOverlapMenu(false);
+                      dragStartChecked.current = false;
+                      // Prevent the menu from reopening on the next mousedown
+                      suppressNextMenuOpen.current = true;
+                      if (closeCurrentOverlapMenu === localCloserRef.current) {
+                        closeCurrentOverlapMenu = null;
+                      }
+                      landscapingMachine.send("MOVE", {
+                        name: choice.name,
+                        id: choice.id,
+                      });
+                    }}
+                  >
+                    <img src={image} className="h-4 w-4" />
+                    <span className="text-xxs">{choice.name}</span>
+                  </div>
+                );
+              })}
             </InnerPanel>
           </div>
         )}

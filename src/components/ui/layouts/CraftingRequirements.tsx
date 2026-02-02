@@ -2,7 +2,12 @@ import Decimal from "decimal.js-light";
 import { INVENTORY_LIMIT } from "features/game/lib/constants";
 import { getBumpkinLevel } from "features/game/lib/level";
 import { getKeys } from "features/game/types/craftables";
-import { GameState, InventoryItemName } from "features/game/types/game";
+import {
+  GameState,
+  InventoryItemName,
+  Rock,
+  Tree,
+} from "features/game/types/game";
 import { ITEM_DETAILS } from "features/game/types/images";
 import React, { useState, type JSX } from "react";
 import { Label } from "../Label";
@@ -30,10 +35,25 @@ import {
 import {
   RESOURCES_UPGRADES_TO,
   ADVANCED_RESOURCES,
-  RESOURCES,
   UpgradedResourceName,
   RESOURCE_STATE_ACCESSORS,
 } from "features/game/types/resources";
+import { SEASON_ICONS } from "features/island/buildings/components/building/market/SeasonalSeeds";
+import { capitalize } from "lib/utils/capitalize";
+import classNames from "classnames";
+
+function getResourceTier(name: UpgradedResourceName): number | undefined {
+  if (name in ADVANCED_RESOURCES) {
+    return ADVANCED_RESOURCES[name].tier;
+  }
+
+  // Upgradeable base resources (Tree, Stone Rock, etc.) are tier 1
+  if (name in RESOURCES_UPGRADES_TO) {
+    return 1;
+  }
+
+  return undefined;
+}
 
 /**
  * The props for the details for items.
@@ -112,34 +132,38 @@ interface Props {
   actionView?: JSX.Element;
   hideDescription?: boolean;
   label?: JSX.Element;
+  showSeason?: boolean;
 }
 
 function getDetails(
   game: GameState,
   details: ItemDetailsProps,
 ): {
-  limit: Decimal;
+  limit: Decimal | undefined;
   count: Decimal;
   image: string;
   name: string;
   description: string;
 } {
   if (details.item) {
-    const inventoryCount = game.inventory[details.item] ?? new Decimal(0);
+    const count = game.inventory[details.item] ?? new Decimal(0);
     const limit = isSeed(details.item)
       ? INVENTORY_LIMIT(game)[details.item]
       : undefined;
 
-    return {
-      count: inventoryCount,
-      description: ITEM_DETAILS[details.item].description,
-      image:
-        ITEM_ICONS(game.season.season, getCurrentBiome(game.island))[
-          details.item
-        ] ?? ITEM_DETAILS[details.item].image,
-      name: ITEM_DETAILS[details.item].translatedName ?? details.item,
-      limit: limit as Decimal,
-    };
+    const {
+      description,
+      image: defaultImage,
+      translatedName,
+    } = ITEM_DETAILS[details.item];
+
+    const image =
+      ITEM_ICONS(game.season.season, getCurrentBiome(game.island))[
+        details.item
+      ] ?? defaultImage;
+    const name = translatedName ?? details.item;
+
+    return { count, description, image, name, limit };
   }
 
   const wardrobeCount = game.wardrobe[details.wearable] ?? 0;
@@ -167,6 +191,7 @@ export const CraftingRequirements: React.FC<Props> = ({
   requirements,
   actionView,
   hideDescription,
+  showSeason = false,
   label,
 }: Props) => {
   const { t } = useAppTranslation();
@@ -290,120 +315,151 @@ export const CraftingRequirements: React.FC<Props> = ({
 
     return (
       <div className="border-t border-white w-full mb-2 pt-2 flex justify-between gap-x-3 gap-y-2 flex-wrap sm:flex-col sm:items-center sm:flex-nowrap my-1">
-        {/* Item ingredients requirements */}
-        {!!requirements.resources && (
-          <div
-            className="relative cursor-pointer flex justify-between gap-x-3 gap-y-2 flex-wrap sm:flex-col sm:items-center sm:flex-nowrap"
-            onClick={() => setShowIngredients(!showIngredients)}
+        {showSeason && (
+          <Label
+            type="default"
+            icon={SEASON_ICONS[gameState.season.season]}
+            className="-mb-3.5"
           >
-            <IngredientsPopover
-              className="-top-1 left-1 sm:-left-[150%]"
-              show={showIngredients}
-              ingredients={getKeys(requirements.resources ?? {})}
-              onClick={() => setShowIngredients(false)}
-            />
-            {getKeys(requirements.resources).map((ingredientName, index) => {
-              // If ingredient is a node, require it to be placed
-              let balance =
-                gameState.inventory[ingredientName] ?? new Decimal(0);
+            {capitalize(gameState.season.season)}
+          </Label>
+        )}
+        <div
+          className={classNames(
+            "w-full mb-2 flex justify-between gap-x-3 gap-y-2 flex-wrap sm:flex-col sm:items-center sm:flex-nowrap my-1",
+            {
+              "pt-2": showSeason,
+            },
+          )}
+        >
+          {/* Item ingredients requirements */}
+          {!!requirements.resources && (
+            <div
+              className="relative cursor-pointer flex justify-between gap-x-3 gap-y-2 flex-wrap sm:flex-col sm:items-center sm:flex-nowrap"
+              onClick={() => setShowIngredients(!showIngredients)}
+            >
+              <IngredientsPopover
+                className="-top-1 left-1 sm:-left-[150%]"
+                show={showIngredients}
+                ingredients={getKeys(requirements.resources ?? {})}
+                onClick={() => setShowIngredients(false)}
+              />
+              {getKeys(requirements.resources).map((ingredientName, index) => {
+                // If ingredient is a node, require it to be placed
+                let balance =
+                  gameState.inventory[ingredientName] ?? new Decimal(0);
 
-              if (ingredientName in RESOURCES) {
-                const stateAccessor =
-                  RESOURCE_STATE_ACCESSORS[
-                    ingredientName as UpgradedResourceName
-                  ];
-                const nodes = Object.values(
-                  stateAccessor(gameState) ?? {},
-                ).filter((resource) => {
-                  if (
-                    ingredientName in RESOURCES_UPGRADES_TO ||
-                    ingredientName in ADVANCED_RESOURCES
-                  ) {
-                    // If node is upgradeable, check if it has the same name as the current item
-                    if ("name" in resource) {
-                      return resource.name === ingredientName;
+                const isNode = (
+                  ingredientName: InventoryItemName,
+                ): ingredientName is UpgradedResourceName =>
+                  ingredientName in ADVANCED_RESOURCES;
+
+                if (isNode(ingredientName)) {
+                  const stateAccessor =
+                    RESOURCE_STATE_ACCESSORS[ingredientName](gameState);
+                  const nodes: (Rock | Tree)[] = Object.values(stateAccessor);
+
+                  const requiredTier = getResourceTier(ingredientName);
+
+                  const activeNodes = nodes.filter(
+                    (n) => n.removedAt === undefined,
+                  );
+
+                  const matchingNodes =
+                    requiredTier === undefined
+                      ? activeNodes
+                      : activeNodes.filter((node) => {
+                          // Prefer `tier` for correctness; `name` may be absent on-chain/older state.
+                          if (typeof node.tier === "number") {
+                            return node.tier === requiredTier;
+                          }
+
+                          if (typeof node.name === "string") {
+                            return node.name === ingredientName;
+                          }
+
+                          // No metadata: treat as base tier-1 node only.
+                          return requiredTier === 1;
+                        });
+
+                  balance = new Decimal(matchingNodes.length);
+                }
+
+                return (
+                  <RequirementLabel
+                    key={index}
+                    type="item"
+                    item={ingredientName}
+                    balance={balance}
+                    requirement={
+                      new Decimal(
+                        (requirements.resources ?? {})[ingredientName] ?? 0,
+                      )
                     }
-
-                    // If it has no name, it probably means it's a base resource
-                    return ingredientName in RESOURCES_UPGRADES_TO;
-                  }
-
-                  return true;
-                });
-                balance = new Decimal(
-                  nodes.filter((node) => node.removedAt === undefined).length,
+                  />
                 );
-              }
+              })}
+            </div>
+          )}
 
-              return (
-                <RequirementLabel
-                  key={index}
-                  type="item"
-                  item={ingredientName}
-                  balance={balance}
-                  requirement={
-                    new Decimal(
-                      (requirements.resources ?? {})[ingredientName] ?? 0,
-                    )
-                  }
-                />
-              );
-            })}
-          </div>
-        )}
+          {/* FLOWER requirement */}
+          {!!requirements.sfl &&
+            (requirements.sfl.greaterThan(0) || requirements.showSflIfFree) && (
+              <RequirementLabel
+                type="sfl"
+                balance={gameState.balance}
+                requirement={requirements.sfl}
+              />
+            )}
 
-        {/* FLOWER requirement */}
-        {!!requirements.sfl &&
-          (requirements.sfl.greaterThan(0) || requirements.showSflIfFree) && (
+          {/* Coin requirement */}
+          {requirements.coins !== undefined &&
+            (requirements.coins > 0 || requirements.showCoinsIfFree) && (
+              <RequirementLabel
+                type="coins"
+                balance={gameState.coins}
+                requirement={requirements.coins}
+              />
+            )}
+
+          {/* Harvests display */}
+          {!!requirements.harvests && (
             <RequirementLabel
-              type="sfl"
-              balance={gameState.balance}
-              requirement={requirements.sfl}
+              type="harvests"
+              minHarvest={requirements.harvests.minHarvest}
+              maxHarvest={requirements.harvests.maxHarvest}
             />
           )}
 
-        {/* Coin requirement */}
-        {requirements.coins !== undefined &&
-          (requirements.coins > 0 || requirements.showCoinsIfFree) && (
+          {/* XP display */}
+          {!!requirements.xp && (
+            <RequirementLabel type="xp" xp={requirements.xp} />
+          )}
+
+          {/* Instant ready display */}
+          {requirements.timeSeconds === 0 && (
+            <RequirementLabel type="instantReady" />
+          )}
+
+          {/* Time requirement display */}
+          {!!requirements.timeSeconds && (
             <RequirementLabel
-              type="coins"
-              balance={gameState.coins}
-              requirement={requirements.coins}
+              type="time"
+              waitSeconds={requirements.timeSeconds}
             />
           )}
 
-        {/* Harvests display */}
-        {!!requirements.harvests && (
-          <RequirementLabel
-            type="harvests"
-            minHarvest={requirements.harvests.minHarvest}
-            maxHarvest={requirements.harvests.maxHarvest}
-          />
-        )}
+          {/* Level requirement */}
+          {!!requirements.level && (
+            <RequirementLabel
+              type="level"
+              currentLevel={getBumpkinLevel(gameState.bumpkin?.experience ?? 0)}
+              requirement={requirements.level}
+            />
+          )}
 
-        {/* XP display */}
-        {!!requirements.xp && (
-          <RequirementLabel type="xp" xp={requirements.xp} />
-        )}
-
-        {/* Time requirement display */}
-        {!!requirements.timeSeconds && (
-          <RequirementLabel
-            type="time"
-            waitSeconds={requirements.timeSeconds}
-          />
-        )}
-
-        {/* Level requirement */}
-        {!!requirements.level && (
-          <RequirementLabel
-            type="level"
-            currentLevel={getBumpkinLevel(gameState.bumpkin?.experience ?? 0)}
-            requirement={requirements.level}
-          />
-        )}
-
-        {label}
+          {label}
+        </div>
       </div>
     );
   };
@@ -412,13 +468,13 @@ export const CraftingRequirements: React.FC<Props> = ({
     <div className="flex flex-col h-full justify-between">
       <div className="flex flex-col h-full px-1 py-0">
         {getStock()}
-        {details.from && (
+        {details.from && details.to && (
           <Label
             icon={SUNNYSIDE.icons.stopwatch}
             type="warning"
             className="my-1 mx-auto whitespace-nowrap"
           >
-            {formatDateRange(details.from, details.to as Date)}
+            {formatDateRange(details.from, details.to)}
           </Label>
         )}
         {getItemDetail({ hideDescription })}

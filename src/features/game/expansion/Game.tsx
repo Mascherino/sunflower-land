@@ -30,8 +30,8 @@ import { VisitingHud } from "features/island/hud/VisitingHud";
 import { VisitLandExpansionForm } from "./components/VisitLandExpansionForm";
 
 import { IslandNotFound } from "./components/IslandNotFound";
-import { Rules } from "../components/Rules";
 import { Introduction } from "./components/Introduction";
+import { Welcome } from "./components/Welcome";
 import { Purchasing } from "../components/Purchasing";
 import { ClaimAuction } from "../components/auctionResults/ClaimAuction";
 import { RefundAuction } from "../components/auctionResults/RefundAuction";
@@ -79,7 +79,6 @@ import { CompetitionModal } from "features/competition/CompetitionBoard";
 import { SeasonChanged } from "./components/temperateSeason/SeasonChanged";
 import { CalendarEvent } from "./components/temperateSeason/CalendarEvent";
 import { DailyReset } from "../components/DailyReset";
-import { FLOWERTeaserContent } from "../components/FLOWERTeaser";
 import { RoninJinClaim } from "./components/RoninJinClaim";
 import {
   EFFECT_SUCCESS_COMPONENTS,
@@ -91,8 +90,6 @@ import { SoftBan } from "features/retreat/components/personhood/SoftBan";
 import { RewardBox } from "features/rewardBoxes/RewardBox";
 import { ClaimBlessingReward } from "features/loveIsland/blessings/ClaimBlessing";
 import { SystemMessageWidget } from "features/announcements/SystemMessageWidget";
-import { News } from "features/farming/mail/components/News";
-import { CloseButtonPanel } from "../components/CloseablePanel";
 import { TradesCleared } from "./components/TradesCleared";
 import { RevealPet } from "features/island/pets/RevealPet";
 import { LeagueResults } from "./components/LeagueResults";
@@ -181,8 +178,6 @@ const SHOW_MODAL: Record<StateValues, boolean> = {
   landscaping: false,
   swarming: true,
   coolingDown: true,
-  gameRules: true,
-  FLOWERTeaser: true,
   randomising: false,
   visiting: false,
   loadLandToVisit: true,
@@ -194,6 +189,7 @@ const SHOW_MODAL: Record<StateValues, boolean> = {
   buyingSFL: true,
   depositing: true,
   introduction: false,
+  welcome: true,
   vip: true,
   transacting: true,
   auctionResults: false,
@@ -221,6 +217,7 @@ const SHOW_MODAL: Record<StateValues, boolean> = {
 };
 
 // State change selectors
+const isWelcome = (state: MachineState) => state.matches("welcome");
 const isLoading = (state: MachineState) =>
   state.matches("loading") || state.matches("portalling");
 const isPortalling = (state: MachineState) => state.matches("portalling");
@@ -251,8 +248,6 @@ const showCommunityCoin = (state: MachineState) =>
 const _showReferralRewards = (state: MachineState) =>
   state.matches("referralRewards");
 const isCoolingDown = (state: MachineState) => state.matches("coolingDown");
-const isGameRules = (state: MachineState) => state.matches("gameRules");
-const isFLOWERTeaser = (state: MachineState) => state.matches("FLOWERTeaser");
 const isDepositing = (state: MachineState) => state.matches("depositing");
 const isLoadingLandToVisit = (state: MachineState) =>
   state.matches("loadLandToVisit");
@@ -298,7 +293,6 @@ const isCalendarEvent = (state: MachineState) => state.matches("calendarEvent");
 
 const isJinAirdrop = (state: MachineState) => state.matches("jinAirdrop");
 const isLinkWallet = (state: MachineState) => state.matches("linkWallet");
-const isNews = (state: MachineState) => state.matches("news");
 const _isVisiting = (state: MachineState) =>
   state.context.visitorId !== undefined;
 const isLeagueResultsReleased = (state: MachineState) =>
@@ -426,6 +420,7 @@ export const GameWrapper: React.FC<React.PropsWithChildren> = ({
   const pwaInstallRef = usePWAInstall();
 
   const loading = useSelector(gameService, isLoading);
+  const welcome = useSelector(gameService, isWelcome);
   const portalling = useSelector(gameService, isPortalling);
   const trading = useSelector(gameService, isTrading);
   const traded = useSelector(gameService, isTraded);
@@ -446,8 +441,6 @@ export const GameWrapper: React.FC<React.PropsWithChildren> = ({
   const hoarding = useSelector(gameService, isHoarding);
   const swarming = useSelector(gameService, isSwarming);
   const coolingDown = useSelector(gameService, isCoolingDown);
-  const gameRules = useSelector(gameService, isGameRules);
-  const FLOWERTeaser = useSelector(gameService, isFLOWERTeaser);
   const depositing = useSelector(gameService, isDepositing);
   const loadingLandToVisit = useSelector(gameService, isLoadingLandToVisit);
   const loadingSession = useSelector(gameService, isLoadingSession);
@@ -479,7 +472,6 @@ export const GameWrapper: React.FC<React.PropsWithChildren> = ({
   const investigating = useSelector(gameService, isInvestigating);
   const blessing = useSelector(gameService, isBlessing);
   const linkWallet = useSelector(gameService, isLinkWallet);
-  const news = useSelector(gameService, isNews);
   const tradesCleared = useSelector(gameService, isTradesCleared);
   const isVisiting = useSelector(gameService, _isVisiting);
   const leagueResultsReleased = useSelector(
@@ -632,6 +624,12 @@ export const GameWrapper: React.FC<React.PropsWithChildren> = ({
     stateValue as string,
   ) as TranslationKeys;
 
+  let effectText = t(effectTranslationKey);
+
+  if (effectText === effectTranslationKey) {
+    effectText = t("loading");
+  }
+
   return (
     <>
       <ToastProvider>
@@ -642,7 +640,7 @@ export const GameWrapper: React.FC<React.PropsWithChildren> = ({
             bumpkinParts={error ? NPC_WEARABLES["worried pete"] : undefined}
           >
             {/* Effects */}
-            {effectPending && <Loading text={t(effectTranslationKey)} />}
+            {effectPending && <Loading text={effectText} />}
             {effectSuccess &&
               (EFFECT_SUCCESS_COMPONENTS[stateValue as StateValues] ?? (
                 <EffectSuccess state={stateValue} />
@@ -659,10 +657,9 @@ export const GameWrapper: React.FC<React.PropsWithChildren> = ({
             {hoarding && <Hoarding />}
             {swarming && <Swarming />}
             {coolingDown && <Cooldown />}
-            {gameRules && <Rules />}
-            {FLOWERTeaser && <FLOWERTeaserContent />}
             {dailyReward && <DailyRewardClaim showClose />}
             {transacting && <Transaction />}
+            {welcome && <Welcome />}
             {depositing && <Loading text={t("depositing")} />}
             {trading && <Loading text={t("trading")} />}
             {traded && <Traded />}
@@ -704,16 +701,6 @@ export const GameWrapper: React.FC<React.PropsWithChildren> = ({
               competitionName="BUILDING_FRIENDSHIPS"
               onClose={() => gameService.send("ACKNOWLEDGE")}
             />
-          </Modal>
-        )}
-        {news && (
-          <Modal show onHide={() => gameService.send("ACKNOWLEDGE")}>
-            <CloseButtonPanel onClose={() => gameService.send("ACKNOWLEDGE")}>
-              <Label type="default" className="mb-2">
-                {t("news.title")}
-              </Label>
-              <News />
-            </CloseButtonPanel>
           </Modal>
         )}
         {leagueResultsReleased && !isVisiting && (

@@ -3,6 +3,7 @@ import { Equipped } from "features/game/types/bumpkin";
 
 export type NPCName =
   | "richie"
+  | "streamer"
   | "cluck e cheese"
   | "felga" // Fruit dash
   | "minewhack" // Mine Whack
@@ -114,10 +115,23 @@ export type NPCName =
   | "gunter"
   | "gorga"
   | "rocket man"
+  | "new year pete"
   | "bailey" // weatherman
+  | "neville" // fish market
   | "maschs";
 
 export const NPC_WEARABLES: Record<NPCName, Equipped> = {
+  streamer: {
+    body: "Beige Farmer Potion",
+    background: "Farm Background",
+    hair: "Basic Hair",
+    shirt: "Hawaiian Shirt",
+    pants: "Farmer Pants",
+    onesie: "Rocket Onesie",
+    shoes: "Black Farmer Boots",
+    tool: "Auction Megaphone",
+    aura: "Coin Aura",
+  },
   "rocket man": {
     body: "Beige Farmer Potion",
     background: "Farm Background",
@@ -231,7 +245,6 @@ export const NPC_WEARABLES: Record<NPCName, Equipped> = {
     background: "Pumpkin Plaza Background",
     shoes: "Black Farmer Boots",
     tool: "Parsnip",
-    hat: "Flower Mask",
   },
   "chef tuck": {
     body: "Goblin Potion",
@@ -536,7 +549,6 @@ export const NPC_WEARABLES: Record<NPCName, Equipped> = {
     background: "Pumpkin Plaza Background",
     shoes: "Black Farmer Boots",
     shirt: "Yellow Farmer Shirt",
-    hat: "Flower Mask",
   },
   grimtooth: {
     body: "Goblin Potion",
@@ -687,7 +699,6 @@ export const NPC_WEARABLES: Record<NPCName, Equipped> = {
     hair: "Brown Long Hair",
     shirt: "Merino Jumper",
     pants: "Cowgirl Skirt",
-    hat: "Flower Mask",
     tool: "Shepherd Staff",
     necklace: "Dream Scarf",
     coat: "Milk Apron",
@@ -795,7 +806,6 @@ export const NPC_WEARABLES: Record<NPCName, Equipped> = {
     pants: "Wise Slacks",
     shirt: "Wise Robes",
     tool: "Wise Staff",
-    hat: "Weather Hat",
     secondaryTool: "Wise Book",
     background: "Pumpkin Plaza Background",
     shoes: "Brown Boots",
@@ -967,7 +977,6 @@ export const NPC_WEARABLES: Record<NPCName, Equipped> = {
   mayor: {
     body: "Light Brown Farmer Potion",
     shirt: "Pirate Leather Polo",
-    hat: "Flower Mask",
     hair: "Sun Spots",
     tool: "Merch Coffee Mug",
     pants: "Farmer Pants",
@@ -1275,6 +1284,28 @@ export const NPC_WEARABLES: Record<NPCName, Equipped> = {
     shoes: "Cowboy Boots",
   },
   maschs: { ...INITIAL_EQUIPPED },
+  "new year pete": {
+    body: "Light Brown Farmer Potion",
+    background: "Pumpkin Plaza Background",
+    hair: "Buzz Cut",
+    hat: "2026 Tiara",
+    shirt: "Yellow Farmer Shirt",
+    pants: "Lumberjack Overalls",
+    shoes: "Black Farmer Boots",
+    tool: "Farmer Pitchfork",
+  },
+  neville: {
+    body: "Dark Brown Farmer Potion",
+    hat: "Boater Hat",
+    coat: "Chef Apron",
+    hair: "Greyed Glory",
+    beard: "Hoary Chin",
+    pants: "Fishing Pants",
+    shirt: "Fresh Catch Vest",
+    tool: "Skinning Knife",
+    background: "Pumpkin Plaza Background",
+    shoes: "Cowboy Boots",
+  },
 };
 
 if (Date.now() < new Date("2025-02-15T00:00:00.000Z").getTime()) {

@@ -11,6 +11,7 @@ import windsOfChangeBanner from "assets/decorations/banners/winds-of-change_bann
 import greatBloomBanner from "assets/decorations/banners/great_bloom_banner.png";
 import betterTogetherBanner from "assets/decorations/banners/better_together_banner.webp";
 import pawPrintsBanner from "assets/decorations/banners/paw_prints_banner.webp";
+import crabChapterBanner from "assets/decorations/banners/crap_chapter_banner.webp";
 import { BeachBountyChapterArtefact } from "./treasure";
 import { getKeys } from "./decorations";
 import { ChapterFish } from "./fishing";
@@ -28,7 +29,8 @@ export type ChapterName =
   | "Winds of Change"
   | "Great Bloom"
   | "Better Together"
-  | "Paw Prints";
+  | "Paw Prints"
+  | "Crabs and Traps";
 
 type ChapterDates = { startDate: Date; endDate: Date };
 
@@ -81,6 +83,10 @@ export const CHAPTERS: Record<ChapterName, ChapterDates> = {
     startDate: new Date("2025-11-03T00:00:00.000Z"),
     endDate: new Date("2026-02-02T00:00:00.000Z"),
   },
+  "Crabs and Traps": {
+    startDate: new Date("2026-02-02T00:00:00.000Z"),
+    endDate: new Date("2026-05-04T00:00:00.000Z"),
+  },
 };
 
 export type ChapterTicket =
@@ -95,7 +101,12 @@ export type ChapterTicket =
   | "Timeshard"
   | "Geniseed"
   | "Bracelet"
-  | "Pet Cookie";
+  | "Pet Cookie"
+  | "Floater";
+
+export type ChapterRaffleTicket =
+  | "Paw Prints Raffle Ticket"
+  | "Crabs and Traps Raffle Ticket";
 
 export type ChapterBanner = `${ChapterName} Banner`;
 
@@ -112,6 +123,7 @@ export const CHAPTER_BANNERS: Record<ChapterBanner, ChapterName> = {
   "Great Bloom Banner": "Great Bloom",
   "Better Together Banner": "Better Together",
   "Paw Prints Banner": "Paw Prints",
+  "Crabs and Traps Banner": "Crabs and Traps",
 };
 
 export const CHAPTER_TICKET_NAME: Record<ChapterName, ChapterTicket> = {
@@ -127,6 +139,26 @@ export const CHAPTER_TICKET_NAME: Record<ChapterName, ChapterTicket> = {
   "Great Bloom": "Geniseed",
   "Better Together": "Bracelet",
   "Paw Prints": "Pet Cookie",
+  "Crabs and Traps": "Floater",
+};
+
+export const CHAPTER_RAFFLE_TICKET_NAME: Record<
+  ChapterName,
+  ChapterRaffleTicket | undefined
+> = {
+  "Solar Flare": undefined,
+  "Dawn Breaker": undefined,
+  "Witches' Eve": undefined,
+  "Catch the Kraken": undefined,
+  "Spring Blossom": undefined,
+  "Clash of Factions": undefined,
+  "Pharaoh's Treasure": undefined,
+  "Bull Run": undefined,
+  "Winds of Change": undefined,
+  "Great Bloom": undefined,
+  "Better Together": undefined,
+  "Paw Prints": "Paw Prints Raffle Ticket",
+  "Crabs and Traps": "Crabs and Traps Raffle Ticket",
 };
 
 export const CHAPTER_ARTEFACT_NAME: Record<
@@ -145,6 +177,7 @@ export const CHAPTER_ARTEFACT_NAME: Record<
   "Great Bloom": "Broken Pillar",
   "Better Together": "Coprolite",
   "Paw Prints": "Moon Crystal",
+  "Crabs and Traps": "Ammonite Shell",
 };
 
 export const CHAPTER_MARVEL_FISH: Record<ChapterName, ChapterFish> = {
@@ -160,6 +193,7 @@ export const CHAPTER_MARVEL_FISH: Record<ChapterName, ChapterFish> = {
   "Great Bloom": "Pink Dolphin",
   "Better Together": "Poseidon",
   "Paw Prints": "Super Star",
+  "Crabs and Traps": "Giant Isopod",
 };
 
 export function getChapterMarvelFish(now: number): ChapterFish {
@@ -189,6 +223,20 @@ export function getChapterTicket(now: number): ChapterTicket {
   const currentChapter = getCurrentChapter(now);
 
   return CHAPTER_TICKET_NAME[currentChapter];
+}
+
+export function getChapterRaffleTicket(
+  now: number = Date.now(),
+): ChapterRaffleTicket {
+  const currentChapter = getCurrentChapter(now);
+
+  const ticket = CHAPTER_RAFFLE_TICKET_NAME[currentChapter];
+
+  if (!ticket) {
+    throw new Error("No raffle ticket found");
+  }
+
+  return ticket;
 }
 
 export function getChapterArtefact(now: number) {
@@ -225,22 +273,24 @@ export function getChapterByBanner(banner: ChapterBanner): ChapterName {
   return CHAPTER_BANNERS[banner];
 }
 
+export const CHAPTER_BANNER_IMAGES: Record<ChapterBanner, string> = {
+  "Solar Flare Banner": solarFlareBanner,
+  "Dawn Breaker Banner": dawnBreakerBanner,
+  "Witches' Eve Banner": witchesEveBanner,
+  "Catch the Kraken Banner": catchTheKrakenBanner,
+  "Spring Blossom Banner": springBlossomBanner,
+  "Clash of Factions Banner": clashOfFactionsBanner,
+  "Pharaoh's Treasure Banner": pharaohsTreasureBanner,
+  "Bull Run Banner": bullsRunBanner,
+  "Winds of Change Banner": windsOfChangeBanner,
+  "Great Bloom Banner": greatBloomBanner,
+  "Better Together Banner": betterTogetherBanner,
+  "Paw Prints Banner": pawPrintsBanner,
+  "Crabs and Traps Banner": crabChapterBanner,
+};
+
 export function getChapterBannerImage(now: number) {
-  const banners: Record<ChapterBanner, string> = {
-    "Solar Flare Banner": solarFlareBanner,
-    "Dawn Breaker Banner": dawnBreakerBanner,
-    "Witches' Eve Banner": witchesEveBanner,
-    "Catch the Kraken Banner": catchTheKrakenBanner,
-    "Spring Blossom Banner": springBlossomBanner,
-    "Clash of Factions Banner": clashOfFactionsBanner,
-    "Pharaoh's Treasure Banner": pharaohsTreasureBanner,
-    "Bull Run Banner": bullsRunBanner,
-    "Winds of Change Banner": windsOfChangeBanner,
-    "Great Bloom Banner": greatBloomBanner,
-    "Better Together Banner": betterTogetherBanner,
-    "Paw Prints Banner": pawPrintsBanner,
-  };
-  return banners[getChapterBanner(now)];
+  return CHAPTER_BANNER_IMAGES[getChapterBanner(now)];
 }
 
 function getPreviousChapter(now: number): ChapterName {

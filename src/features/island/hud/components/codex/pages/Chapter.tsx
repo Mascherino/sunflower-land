@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { TicketsLeaderboard } from "./TicketsLeaderboard";
 import { TicketLeaderboard } from "features/game/expansion/components/leaderboard/actions/leaderboard";
 import { InnerPanel } from "components/ui/Panel";
@@ -24,6 +24,9 @@ import { ITEM_DETAILS } from "features/game/types/images";
 import { GameState } from "features/game/types/game";
 import { MegaBountyBoardContent } from "features/world/ui/flowerShop/MegaBountyBoard";
 import { useNow } from "lib/utils/hooks/useNow";
+import { pixelOrangeBorderStyle } from "features/game/lib/style";
+import giftIcon from "assets/icons/gift.png";
+import { ModalContext } from "features/game/components/modal/ModalProvider";
 
 export const CHAPTER_GRAPHICS: Record<ChapterName, string> = {
   "Solar Flare": "?",
@@ -38,6 +41,7 @@ export const CHAPTER_GRAPHICS: Record<ChapterName, string> = {
   "Great Bloom": "",
   "Better Together": SUNNYSIDE.announcement.betterTogetherSeason,
   "Paw Prints": SUNNYSIDE.announcement.pawPrintsSeason,
+  "Crabs and Traps": "?",
 };
 
 const CHORES_DELIVERIES_START_DATE: Record<ChapterName, string> = {
@@ -53,6 +57,7 @@ const CHORES_DELIVERIES_START_DATE: Record<ChapterName, string> = {
   "Great Bloom": "May 5th",
   "Better Together": "Aug 4th",
   "Paw Prints": "Nov 10th",
+  "Crabs and Traps": "Feb 2nd",
 };
 
 interface Props {
@@ -71,6 +76,7 @@ export const Chapter: React.FC<Props> = ({
   farmId,
 }) => {
   const { t } = useAppTranslation();
+  const { openModal } = useContext(ModalContext);
   const now = useNow({
     live: true,
     autoEndAt: CHAPTERS[chapter].endDate.getTime(),
@@ -101,6 +107,23 @@ export const Chapter: React.FC<Props> = ({
           </p>
         </div>
       </InnerPanel>
+      <div
+        className={classNames(
+          `w-full items-center flex  text-xs p-2 pr-4 mb-1 relative cursor-pointer`,
+        )}
+        onClick={() => openModal("CHAPTER_TRACKS")}
+        style={{
+          background: "#ffa500",
+          color: "#181425",
+          ...pixelOrangeBorderStyle,
+        }}
+      >
+        <img src={giftIcon} className="h-6 mr-2" />
+        <div>
+          <p className="text-xs flex-1">{t("chapter.tracks")}</p>
+          <p className="text-xxs flex-1 underline">{t("chapter.open")}</p>
+        </div>
+      </div>
       <InnerPanel className="mb-1">
         <div
           style={{
@@ -151,6 +174,7 @@ export const Chapter: React.FC<Props> = ({
       </InnerPanel>
       <ChapterAuctions gameState={state} farmId={farmId} chapter={chapter} />
       <ChapterMutants chapter={chapter} />
+
       <InnerPanel className="mb-1">
         <TicketsLeaderboard isLoading={isLoading} data={data} />
       </InnerPanel>

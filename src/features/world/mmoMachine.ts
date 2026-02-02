@@ -35,7 +35,6 @@ export type Scenes = {
   stream: Room<PlazaRoomState> | undefined;
   love_island: Room<PlazaRoomState> | undefined;
   memory: Room<PlazaRoomState> | undefined;
-  holidays_island: Room<PlazaRoomState> | undefined;
   "chaacs-temple": Room<PlazaRoomState> | undefined;
 };
 

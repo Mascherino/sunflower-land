@@ -93,8 +93,10 @@ export type ChapterDecorationName =
   | "Paw Prints Rug"
   | "Pet Bed"
   | "Pet Bowls"
+  | "Squeaky Chicken"
   | "Moon Fox Statue"
-  | "Giant Acorn";
+  | "Giant Acorn"
+  | "Diving Helmet";
 
 export type EventDecorationName =
   | "Jelly Lamp"
@@ -197,7 +199,7 @@ export type EventDecorationName =
   | "Winter Alpaca"
   | "Penguin Surprise"
   | "Frozen Meat"
-  | "Ho Ho oh oh...";
+  | "Ho Ho oh oh…";
 
 export type TileName =
   | "Black Tile"
@@ -622,6 +624,10 @@ export type DecorationName =
   | GiantFruit;
 
 export const DECORATION_DIMENSIONS: Record<DecorationName, Dimensions> = {
+  "Diving Helmet": {
+    width: 1,
+    height: 2,
+  },
   "Jelly Lamp": {
     width: 2,
     height: 2,
@@ -1319,6 +1325,10 @@ export const DECORATION_DIMENSIONS: Record<DecorationName, Dimensions> = {
     width: 2,
     height: 1,
   },
+  "Squeaky Chicken": {
+    width: 1,
+    height: 1,
+  },
   "Pet Bed": {
     width: 2,
     height: 1,
@@ -1406,7 +1416,7 @@ export const DECORATION_DIMENSIONS: Record<DecorationName, Dimensions> = {
     width: 1,
     height: 1,
   },
-  "Ho Ho oh oh...": {
+  "Ho Ho oh oh…": {
     width: 2,
     height: 2,
   },

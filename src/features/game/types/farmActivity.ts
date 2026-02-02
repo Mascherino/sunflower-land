@@ -6,7 +6,7 @@ import {
   TreeName,
   UpgradedResourceName,
 } from "./resources";
-import { FishName } from "./fishing";
+import { FishName, MarineMarvelName } from "./fishing";
 import { FullMoonFruit } from "./fruits";
 import { LandBiomeName } from "features/island/biomes/biomes";
 import { PetResourceName } from "./pets";
@@ -49,6 +49,11 @@ import { WeatherShopItem } from "./calendar";
 import { PetShopItemName } from "./petShop";
 import { MonumentName } from "./monuments";
 import { BumpkinItem } from "./bumpkin";
+import { WaterTrapName } from "./crustaceans";
+import { ProcessedResource } from "./processedFood";
+import { ChapterName, ChapterTicket } from "./chapters";
+import { TrackName } from "./tracks";
+import { BonusName } from "./bonuses";
 
 export type CaughtEvent = `${InventoryItemName} Caught`;
 export type HarvestedEvent = `${FlowerName} Harvested`;
@@ -92,6 +97,7 @@ type SellableName =
   | "Love Charm";
 
 type Recipes = Food | CookableName;
+type ProcessedEvent = `${ProcessedResource} Processed`;
 type Edibles = Food | ConsumableName;
 
 export type HarvestEvent = `${
@@ -147,11 +153,13 @@ export type FarmActivityName =
   | BiomeBought
   | "Obsidian Exchanged"
   | "FLOWER Exchanged"
+  | "Gems Purchased"
   | ResourceNodeUpgradeEvent
   | `${PetResourceName} Fetched`
   | PlantGreenHouseFruitEvent
   | PlantGreenHouseCropEvent
   | CookEvent
+  | ProcessedEvent
   | FedEvent
   | BuyEvent
   | CraftedEvent
@@ -212,7 +220,15 @@ export type FarmActivityName =
   | `${MonumentName} Completed`
   | "Daily Reward Collected"
   | "Fish Missed"
-  | "Fish Retried";
+  | "Fish Retried"
+  | `${WaterTrapName} Collected`
+  | `${WaterTrapName} Placed`
+  | `${MarineMarvelName} Map Piece Found`
+  | "Map Missed"
+  | `${ChapterTicket} Collected`
+  | `${ChapterName} Points Earned`
+  | `${ChapterName} ${TrackName} Milestone Claimed`
+  | `${BonusName} Bonus Claimed`;
 
 export function trackFarmActivity(
   activityName: FarmActivityName,

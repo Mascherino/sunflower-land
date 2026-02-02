@@ -41,7 +41,7 @@ import { Label } from "components/ui/Label";
 import { secondsToString } from "lib/utils/time";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { formatNumber } from "lib/utils/formatNumber";
-import { useCountdown } from "lib/utils/hooks/useCountdown";
+import { useNow } from "lib/utils/hooks/useNow";
 
 type Stage = "seedling" | "growing" | "almost" | "ready";
 const PLANT_STAGES: Record<
@@ -73,6 +73,8 @@ interface Props {
 }
 
 const _state = (state: MachineState) => state.context.state;
+const _farmId = (state: MachineState) => state.context.farmId;
+const clampPercentage = (value: number) => Math.min(Math.max(value, 0), 100);
 
 export const GreenhousePot: React.FC<Props> = ({ id }) => {
   const {
@@ -94,6 +96,13 @@ export const GreenhousePot: React.FC<Props> = ({ id }) => {
   const [harvestedAmount, setHarvestedAmount] = useState<number>(0);
 
   const state = useSelector(gameService, _state);
+  const farmId = useSelector(gameService, _farmId);
+  const activityCount = useSelector(gameService, (state) => {
+    const cropName = state.context.state.greenhouse.pots[id]?.plant?.name;
+    if (!cropName) return 0;
+    return state.context.state.farmActivity[`${cropName} Harvested`] ?? 0;
+  });
+
   const { inventory, greenhouse } = state;
   const { pots } = greenhouse;
 
@@ -107,9 +116,14 @@ export const GreenhousePot: React.FC<Props> = ({ id }) => {
         createdAt: plantedAt,
       })
     : 0;
-  const harvestSeconds = (readyAt - plantedAt) / 1000;
-  const { totalSeconds: secondsLeft } = useCountdown(readyAt);
-  const percentage = ((harvestSeconds - secondsLeft) / harvestSeconds) * 100;
+  const harvestSeconds = Math.max((readyAt - plantedAt) / 1000, 0);
+  const now = useNow({ live: !!growingPlant, autoEndAt: readyAt });
+  const secondsLeft =
+    readyAt > 0 ? Math.max(Math.ceil((readyAt - now) / 1000), 0) : 0;
+  const percentage =
+    harvestSeconds > 0
+      ? clampPercentage(((harvestSeconds - secondsLeft) / harvestSeconds) * 100)
+      : 100;
 
   const { usage: oilRequired } = getOilUsage({
     seed: selectedItem as GreenHouseCropSeedName,
@@ -226,7 +240,7 @@ export const GreenhousePot: React.FC<Props> = ({ id }) => {
 
   const harvest = async () => {
     if (!pot.plant) return;
-    if (Date.now() < readyAt) {
+    if (now < readyAt) {
       setShowTimeRemaining(true);
       await new Promise((res) => setTimeout(res, 2000));
       setShowTimeRemaining(false);
@@ -238,10 +252,10 @@ export const GreenhousePot: React.FC<Props> = ({ id }) => {
     setHarvestedAmount(
       pot.plant.amount ??
         getGreenhouseCropYieldAmount({
+          prngArgs: { farmId, counter: activityCount },
           crop: pot.plant.name,
           game: state,
-          createdAt: Date.now(),
-          criticalDrop: (name) => !!(pot.plant?.criticalHit?.[name] ?? 0),
+          createdAt: now,
         }).amount,
     );
 

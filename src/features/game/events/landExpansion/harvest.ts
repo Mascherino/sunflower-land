@@ -4,6 +4,8 @@ import {
   CriticalHitName,
   GameState,
   PlantedCrop,
+  Reward,
+  Skills,
   TemperateSeasonName,
 } from "../../types/game";
 import {
@@ -55,6 +57,8 @@ import {
   FarmActivityName,
 } from "features/game/types/farmActivity";
 import { isBuffActive } from "features/game/types/buffs";
+import { prngChance } from "lib/prng";
+import { KNOWN_IDS } from "features/game/types";
 export type LandExpansionHarvestAction = {
   type: "crop.harvested";
   index: string;
@@ -64,6 +68,7 @@ type Options = {
   state: GameState;
   action: LandExpansionHarvestAction;
   createdAt?: number;
+  farmId?: number;
 };
 
 export const isSummerCrop = (
@@ -123,13 +128,13 @@ export function getCropYieldAmount({
   game,
   plot,
   createdAt,
-  criticalDrop = () => false,
+  prngArgs,
 }: {
   crop: CropName | GreenHouseCropName;
   plot?: CropPlot;
   game: GameState;
   createdAt: number;
-  criticalDrop?: (name: CriticalHitName) => boolean;
+  prngArgs?: { farmId: number; counter: number };
 }): { amount: number; aoe: AOE; boostsUsed: BoostName[] } {
   let amount = 1;
   const boostsUsed: BoostName[] = [];
@@ -137,6 +142,65 @@ export function getCropYieldAmount({
   const { inventory, bumpkin, buds, aoe } = game;
   const updatedAoe = cloneDeep(aoe);
   const skills = bumpkin?.skills ?? {};
+  if (prngArgs) {
+    const itemId = KNOWN_IDS[crop];
+    const criticalDrop = (criticalHitName: CriticalHitName, chance: number) =>
+      prngChance({ ...prngArgs, itemId, chance, criticalHitName });
+
+    if (
+      isWearableActive({ name: "Green Amulet", game }) &&
+      criticalDrop("Green Amulet", 10)
+    ) {
+      amount *= 10;
+      boostsUsed.push("Green Amulet");
+    }
+
+    if (
+      crop === "Potato" &&
+      isCollectibleBuilt({ name: "Peeled Potato", game }) &&
+      criticalDrop("Peeled Potato", 20)
+    ) {
+      amount += 1;
+      boostsUsed.push("Peeled Potato");
+    }
+
+    // Greenhouse Gamble 25% chance of +1 yield
+    if (
+      isGreenhouseCrop(crop) &&
+      skills["Greenhouse Gamble"] &&
+      criticalDrop("Greenhouse Gamble", 25)
+    ) {
+      amount += 1;
+      boostsUsed.push("Greenhouse Gamble");
+    }
+
+    if (
+      crop === "Potato" &&
+      isCollectibleBuilt({ name: "Potent Potato", game }) &&
+      criticalDrop("Potent Potato", 10 / 3)
+    ) {
+      amount += 10;
+      boostsUsed.push("Potent Potato");
+    }
+
+    if (
+      crop === "Sunflower" &&
+      isCollectibleBuilt({ name: "Stellar Sunflower", game }) &&
+      criticalDrop("Stellar Sunflower", 10 / 3)
+    ) {
+      amount += 10;
+      boostsUsed.push("Stellar Sunflower");
+    }
+
+    if (
+      crop === "Radish" &&
+      isCollectibleBuilt({ name: "Radical Radish", game }) &&
+      criticalDrop("Radical Radish", 10 / 3)
+    ) {
+      amount += 10;
+      boostsUsed.push("Radical Radish");
+    }
+  }
 
   if (isBuffActive({ buff: "Power hour", game })) {
     amount += 0.2;
@@ -197,24 +261,6 @@ export function getCropYieldAmount({
   if (inventory.Coder?.gte(1)) {
     amount *= 1.2;
     boostsUsed.push("Coder");
-  }
-
-  if (
-    isWearableActive({ name: "Green Amulet", game }) &&
-    criticalDrop("Green Amulet")
-  ) {
-    amount *= 10;
-    boostsUsed.push("Green Amulet");
-  }
-
-  // Specific crop additions
-  if (
-    crop === "Potato" &&
-    isCollectibleBuilt({ name: "Peeled Potato", game }) &&
-    criticalDrop("Peeled Potato")
-  ) {
-    amount += 1;
-    boostsUsed.push("Peeled Potato");
   }
 
   if (crop === "Cabbage") {
@@ -295,6 +341,11 @@ export function getCropYieldAmount({
     boostsUsed.push("Corn Onesie");
   }
 
+  if (crop === "Corn" && isWearableActive({ name: "Corn Silk Hair", game })) {
+    amount += 2;
+    boostsUsed.push("Corn Silk Hair");
+  }
+
   if (crop === "Wheat" && isWearableActive({ name: "Sickle", game })) {
     amount += 2;
     boostsUsed.push("Sickle");
@@ -336,16 +387,6 @@ export function getCropYieldAmount({
   if (crop === "Olive" && isWearableActive({ name: "Olive Shield", game })) {
     amount += 1;
     boostsUsed.push("Olive Shield");
-  }
-
-  // Greenhouse Gamble 25% chance of +1 yield
-  if (
-    isGreenhouseCrop(crop) &&
-    skills["Greenhouse Gamble"] &&
-    criticalDrop("Greenhouse Gamble")
-  ) {
-    amount += 1;
-    boostsUsed.push("Greenhouse Gamble");
   }
 
   if (plot?.fertiliser?.name === "Sprout Mix") {
@@ -710,33 +751,6 @@ export function getCropYieldAmount({
     boostsUsed.push("Lab Grown Radish");
   }
 
-  if (
-    crop === "Potato" &&
-    isCollectibleBuilt({ name: "Potent Potato", game }) &&
-    criticalDrop("Potent Potato")
-  ) {
-    amount += 10;
-    boostsUsed.push("Potent Potato");
-  }
-
-  if (
-    crop === "Sunflower" &&
-    isCollectibleBuilt({ name: "Stellar Sunflower", game }) &&
-    criticalDrop("Stellar Sunflower")
-  ) {
-    amount += 10;
-    boostsUsed.push("Stellar Sunflower");
-  }
-
-  if (
-    crop === "Radish" &&
-    isCollectibleBuilt({ name: "Radical Radish", game }) &&
-    criticalDrop("Radical Radish")
-  ) {
-    amount += 10;
-    boostsUsed.push("Radical Radish");
-  }
-
   if (plot?.beeSwarm) {
     let beeSwarmBonus = 0.2;
     if (skills["Pollen Power Up"]) {
@@ -837,14 +851,68 @@ export function getCropYieldAmount({
   };
 }
 
+/**
+ * A random reward of items. Opened on harvest.
+ */
+export function getReward({
+  crop,
+  skills,
+  prngArgs,
+}: {
+  crop: CropName | GreenHouseCropName;
+  skills: Skills;
+  prngArgs: { farmId: number; counter: number };
+}): { reward: Reward | undefined; boostUsed: BoostName[] } {
+  const items: Reward["items"] = [];
+  const boostUsed: BoostName[] = [];
+  const itemId = KNOWN_IDS[crop];
+
+  const getPrngChance = (criticalHitName: CriticalHitName, chance: number) =>
+    prngChance({
+      ...prngArgs,
+      itemId,
+      chance,
+      criticalHitName,
+    });
+
+  if (
+    skills["Golden Sunflower"] &&
+    crop === "Sunflower" &&
+    getPrngChance("Golden Sunflower", 1 / 7)
+  ) {
+    items.push({
+      amount: 0.35,
+      name: "Gold",
+    });
+    boostUsed.push("Golden Sunflower");
+  }
+
+  // 1 out of 20 chance
+  if (getPrngChance(crop, 5)) {
+    const seedName: SeedName = `${crop} Seed`;
+    const amount = getPrngChance(seedName, 50) ? 2 : 3;
+    // Return the same seed for them as a reward
+    items.push({
+      amount,
+      name: seedName,
+    });
+  }
+
+  return items.length > 0
+    ? { reward: { items }, boostUsed }
+    : { reward: undefined, boostUsed };
+}
+
 export function harvestCropFromPlot({
   plotId,
   game,
   createdAt,
+  farmId,
 }: {
   plotId: string;
   game: GameState;
   createdAt: number;
+  farmId: number;
 }): {
   updatedPlot: CropPlot;
   amount: number;
@@ -877,16 +945,22 @@ export function harvestCropFromPlot({
     throw new Error("Nothing was planted");
   }
 
-  const { name: cropName, plantedAt, reward, criticalHit = {} } = plot.crop;
+  const { name: cropName, plantedAt } = plot.crop;
 
-  const { amount, aoe, boostsUsed } = plot.crop.amount
+  const counter = game.farmActivity[`${cropName} Harvested`] ?? 0;
+
+  const {
+    amount,
+    aoe,
+    boostsUsed: cropYieldBoostsUsed,
+  } = plot.crop.amount
     ? { amount: plot.crop.amount, aoe: game.aoe, boostsUsed: [] }
     : getCropYieldAmount({
         crop: cropName,
         game,
         plot,
         createdAt,
-        criticalDrop: (name) => !!(criticalHit[name] ?? 0),
+        prngArgs: { farmId, counter },
       });
 
   const { harvestSeconds } = CROPS[cropName];
@@ -894,6 +968,14 @@ export function harvestCropFromPlot({
   if (createdAt - plantedAt < harvestSeconds * 1000) {
     throw new Error("Not ready");
   }
+
+  const { reward, boostUsed: rewardBoostsUsed } = plot.crop.reward
+    ? { reward: plot.crop.reward, boostUsed: [] }
+    : getReward({
+        crop: cropName,
+        skills: bumpkin.skills ?? {},
+        prngArgs: { farmId, counter },
+      });
 
   if (reward) {
     if (reward.coins) {
@@ -927,7 +1009,7 @@ export function harvestCropFromPlot({
     updatedPlot,
     amount,
     aoe,
-    boostsUsed,
+    boostsUsed: [...cropYieldBoostsUsed, ...rewardBoostsUsed],
     cropName,
   };
 }
@@ -936,6 +1018,7 @@ export function harvest({
   state,
   action,
   createdAt = Date.now(),
+  farmId = 0,
 }: Options): GameState {
   return produce(state, (stateCopy) => {
     const { crops: plots } = stateCopy;
@@ -945,6 +1028,7 @@ export function harvest({
         plotId: action.index,
         game: stateCopy,
         createdAt,
+        farmId,
       });
 
     stateCopy.aoe = aoe;

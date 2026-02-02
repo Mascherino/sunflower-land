@@ -1,6 +1,6 @@
 import { Button } from "components/ui/Button";
 import { Label, LabelType } from "components/ui/Label";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useGame } from "../GameProvider";
 import { ButtonPanel } from "components/ui/Panel";
 import { ITEM_DETAILS } from "../types/images";
@@ -18,6 +18,7 @@ import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { MachineState } from "../lib/gameMachine";
 import { useSelector } from "@xstate/react";
 import { useNow } from "lib/utils/hooks/useNow";
+import { gameAnalytics } from "lib/gameAnalytics";
 
 import basicToolBox from "assets/rewardBoxes/basic_tool_box.png";
 import streakBox from "assets/rewardBoxes/streak_box.png";
@@ -27,6 +28,7 @@ import basicBuffBox from "assets/rewardBoxes/basic_buff_box.png";
 import basicXPBox from "assets/rewardBoxes/basic_xp_box.png";
 import { BuffName } from "../types/buffs";
 import coinsIcon from "assets/icons/coins_stack.webp";
+import { getBumpkinLevel } from "../lib/level";
 
 export const DAILY_REWARD_IMAGES: Record<DailyRewardName, string> = {
   "default-reward": SUNNYSIDE.icons.expression_confused,
@@ -38,10 +40,10 @@ export const DAILY_REWARD_IMAGES: Record<DailyRewardName, string> = {
   "onboarding-day-6-anchovy-kit": basicFishingBox,
   "onboarding-day-7-first-week-finale": ITEM_DETAILS["Weekly Mega Box"].image,
   "weekly-day-1-tool-cache": basicToolBox,
-  "weekly-day-2-growth-feast": basicXPBox,
+  "weekly-day-2-growth-boost": basicBuffBox,
   "weekly-day-3-love-box": ITEM_DETAILS["Basic Love Box"].image,
   "weekly-day-4-angler-pack": basicFishingBox,
-  "weekly-day-5-growth-boost": basicBuffBox,
+  "weekly-day-5-growth-feast": basicXPBox,
   "weekly-day-6-coin-stash": coinsIcon,
   "weekly-mega-box": ITEM_DETAILS["Weekly Mega Box"].image,
   "streak-one-year": streakBox,
@@ -56,6 +58,18 @@ const _gameState = (state: MachineState) => state.context.state;
 function acknowledgeDailyReward() {
   localStorage.setItem("dailyRewardAcknowledged", new Date().toISOString());
 }
+
+const getUtcDay = (value: number) => {
+  const date = new Date(value);
+
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+};
+
+const getUtcDayDifference = (later: number, earlier: number) => {
+  const difference = getUtcDay(later) - getUtcDay(earlier);
+
+  return Math.max(0, Math.floor(difference / (1000 * 60 * 60 * 24)));
+};
 
 export function getDailyRewardLastAcknowledged(): Date | null {
   const value = localStorage.getItem("dailyRewardAcknowledged");
@@ -77,35 +91,62 @@ export const DailyRewardClaim: React.FC<{ showClose?: boolean }> = ({
   const currentDate = new Date(now).toISOString().substring(0, 10);
 
   const [showClaim, setShowClaim] = useState(false);
+  const hasUnlocked = getBumpkinLevel(bumpkinExperience) >= 3;
 
-  const hasClaimed = !isDailyRewardReady({
-    dailyRewards,
-    bumpkinExperience,
-    now,
-  });
+  const claim = () => {
+    const lastCollectedAt =
+      dailyRewards?.chest?.collectedAt ?? gameState.createdAt ?? now;
 
-  const rewards = useMemo(() => {
-    let streak = getDailyRewardStreak({
-      game: gameState,
-      dailyRewards,
-      currentDate,
-    });
+    gameService.send("dailyReward.claimed");
+    gameService.send("CONTINUE");
 
-    if (hasClaimed) {
-      streak -= 1;
+    if (gameState.createdAt > new Date("2026-01-09").getTime()) {
+      const daysSinceLastClaim = getUtcDayDifference(now, lastCollectedAt);
+      const totalClaimed =
+        gameService.getSnapshot().context.state.farmActivity[
+          "Daily Reward Collected"
+        ] ?? 0;
+
+      gameAnalytics.trackDailyRewardReturn({
+        totalClaimed,
+        daysSinceLastClaim,
+      });
     }
 
-    return new Array(7).fill(null).map((_, index) => {
-      return {
-        day: streak + index + 1,
-        reward: getRewardsForStreak({
-          game: gameState,
-          streak: streak + index,
-          currentDate,
-        }),
-      };
-    });
-  }, [dailyRewards, hasClaimed, currentDate, gameState]);
+    setShowClaim(false);
+  };
+
+  const hasClaimed =
+    !isDailyRewardReady({
+      dailyRewards,
+      bumpkinExperience,
+      now,
+    }) && hasUnlocked;
+
+  let streak = getDailyRewardStreak({
+    game: gameState,
+    dailyRewards,
+    currentDate,
+  });
+
+  if (hasClaimed) {
+    streak -= 1;
+  }
+
+  if (streak < 0) {
+    streak = 0;
+  }
+
+  const rewards = new Array(7).fill(null).map((_, index) => {
+    return {
+      day: streak + index + 1,
+      reward: getRewardsForStreak({
+        game: gameState,
+        streak: streak + index,
+        currentDate,
+      }).rewards,
+    };
+  });
 
   if (showClaim) {
     const items = rewards[0].reward.reduce(
@@ -147,9 +188,7 @@ export const DailyRewardClaim: React.FC<{ showClose?: boolean }> = ({
           buff: buffs[0],
         }}
         onClaim={() => {
-          gameService.send("dailyReward.claimed");
-          gameService.send("CONTINUE");
-          setShowClaim(false);
+          claim();
         }}
       />
     );
@@ -170,27 +209,22 @@ export const DailyRewardClaim: React.FC<{ showClose?: boolean }> = ({
           }}
         />
       )}
-      <Label type="warning">{t("dailyReward.title")}</Label>
+      <div className="flex flex-row items-center gap-1">
+        <Label type="warning">{t("dailyReward.title")}</Label>
+        {!hasUnlocked && (
+          <Label type="formula" secondaryIcon={SUNNYSIDE.icons.lock}>
+            {`Unlock at level 3`}
+          </Label>
+        )}
+      </div>
       <p className="text-xs mx-1 my-2">
         {t("dailyReward.megaRewardCountdown", {
           days: daysTillWeeklyMega,
         })}
       </p>
-      <div className="flex overflow-x-scroll  px-1 mb-1">
+      <div className="flex overflow-x-scroll scrollable px-1 mb-1">
         {rewards.map(({ day, reward }, index) => {
-          const items = reward.reduce((acc, reward) => {
-            return [...acc, ...getKeys(reward.items ?? {})];
-          }, [] as InventoryItemName[]);
-
-          const coins = reward.reduce((acc, reward) => {
-            return acc + (reward.coins ?? 0);
-          }, 0);
-
           let labelType: LabelType = "default";
-
-          if (index === 0) {
-            labelType = "info";
-          }
 
           if (day % 7 === 0) {
             labelType = "vibrant";
@@ -198,7 +232,8 @@ export const DailyRewardClaim: React.FC<{ showClose?: boolean }> = ({
 
           let labelText = t("dailyReward.day", { day });
 
-          if (index === 0) {
+          if (index === 0 && hasUnlocked) {
+            labelType = "info";
             labelText = t("dailyReward.today");
           }
 
@@ -248,6 +283,7 @@ export const DailyRewardClaim: React.FC<{ showClose?: boolean }> = ({
           onClick={() => {
             setShowClaim(true);
           }}
+          disabled={!hasUnlocked}
         >
           {t("dailyReward.claim")}
         </Button>

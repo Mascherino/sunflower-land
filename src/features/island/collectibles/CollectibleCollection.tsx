@@ -370,6 +370,10 @@ import { BlackHoleFlower } from "./components/BlackHoleFlower";
 import { SleepyChicken } from "./components/SleepyChicken";
 import { AstronautCow } from "./components/AstronautCow";
 import { AstronautSheep } from "./components/AstronautSheep";
+import { MermaidCow } from "./components/MermaidCow";
+import { MermaidSheep } from "./components/MermaidSheep";
+import { SquidChicken } from "./components/SquidChicken";
+import { AnemoneFlower } from "./components/AnemoneFlower";
 import { Poseidon } from "./components/Poseidon";
 import { Project } from "./components/Project";
 import { PetShrine } from "./components/PetShrine";
@@ -377,6 +381,9 @@ import { ObsidianShrine } from "./components/ObsidianShrine";
 import { Pet } from "../pets/Pet";
 import { PetName, PET_TYPES } from "features/game/types/pets";
 import { PetNFT } from "./components/petNFT/PetNFT";
+import { Isopod } from "./components/Isopod";
+import { Nautilus } from "./components/Nautilus";
+import { Dollocaris } from "./components/Dollocaris";
 
 export const COLLECTIBLE_COMPONENTS: Record<
   CollectibleName | "Bud" | "PetNFT",
@@ -406,6 +413,10 @@ export const COLLECTIBLE_COMPONENTS: Record<
   "Sleepy Chicken": SleepyChicken,
   "Astronaut Cow": AstronautCow,
   "Astronaut Sheep": AstronautSheep,
+  "Mermaid Cow": MermaidCow,
+  "Mermaid Sheep": MermaidSheep,
+  "Squid Chicken": SquidChicken,
+  "Anemone Flower": AnemoneFlower,
   "Love Chicken": LoveChicken,
   "Dr Cow": DrCow,
   "Nurse Sheep": NurseSheep,
@@ -719,6 +730,9 @@ export const COLLECTIBLE_COMPONENTS: Record<
   "Phantom Barracuda": PhantomBarracuda,
   "Gilded Swordfish": GildedSwordfish,
   "Super Star": SuperStar,
+  "Giant Isopod": Isopod,
+  Nautilus: Nautilus,
+  Dollocaris: Dollocaris,
   "Crimson Carp": CrimsonCarp,
   "Battle Fish": BattleFish,
   "Lemon Shark": LemonShark,
@@ -744,6 +758,40 @@ export const COLLECTIBLE_COMPONENTS: Record<
   "Skill Shrimpy": SkillShrimpy,
   "Soil Krabby": SoilKrabby,
   Nana: Nana,
+  "Speckled Kissing Fish": () => (
+    <TemplateCollectible name="Speckled Kissing Fish" />
+  ),
+  "Dark Eyed Kissing Fish": () => (
+    <TemplateCollectible name="Dark Eyed Kissing Fish" />
+  ),
+  "Fisherman's Boat": () => <TemplateCollectible name="Fisherman's Boat" />,
+  "Sea Arch": () => <TemplateCollectible name="Sea Arch" />,
+  "Crabs and Fish Rug": () => <TemplateCollectible name="Crabs and Fish Rug" />,
+  "Fish Flags": () => <TemplateCollectible name="Fish Flags" />,
+  "Fish Drying Rack": () => <TemplateCollectible name="Fish Drying Rack" />,
+  "Yellow Submarine Trophy": () => (
+    <TemplateCollectible name="Yellow Submarine Trophy" />
+  ),
+  Oaken: () => <TemplateCollectible name="Oaken" />,
+  Meerkat: () => <TemplateCollectible name="Meerkat" />,
+  "Pearl Bed": () => <TemplateCollectible name="Pearl Bed" />,
+  "Crimstone Clam": () => <TemplateCollectible name="Crimstone Clam" />,
+  "Poseidon's Throne": () => <TemplateCollectible name="Poseidon's Throne" />,
+  "Fish Kite": (props: CollectibleProps) => (
+    <ImageStyle
+      {...props}
+      divStyle={{
+        width: `${PIXEL_SCALE * 24}px`,
+        bottom: `${PIXEL_SCALE * 0}px`,
+        left: `${PIXEL_SCALE * 4}px`,
+      }}
+      imgStyle={{
+        width: `${PIXEL_SCALE * 24}px`,
+      }}
+      image={ITEM_DETAILS["Fish Kite"].image}
+      alt="Fish Kite"
+    />
+  ),
   "Crim Peckster": CrimPeckster,
   "Knight Chicken": KnightChicken,
   "Pharaoh Chicken": PharaohChicken,
@@ -2740,6 +2788,37 @@ export const COLLECTIBLE_COMPONENTS: Record<
       alt="Paw Prints Banner"
     />
   ),
+  "Crabs and Traps Banner": (props: CollectibleProps) => (
+    <ImageStyle
+      {...props}
+      divStyle={{
+        width: `${PIXEL_SCALE * 16}px`,
+        bottom: `${PIXEL_SCALE * 2}px`,
+        left: `${PIXEL_SCALE * 0}px`,
+      }}
+      imgStyle={{
+        width: `${PIXEL_SCALE * 16}px`,
+      }}
+      image={ITEM_DETAILS["Crabs and Traps Banner"].image}
+      alt="Crabs and Traps Banner"
+    />
+  ),
+  "Diving Helmet": (props: CollectibleProps) => (
+    <ImageStyle
+      {...props}
+      divStyle={{
+        width: `${PIXEL_SCALE * 18}px`,
+        bottom: `${PIXEL_SCALE * 0}px`,
+        left: `50%`,
+        transform: "translatex(-50%)",
+      }}
+      imgStyle={{
+        width: `${PIXEL_SCALE * 18}px`,
+      }}
+      image={ITEM_DETAILS["Diving Helmet"].image}
+      alt="Diving Helmet"
+    />
+  ),
   "Paw Prints Rug": (props: CollectibleProps) => (
     <ImageStyle
       {...props}
@@ -3595,7 +3674,7 @@ export const COLLECTIBLE_COMPONENTS: Record<
       alt="Frozen Meat"
     />
   ),
-  "Ho Ho oh oh...": (props: CollectibleProps) => (
+  "Ho Ho oh oh…": (props: CollectibleProps) => (
     <ImageStyle
       {...props}
       divStyle={{
@@ -3606,8 +3685,23 @@ export const COLLECTIBLE_COMPONENTS: Record<
       imgStyle={{
         width: `${PIXEL_SCALE * 32}px`,
       }}
-      image={ITEM_DETAILS["Ho Ho oh oh..."].image}
-      alt="Ho Ho oh oh..."
+      image={ITEM_DETAILS["Ho Ho oh oh…"].image}
+      alt="Ho Ho oh oh…"
+    />
+  ),
+  "Squeaky Chicken": (props: CollectibleProps) => (
+    <ImageStyle
+      {...props}
+      divStyle={{
+        width: `${PIXEL_SCALE * 23}px`,
+        bottom: `${PIXEL_SCALE * 0}px`,
+        left: `${PIXEL_SCALE * -3}px`,
+      }}
+      imgStyle={{
+        width: `${PIXEL_SCALE * 23}px`,
+      }}
+      image={ITEM_DETAILS["Squeaky Chicken"].image}
+      alt="Squeaky Chicken"
     />
   ),
 };

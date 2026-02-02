@@ -22,6 +22,7 @@ import { BuildingName } from "./buildings";
 import { GameEvent } from "../events";
 import { BumpkinItem, Equipped as BumpkinParts } from "./bumpkin";
 import { ConsumableName, CookableName } from "./consumables";
+import { ProcessedResource } from "./processedFood";
 import { BumpkinSkillName, BumpkinRevampSkillName } from "./bumpkinSkills";
 import { AchievementName } from "./achievements";
 import { DecorationName } from "./decorations";
@@ -47,7 +48,12 @@ import {
 import { TreasureToolName, WorkbenchToolName } from "./tools";
 import { ConversationName } from "./announcements";
 import { NPCName } from "lib/npcs";
-import { ChapterBanner, ChapterTicket, ChapterName } from "./chapters";
+import {
+  ChapterBanner,
+  ChapterTicket,
+  ChapterName,
+  ChapterRaffleTicket,
+} from "./chapters";
 import { Bud } from "./buds";
 import {
   CompostName,
@@ -111,6 +117,7 @@ import { RockName } from "./resources";
 import { PetShopItemName } from "./petShop";
 import { League } from "features/leagues/leagues";
 import { Buff, BuffName } from "./buffs";
+import { CrustaceanChum, CrustaceanName, WaterTrapName } from "./crustaceans";
 
 export type Reward = {
   coins?: number;
@@ -215,21 +222,24 @@ export type MutantChicken =
   | "Summer Chicken"
   | "Love Chicken"
   | "Janitor Chicken"
-  | "Sleepy Chicken";
+  | "Sleepy Chicken"
+  | "Squid Chicken";
 
 export type MutantCow =
   | "Mootant"
   | "Frozen Cow"
   | "Dr Cow"
   | "Baby Cow"
-  | "Astronaut Cow";
+  | "Astronaut Cow"
+  | "Mermaid Cow";
 
 export type MutantSheep =
   | "Toxic Tuft"
   | "Frozen Sheep"
   | "Nurse Sheep"
   | "Baby Sheep"
-  | "Astronaut Sheep";
+  | "Astronaut Sheep"
+  | "Mermaid Sheep";
 
 export type MutantAnimal = MutantChicken | MutantCow | MutantSheep;
 
@@ -254,7 +264,6 @@ export type Coupons =
   | "Arcade Token"
   | "Farmhand Coupon"
   | "Farmhand"
-  | "VIP3"
   | "Prize Ticket"
   | "Mark"
   | "Trade Point"
@@ -341,9 +350,6 @@ export const COUPONS: Record<Coupons, { description: string }> = {
   Farmhand: {
     description: translate("description.farmhand"),
   },
-  VIP3: {
-    description: translate("description.vip3"),
-  },
   "Tulip Bulb": {
     description: translate("description.tulip.bulb"),
   },
@@ -410,6 +416,7 @@ export const COUPONS: Record<Coupons, { description: string }> = {
   Bracelet: { description: "" },
   Cheer: { description: translate("description.cheer") },
   "Pet Cookie": { description: translate("description.petCookie") },
+  Floater: { description: "Collected during the Crabs and Traps." },
   "Halloween Token 2025": {
     description: translate("description.halloweenToken2025"),
   },
@@ -582,6 +589,7 @@ export type InventoryItemName =
   | FertiliserName
   | WarBanner
   | ConsumableName
+  | ProcessedResource
   | DecorationName
   | GoldenCropEventItem
   | TreasureName
@@ -623,7 +631,9 @@ export type InventoryItemName =
   | ClutterName
   | PetName
   | PetResourceName
-  | PetShopItemName;
+  | PetShopItemName
+  | CrustaceanName
+  | ChapterRaffleTicket;
 
 export type Inventory = Partial<Record<InventoryItemName, Decimal>>;
 
@@ -765,12 +775,14 @@ export type FruitPatch = {
 } & OptionalCoordinates;
 
 export type BuildingProduct = {
-  name: CookableName;
+  name: CookableName | ProcessedResource;
   readyAt: number;
   amount?: number;
   boost?: Partial<Record<InventoryItemName, number>>;
   skills?: Partial<Record<BumpkinRevampSkillName, boolean>>;
   timeRemaining?: number;
+  startedAt?: number;
+  requirements?: Inventory;
 };
 
 export type BuildingProduce = {
@@ -793,6 +805,7 @@ export type PlacedItem = {
   removedAt?: number;
   cancelled?: Cancelled;
   crafting?: BuildingProduct[];
+  processing?: BuildingProduct[];
   oil?: number;
   flipped?: boolean;
 };
@@ -1009,6 +1022,7 @@ export type BedName =
   | "Cow Bed"
   | "Pirate Bed"
   | "Royal Bed"
+  | "Pearl Bed"
   | "Double Bed"
   | "Messy Bed";
 
@@ -1277,6 +1291,29 @@ type FishingSpot = {
   bait?: FishingBait;
   chum?: InventoryItemName;
   caught?: Partial<Record<InventoryItemName, number>>;
+  guaranteedCatch?: FishName;
+  maps?: Partial<Record<MarineMarvelName, number>>;
+  freePuzzleAttemptUsed?: boolean;
+  /**
+   * Number of reels used for this cast. When omitted, defaults to 1.
+   */
+  multiplier?: number;
+};
+
+type WaterTrapSpot = {
+  waterTrap?: WaterTrap;
+} & Coordinates;
+
+export type WaterTrap = {
+  type: WaterTrapName;
+  placedAt: number;
+  chum?: CrustaceanChum;
+  readyAt: number;
+  caught?: Partial<Record<InventoryItemName, number>>;
+};
+
+export type CrabTrap = {
+  trapSpots?: Record<string, WaterTrapSpot>;
 };
 
 export type Fishing = {
@@ -1586,7 +1623,10 @@ export type BoostName =
   | InventoryItemName
   | BumpkinItem
   | BumpkinRevampSkillName
-  | BudNFTName;
+  | BudNFTName
+  | SpecialBoostName;
+
+export type SpecialBoostName = "Sunshower" | "Power hour";
 
 export type BoostUsedAt = Partial<Record<BoostName, number>>;
 
@@ -1736,6 +1776,7 @@ export interface GameState {
     flowerBeds: FlowerBeds;
   };
   fishing: Fishing;
+  crabTraps: CrabTrap;
   farmActivity: Partial<Record<FarmActivityName, number>>;
   milestones: Partial<Record<MilestoneName, number>>;
 
@@ -1766,7 +1807,7 @@ export interface GameState {
       tier: "bronze" | "silver" | "gold" | "platinum" | "diamond";
     };
     giftGiver?: { openedAt: number };
-    streamerHat?: { openedAt: number };
+    streamerHat?: { openedAt: number; dailyCount?: number };
     pirateChest?: { openedAt: number };
     keysBought?: KeysBought;
   };
@@ -1788,6 +1829,16 @@ export interface GameState {
       id: string;
       createdAt: number;
     }[];
+  };
+  raffle?: {
+    active: Record<
+      string,
+      {
+        entries: number;
+        endAt: number;
+        items: Partial<Record<InventoryItemName, number>>;
+      }
+    >;
   };
   dailyRewards?: DailyRewards;
   auctioneer: Auctioneer;

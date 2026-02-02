@@ -65,10 +65,14 @@ export const INITIAL_STOCK = (
   state?: GameState,
 ): Record<StockableName, Decimal> => {
   const tools = Object.entries(WORKBENCH_TOOLS).reduce(
-    (acc, [toolName, tool]) => ({
-      ...acc,
-      [toolName]: tool.stock,
-    }),
+    (acc, [toolName, tool]) => {
+      if (tool.disabled) return acc;
+
+      return {
+        ...acc,
+        [toolName]: tool.stock,
+      };
+    },
     {} as Record<WorkbenchToolName, Decimal>,
   );
 
@@ -525,6 +529,9 @@ export const INITIAL_FARM: GameState = {
     dailyAttempts: {},
     wharf: {},
   },
+  crabTraps: {
+    trapSpots: {},
+  },
   mailbox: {
     read: [],
   },
@@ -759,6 +766,9 @@ export const TEST_FARM: GameState = {
   fishing: {
     wharf: {},
     dailyAttempts: {},
+  },
+  crabTraps: {
+    trapSpots: {},
   },
   greenhouse: {
     pots: {},
@@ -1128,6 +1138,9 @@ export const EMPTY: GameState = {
   fishing: {
     wharf: {},
     dailyAttempts: {},
+  },
+  crabTraps: {
+    trapSpots: {},
   },
   mushrooms: {
     spawnedAt: 0,

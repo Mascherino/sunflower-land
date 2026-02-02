@@ -2,6 +2,7 @@ import Decimal from "decimal.js-light";
 import { INVENTORY_LIMIT } from "features/game/lib/constants";
 import { getBumpkinLevel } from "features/game/lib/level";
 import {
+  BoostName,
   GameState,
   InventoryItemName,
   TemperateSeasonName,
@@ -18,13 +19,28 @@ import flowerBed from "assets/flowers/empty_flowerbed.webp";
 
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { ITEM_ICONS } from "features/island/hud/components/inventory/Chest";
-import { Seed, SeedName, SEEDS } from "features/game/types/seeds";
+import {
+  isCropSeed,
+  isFlowerSeed,
+  isGreenhouseSeed,
+  isPatchFruitSeed,
+  Seed,
+  SeedName,
+  SEEDS,
+} from "features/game/types/seeds";
 import {
   CropName,
+  CropSeedName,
   getCropCategory,
   ProduceName,
 } from "features/game/types/crops";
 import { getCurrentBiome } from "features/island/biomes/biomes";
+import { BoostsDisplay } from "./BoostsDisplay";
+import {
+  calculateCropTime,
+  CROP_MACHINE_PLOTS,
+} from "features/game/events/landExpansion/supplyCropMachine";
+import { AdditionalBoostInfo } from "features/game/types/collectibleItemBuffs";
 
 /**
  * The props for the details for items.
@@ -72,7 +88,8 @@ interface RequirementsProps {
   coins?: number;
   showCoinsIfFree?: boolean;
   harvests?: HarvestsRequirementProps;
-  timeSeconds?: number;
+  time?: { seconds: number; boostsUsed: BoostName[] };
+  baseTimeSeconds?: number;
   level?: number;
   restriction?: {
     icon: string;
@@ -102,6 +119,8 @@ interface Props {
   actionView?: JSX.Element;
   label?: JSX.Element;
   validSeeds: SeedName[];
+  setShowBoosts: (show: boolean) => void;
+  showBoosts: boolean;
 }
 
 function getDetails(
@@ -150,8 +169,11 @@ export const SeedRequirements: React.FC<Props> = ({
   actionView,
   label,
   validSeeds,
+  setShowBoosts,
+  showBoosts,
 }) => {
   const { t } = useAppTranslation();
+
   const getStock = () => {
     if (!stock) return <></>;
 
@@ -180,7 +202,15 @@ export const SeedRequirements: React.FC<Props> = ({
   };
 
   const inSeasonSeeds = validSeeds.includes(details.item);
-  const isCropMachineSeed = details.cropMachineSeeds?.includes(details.item);
+  const isSeedCropMachine = (seed: SeedName): seed is CropSeedName =>
+    !!details.cropMachineSeeds?.includes(seed);
+
+  const isSeedGreenhouse = isGreenhouseSeed(details.item);
+  const isSeedFlower = isFlowerSeed(details.item);
+  const isSeedPatchFruit = isPatchFruitSeed(details.item);
+  const isSeedCrop = isCropSeed(details.item);
+
+  const isCropMachineSeed = isSeedCropMachine(details.item);
 
   const getItemDetail = () => {
     const { image: icon, name } = getDetails(gameState, details);
@@ -233,23 +263,104 @@ export const SeedRequirements: React.FC<Props> = ({
 
   const getRequirements = () => {
     if (!requirements) return <></>;
+    const { coins, showCoinsIfFree, harvests, time, baseTimeSeconds, level } =
+      requirements;
+
+    const isTimeBoosted = time?.seconds !== baseTimeSeconds;
+
+    const RequirementLabels: React.FC = () => {
+      if (isSeedCropMachine(details.item)) {
+        const cropMachinePackSize = CROP_MACHINE_PLOTS(gameState);
+        const cropMachineBoostedTime = calculateCropTime(
+          { type: details.item, amount: cropMachinePackSize },
+          gameState,
+        );
+        const cropMachineBaseTime = baseTimeSeconds;
+        const isCropMachineTimeBoosted =
+          cropMachineBoostedTime.milliSeconds / 1000 !== cropMachineBaseTime;
+
+        return (
+          <div
+            className="flex flex-col items-center cursor-pointer"
+            onClick={
+              isCropMachineTimeBoosted
+                ? () => setShowBoosts(!showBoosts)
+                : undefined
+            }
+          >
+            <p className="text-xxs">{`Time to grow ${cropMachinePackSize}x: `}</p>
+            {!!cropMachineBoostedTime && isCropMachineTimeBoosted && (
+              <RequirementLabel
+                type="time"
+                waitSeconds={cropMachineBoostedTime.milliSeconds / 1000}
+                boosted
+              />
+            )}
+            {!!cropMachineBaseTime && (
+              <RequirementLabel
+                type="time"
+                waitSeconds={cropMachineBaseTime}
+                strikethrough={isCropMachineTimeBoosted}
+              />
+            )}
+            <BoostsDisplay
+              boosts={cropMachineBoostedTime.boostUsed ?? []}
+              show={showBoosts}
+              state={gameState}
+              onClick={() => setShowBoosts(!showBoosts)}
+              searchBoostInfo={{ boostType: "time", boostOn: ["crop machine"] }}
+            />
+          </div>
+        );
+      }
+      const getBoostOn = (): AdditionalBoostInfo["boostOn"][] => {
+        if (isSeedCrop) return ["crops"];
+        if (isSeedFlower) return ["flowers"];
+        if (isSeedPatchFruit) return ["fruits"];
+        if (isSeedGreenhouse) return ["crops", "greenhouse"];
+        return [];
+      };
+      const boostOn = getBoostOn();
+      // Temporary allow this console log for testing
+      // eslint-disable-next-line no-console
+      console.log({ time });
+
+      return (
+        <div
+          className="flex flex-col items-center cursor-pointer"
+          onClick={isTimeBoosted ? () => setShowBoosts(!showBoosts) : undefined}
+        >
+          {!!time && isTimeBoosted && (
+            <RequirementLabel type="time" waitSeconds={time.seconds} boosted />
+          )}
+          {!!baseTimeSeconds && (
+            <RequirementLabel
+              type="time"
+              waitSeconds={baseTimeSeconds}
+              strikethrough={isTimeBoosted}
+            />
+          )}
+          <BoostsDisplay
+            boosts={time?.boostsUsed ?? []}
+            show={showBoosts}
+            state={gameState}
+            onClick={() => setShowBoosts(!showBoosts)}
+            searchBoostInfo={{ boostType: "time", boostOn }}
+          />
+        </div>
+      );
+    };
 
     return (
       <div className="w-full mb-2 flex justify-center gap-x-3 gap-y-0 flex-wrap sm:flex-col sm:items-center sm:flex-nowrap my-1">
         {/* Time requirement display */}
-        {!!requirements.timeSeconds && (
-          <RequirementLabel
-            type="time"
-            waitSeconds={requirements.timeSeconds}
-          />
-        )}
-
+        <RequirementLabels />
         {/* Level requirement */}
-        {!!requirements.level && (
+        {!!level && (
           <RequirementLabel
             type="level"
             currentLevel={getBumpkinLevel(gameState.bumpkin?.experience ?? 0)}
-            requirement={requirements.level}
+            requirement={level}
           />
         )}
 
@@ -264,23 +375,22 @@ export const SeedRequirements: React.FC<Props> = ({
         )}
 
         {/* Harvests display */}
-        {!!requirements.harvests && (
+        {!!harvests && (
           <RequirementLabel
             type="harvests"
-            minHarvest={requirements.harvests.minHarvest}
-            maxHarvest={requirements.harvests.maxHarvest}
+            minHarvest={harvests.minHarvest}
+            maxHarvest={harvests.maxHarvest}
           />
         )}
 
         {/* Coin requirement */}
-        {requirements.coins !== undefined &&
-          (requirements.coins > 0 || requirements.showCoinsIfFree) && (
-            <RequirementLabel
-              type="coins"
-              balance={gameState.coins}
-              requirement={requirements.coins}
-            />
-          )}
+        {coins !== undefined && (coins > 0 || showCoinsIfFree) && (
+          <RequirementLabel
+            type="coins"
+            balance={gameState.coins}
+            requirement={coins}
+          />
+        )}
 
         {label}
       </div>

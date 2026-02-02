@@ -21,6 +21,7 @@ import { SquareIcon } from "components/ui/SquareIcon";
 import {
   getChapterArtefact,
   getChapterTicket,
+  getCurrentChapter,
 } from "features/game/types/chapters";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 import { ITEM_DETAILS } from "features/game/types/images";
@@ -35,10 +36,12 @@ import {
 import { Button } from "components/ui/Button";
 import confetti from "canvas-confetti";
 import flowerIcon from "assets/icons/flower_token.webp";
+import chapterPoints from "assets/icons/red_medal_short.webp";
 import { NO_BONUS_BOUNTIES_WEEK } from "features/game/events/landExpansion/claimBountyBonus";
 import { getCountAndType } from "features/island/hud/components/inventory/utils/inventory";
 import { useCountdown } from "lib/utils/hooks/useCountdown";
 import { useNow } from "lib/utils/hooks/useNow";
+import { getChapterTaskPoints } from "features/game/types/tracks";
 
 export const MegaBountyBoard: React.FC<{ onClose: () => void }> = ({
   onClose,
@@ -47,7 +50,13 @@ export const MegaBountyBoard: React.FC<{ onClose: () => void }> = ({
     bumpkinParts={NPC_WEARABLES.poppy}
     onClose={onClose}
     container={OuterPanel}
-    tabs={[{ icon: SUNNYSIDE.icons.stopwatch, name: "Mega Bounty Board" }]}
+    tabs={[
+      {
+        icon: SUNNYSIDE.icons.stopwatch,
+        name: "Mega Bounty Board",
+        id: "board",
+      },
+    ]}
   >
     <MegaBountyBoardContent />
   </CloseButtonPanel>
@@ -381,6 +390,12 @@ const Deal: React.FC<{
     imgElement.src = ITEM_DETAILS[bounty.name].image;
   }, []);
 
+  const chapter = getCurrentChapter(now);
+  const tickets = generateBountyTicket({
+    game: state,
+    bounty,
+  });
+
   return (
     <InnerPanel className="shadow">
       <>
@@ -454,6 +469,11 @@ const Deal: React.FC<{
                     </Label>
                   );
                 })}
+                {!!tickets && (
+                  <Label type={"vibrant"} icon={chapterPoints}>
+                    {`+${getChapterTaskPoints({ task: "bounty", points: tickets })} ${chapter} points.`}
+                  </Label>
+                )}
                 {BOUNTY_CATEGORIES["Obsidian Bounties"](bounty) &&
                   bounty.sfl && (
                     <Label

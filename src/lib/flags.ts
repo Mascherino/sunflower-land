@@ -31,7 +31,7 @@ export const adminFeatureFlag = ({ wardrobe, inventory }: GameState) =>
 const defaultFeatureFlag = ({ inventory }: GameState) =>
   CONFIG.NETWORK === "amoy" || !!inventory["Beta Pass"]?.gt(0);
 
-const testnetFeatureFlag = () => CONFIG.NETWORK === "amoy";
+export const testnetFeatureFlag = () => CONFIG.NETWORK === "amoy";
 
 const localStorageFeatureFlag = (key: string) =>
   !!localStorage.getItem(key) === true;
@@ -40,8 +40,8 @@ const testnetLocalStorageFeatureFlag = (key: string) => () => {
   return testnetFeatureFlag() || localStorageFeatureFlag(key);
 };
 
-const timeBasedFeatureFlag = (date: Date) => () => {
-  return testnetFeatureFlag() || Date.now() > date.getTime();
+const timeBasedFeatureFlag = (date: Date) => (now: number) => {
+  return testnetFeatureFlag() || now >= date.getTime();
 };
 
 const betaTimeBasedFeatureFlag = (date: Date) => (game: GameState) => {
@@ -76,7 +76,6 @@ export const ADMIN_IDS = [1, 3, 39488, 128727];
 export const MANAGER_IDS = [...ADMIN_IDS, 29, 130170, 7841];
 
 export type FeatureFlag = (game: GameState) => boolean;
-
 export type ExperimentName = "ONBOARDING_CHALLENGES" | "GEM_BOOSTS";
 
 /*
@@ -100,7 +99,7 @@ const FEATURE_FLAGS = {
   FACE_RECOGNITION_TEST: defaultFeatureFlag,
   LEDGER: testnetLocalStorageFeatureFlag("ledger"),
 
-  LEAGUES: defaultFeatureFlag,
+  LEAGUES: () => false,
 
   EASTER: () => false,
 
@@ -115,14 +114,26 @@ const FEATURE_FLAGS = {
 
   PET_HOUSE: testnetFeatureFlag,
 
-  RENEW_PET_SHRINES: defaultFeatureFlag,
-  FISHING_PUZZLE: defaultFeatureFlag,
-
   BETA_ACCESS: defaultFeatureFlag,
 } satisfies Record<string, FeatureFlag>;
+
+const TIME_BASED_FEATURE_FLAGS = {
+  PET_CHAPTER_COMPLETE: timeBasedFeatureFlag(new Date("2026-02-02T00:00:00Z")),
+} satisfies Record<string, TimeBasedFeatureFlag>;
 
 export type FeatureName = keyof typeof FEATURE_FLAGS;
 
 export const hasFeatureAccess = (game: GameState, featureName: FeatureName) => {
   return FEATURE_FLAGS[featureName](game);
+};
+
+export type TimeBasedFeatureFlag = (now: number) => boolean;
+
+export type TimeBasedFeatureName = keyof typeof TIME_BASED_FEATURE_FLAGS;
+
+export const hasTimeBasedFeatureAccess = (
+  featureName: TimeBasedFeatureName,
+  now: number,
+) => {
+  return TIME_BASED_FEATURE_FLAGS[featureName](now);
 };

@@ -241,6 +241,10 @@ export const BUMPKIN_RELEASES: Partial<Record<BumpkinItem, Releases>> = {
   "Infernal Drill": CAN_WITHDRAW_AND_TRADE,
   "Grape Pants": CAN_WITHDRAW_AND_TRADE,
   "Carrot Amulet": CAN_WITHDRAW_AND_TRADE,
+  "2026 Tiara": {
+    tradeAt: new Date("2026-01-19T00:00:00Z"),
+    withdrawAt: new Date("2026-01-19T00:00:00Z"),
+  },
 
   // Bull Run Season Items
   "Cowboy Hat": {
@@ -531,6 +535,44 @@ export const BUMPKIN_RELEASES: Partial<Record<BumpkinItem, Releases>> = {
   "Saw Fish": {
     tradeAt: CHAPTERS["Paw Prints"].endDate,
     withdrawAt: new Date("2026-03-04T00:00:00Z"),
+  },
+
+  // Crabs and Traps
+  "Walrus Onesie": {
+    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+    withdrawAt: new Date("2026-06-04T00:00:00Z"),
+  },
+  "Crimstone Spikes Hair": {
+    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+    withdrawAt: new Date("2026-06-04T00:00:00Z"),
+  },
+  "Paw Aura": {
+    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+    withdrawAt: new Date("2026-06-04T00:00:00Z"),
+  },
+  "Victoria's Apron": {
+    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+    withdrawAt: new Date("2026-06-04T00:00:00Z"),
+  },
+  "Beast Shoes": {
+    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+    withdrawAt: new Date("2026-06-04T00:00:00Z"),
+  },
+  "Fish Hook Hat": {
+    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+    withdrawAt: new Date("2026-06-04T00:00:00Z"),
+  },
+  "Fish Hook Vest": {
+    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+    withdrawAt: new Date("2026-06-04T00:00:00Z"),
+  },
+  "Fish Hook Waders": {
+    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+    withdrawAt: new Date("2026-06-04T00:00:00Z"),
+  },
+  "Corn Silk Hair": {
+    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+    withdrawAt: new Date("2026-06-04T00:00:00Z"),
   },
 
   "Moonseeker Potion": {
@@ -1369,6 +1411,82 @@ export const INVENTORY_RELEASES: Partial<Record<InventoryItemName, Releases>> =
     "Astronaut Sheep": {
       tradeAt: CHAPTERS["Paw Prints"].endDate,
       withdrawAt: new Date("2026-03-04T00:00:00Z"),
+    },
+    "Mermaid Cow": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Mermaid Sheep": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Squid Chicken": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Anemone Flower": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Speckled Kissing Fish": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Dark Eyed Kissing Fish": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Fisherman's Boat": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Sea Arch": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Crabs and Fish Rug": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Fish Flags": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Fish Drying Rack": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Yellow Submarine Trophy": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    Oaken: {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    Meerkat: {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Pearl Bed": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Crimstone Clam": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Poseidon's Throne": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Fish Kite": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
+    },
+    "Diving Helmet": {
+      tradeAt: CHAPTERS["Crabs and Traps"].endDate,
+      withdrawAt: new Date("2026-06-04T00:00:00Z"),
     },
     "Paw Prints Rug": {
       tradeAt: CHAPTERS["Paw Prints"].endDate,

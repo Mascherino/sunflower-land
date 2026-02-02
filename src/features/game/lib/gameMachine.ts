@@ -38,7 +38,6 @@ import { autosave } from "../actions/autosave";
 import { ErrorCode, ERRORS } from "lib/errors";
 import { makeGame } from "./transforms";
 import { reset } from "features/farming/hud/actions/reset";
-// import { getGameRulesLastRead } from "features/announcements/announcementsStorage";
 import { checkProgress, processEvent } from "./processEvent";
 import {
   landscapingMachine,
@@ -54,7 +53,6 @@ import { randomID } from "lib/utils/random";
 import { buySFL } from "../actions/buySFL";
 import { PlaceableLocation } from "../types/collectibles";
 import {
-  getGameRulesLastRead,
   getIntroductionRead,
   getVipRead,
 } from "features/announcements/announcementsStorage";
@@ -100,17 +98,16 @@ import { preloadHotNow } from "features/marketplace/components/MarketplaceHotNow
 import { getLastTemperateSeasonStartedAt } from "./temperateSeason";
 import { hasVipAccess } from "./vipAccess";
 import { getActiveCalendarEvent, SeasonalEventName } from "../types/calendar";
-import { getAccount, getChainId } from "@wagmi/core";
+import { getConnection, getChainId } from "@wagmi/core";
 import { config } from "features/wallet/WalletProvider";
 import { depositFlower } from "lib/blockchain/DepositFlower";
 import { NetworkOption } from "features/island/hud/components/deposit/DepositFlower";
 import { blessingIsReady } from "./blessings";
-import { hasReadNews } from "features/farming/mail/components/News";
 import { depositSFL } from "lib/blockchain/DepositSFL";
-import { getBumpkinLevel } from "./level";
 import { hasFeatureAccess } from "lib/flags";
 import { isDailyRewardReady } from "../events/landExpansion/claimDailyReward";
 import { getDailyRewardLastAcknowledged } from "../components/DailyReward";
+import { LanguageCode } from "lib/i18n/dictionaries/language";
 
 // Run at startup in case removed from query params
 const portalName = new URLSearchParams(window.location.search).get("portal");
@@ -534,10 +531,11 @@ const EFFECT_STATES = Object.values(STATE_MACHINE_EFFECTS).reduce(
           }
 
           const { gameState, data } = await postEffect({
-            farmId: Number(context.visitorId ?? context.farmId),
+            farmId: Number(context.farmId),
             effect,
             token: authToken ?? context.rawToken,
             transactionId: context.transactionId as string,
+            state: context.state,
           });
 
           if (context.visitorId) {
@@ -622,6 +620,10 @@ const VISIT_EFFECT_STATES = Object.values(STATE_MACHINE_VISIT_EFFECTS).reduce(
         src: async (context: Context, event: PostEffectEvent) => {
           const { effect, authToken } = event;
 
+          if (!context.visitorState || !context.visitorId) {
+            throw new Error("Visitor state and/or visitor id are required");
+          }
+
           if (context.actions.length > 0) {
             await autosave({
               farmId: Number(context.visitorId),
@@ -631,7 +633,7 @@ const VISIT_EFFECT_STATES = Object.values(STATE_MACHINE_VISIT_EFFECTS).reduce(
               fingerprint: context.fingerprint as string,
               deviceTrackerId: context.deviceTrackerId as string,
               transactionId: context.transactionId as string,
-              state: context.state,
+              state: context.visitorState,
             });
           }
 
@@ -640,6 +642,7 @@ const VISIT_EFFECT_STATES = Object.values(STATE_MACHINE_VISIT_EFFECTS).reduce(
             effect,
             token: authToken ?? context.rawToken,
             transactionId: context.transactionId as string,
+            state: context.visitorState,
           });
 
           if (event.effect.type === "farm.followed") {
@@ -718,9 +721,9 @@ export type BlockchainState = {
     | "visiting"
     | "gameRules"
     | "blessing"
-    | "FLOWERTeaser"
     | "portalling"
     | "introduction"
+    | "welcome"
     | "investigating"
     | "gems"
     | "communityCoin"
@@ -761,7 +764,6 @@ export type BlockchainState = {
     | "seasonChanged"
     | "randomising"
     | "competition"
-    | "news"
     | "jinAirdrop"
     | "leagueResults"
     | "linkWallet"
@@ -938,12 +940,15 @@ export function startGame(authContext: AuthContext) {
             src: async (context) => {
               const fingerprint = "X";
 
-              const { connector } = getAccount(config);
+              const { connector } = getConnection(config);
+              const language: LanguageCode =
+                (localStorage.getItem("language") as LanguageCode) || "en";
 
               const response = await loadSession({
                 token: authContext.user.rawToken as string,
                 transactionId: context.transactionId as string,
                 wallet: connector?.name,
+                language,
               });
 
               // If no farm go no farms route
@@ -1133,19 +1138,15 @@ export function startGame(authContext: AuthContext) {
         notifying: {
           always: [
             {
-              target: "gameRules",
-              cond: () => {
-                const lastRead = getGameRulesLastRead();
-
-                // Don't show game rules if they have been read in the last 7 days
-                // or if the user has come from a pwa install magic link
+              target: "welcome",
+              cond: (context) => {
+                const isNew =
+                  context.state.createdAt > new Date("2026-01-28").getTime();
                 return (
-                  !lastRead ||
-                  Date.now() - lastRead.getTime() > 7 * 24 * 60 * 60 * 1000
+                  isNew && !context.state.farmActivity["welcome Bonus Claimed"]
                 );
               },
             },
-
             {
               target: "introduction",
               cond: (context) => {
@@ -1291,17 +1292,6 @@ export function startGame(authContext: AuthContext) {
             {
               target: "competition",
               cond: () => false,
-            },
-            {
-              target: "news",
-              cond: (context) => {
-                // Do not show if they are under level 5
-                const level = getBumpkinLevel(
-                  context.state.bumpkin?.experience ?? 0,
-                );
-                if (level < 5) return false;
-                return !hasReadNews();
-              },
             },
 
             {
@@ -1461,13 +1451,6 @@ export function startGame(authContext: AuthContext) {
           },
         },
 
-        gameRules: {
-          on: {
-            ACKNOWLEDGE: {
-              target: "notifying",
-            },
-          },
-        },
         blessing: {
           on: {
             "blessing.claimed": (GAME_EVENT_HANDLERS as any)[
@@ -1476,13 +1459,6 @@ export function startGame(authContext: AuthContext) {
             "blessing.seeked": {
               target: STATE_MACHINE_EFFECTS["blessing.seeked"],
             },
-            ACKNOWLEDGE: {
-              target: "notifying",
-            },
-          },
-        },
-        FLOWERTeaser: {
-          on: {
             ACKNOWLEDGE: {
               target: "notifying",
             },
@@ -2224,13 +2200,13 @@ export function startGame(authContext: AuthContext) {
         depositingFlowerFromLinkedWallet: {
           invoke: {
             src: async (context, event) => {
-              if (!wallet.getAccount()) throw new Error("No account");
+              if (!wallet.getConnection()) throw new Error("No account");
 
               const { amount, depositAddress, selectedNetwork } =
                 event as DepositFlowerFromLinkedWalletEvent;
 
               await depositFlower({
-                account: wallet.getAccount() as `0x${string}`,
+                account: wallet.getConnection() as `0x${string}`,
                 depositAddress,
                 amount,
                 selectedNetwork,
@@ -2256,13 +2232,14 @@ export function startGame(authContext: AuthContext) {
         depositingSFLFromLinkedWallet: {
           invoke: {
             src: async (context, event) => {
-              if (!wallet.getAccount()) throw new Error("No account");
+              const address = wallet.getConnection();
+              if (!address) throw new Error("No account");
 
               const { amount, depositAddress, selectedNetwork } =
                 event as DepositSFLFromLinkedWalletEvent;
 
               await depositSFL({
-                account: wallet.getAccount() as `0x${string}`,
+                account: address,
                 depositAddress,
                 amount,
                 selectedNetwork,
@@ -2288,7 +2265,8 @@ export function startGame(authContext: AuthContext) {
         depositing: {
           invoke: {
             src: async (context, event) => {
-              if (!wallet.getAccount()) throw new Error("No account");
+              const account = wallet.getConnection();
+              if (!account) throw new Error("No account");
 
               const {
                 itemAmounts,
@@ -2300,7 +2278,7 @@ export function startGame(authContext: AuthContext) {
               } = event as DepositEvent;
 
               await depositToFarm({
-                account: wallet.getAccount() as `0x${string}`,
+                account,
                 farmId: context.nftId as number,
                 itemIds: itemIds,
                 itemAmounts: itemAmounts,
@@ -2387,6 +2365,15 @@ export function startGame(authContext: AuthContext) {
           },
         },
 
+        welcome: {
+          on: {
+            "bonus.claimed": (GAME_EVENT_HANDLERS as any)["bonus.claimed"],
+            ACKNOWLEDGE: {
+              target: "notifying",
+            },
+          },
+        },
+
         investigating: {
           on: {
             "faceRecognition.started": {
@@ -2413,13 +2400,6 @@ export function startGame(authContext: AuthContext) {
         },
 
         linkWallet: {
-          on: {
-            ACKNOWLEDGE: {
-              target: "notifying",
-            },
-          },
-        },
-        news: {
           on: {
             ACKNOWLEDGE: {
               target: "notifying",

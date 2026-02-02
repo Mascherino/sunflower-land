@@ -107,7 +107,7 @@ export type Pet = {
       [date: string]: number;
     };
   };
-  // fetches?: Partial<Record<PetResourceName, number>>; // Will be unused in the future
+  fetches?: Partial<Record<PetResourceName, number>>; // Used to track the number of times a pet has fetched a resource
   fetchSeeds?: Partial<Record<PetResourceName, number>>; // Store the next seed
   energy: number;
   experience: number;
@@ -746,6 +746,11 @@ const MAINNET_PET_NFT_REVEAL_CONFIG: PetNFTRevealConfig[] = [
     revealAt: new Date("2026-01-13T00:00:00.000Z"),
     startId: 1001,
     endId: 1250,
+  },
+  {
+    revealAt: new Date("2026-04-12T00:00:00.000Z"),
+    startId: 1251,
+    endId: 1500,
   },
   {
     revealAt: new Date("2025-11-12T00:00:00.000Z"),

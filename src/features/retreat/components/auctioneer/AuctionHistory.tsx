@@ -59,7 +59,10 @@ export const AuctionHistory: React.FC = () => {
   const farmId = gameState.context.farmId ?? 0;
   const game = gameState.context.state;
 
-  const [selectedAuctionId, setSelectedAuctionId] = useState<string>();
+  const [selectedItem, setSelectedItem] = useState<{
+    type: "auction";
+    id: string;
+  }>();
 
   const now = useNow();
 
@@ -86,9 +89,24 @@ export const AuctionHistory: React.FC = () => {
       .slice(0, 20);
   }, [auctions, now]);
 
-  const selectedAuction = completedAuctions.find(
-    (auction) => auction.auctionId === selectedAuctionId,
-  );
+  const historyItems = useMemo(() => {
+    const items = [
+      ...completedAuctions.map((auction) => ({
+        type: "auction" as const,
+        id: auction.auctionId,
+        endAt: auction.endAt,
+        auction,
+      })),
+    ];
+    return items.sort((a, b) => b.endAt - a.endAt).slice(0, 50);
+  }, [completedAuctions]);
+
+  const selectedAuction =
+    selectedItem?.type === "auction"
+      ? completedAuctions.find(
+          (auction) => auction.auctionId === selectedItem.id,
+        )
+      : undefined;
 
   const {
     data: selectedResults,
@@ -116,7 +134,7 @@ export const AuctionHistory: React.FC = () => {
     );
   }
 
-  if (!completedAuctions.length) {
+  if (!historyItems.length) {
     return (
       <div className="p-2">
         <div className="text-sm">{t("auction.const.soon")}</div>
@@ -138,7 +156,7 @@ export const AuctionHistory: React.FC = () => {
             <img
               src={SUNNYSIDE.icons.arrow_left}
               className="h-6 cursor-pointer"
-              onClick={() => setSelectedAuctionId(undefined)}
+              onClick={() => setSelectedItem(undefined)}
             />
             <Label type="default">{t("auction.results")}</Label>
           </div>
@@ -146,14 +164,23 @@ export const AuctionHistory: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="relative w-12 h-12 flex items-center justify-center">
-                <img
-                  src={SUNNYSIDE.ui.grey_background}
-                  className="absolute inset-0 w-full h-full rounded-md"
-                />
-                <img
-                  src={selectedDisplay.image}
-                  className="w-2/3 h-2/3 object-contain z-10"
-                />
+                {selectedAuction.type === "wearable" ? (
+                  <img
+                    src={selectedDisplay.image}
+                    className="w-full object-contain z-10 rounded-md"
+                  />
+                ) : (
+                  <>
+                    <img
+                      src={SUNNYSIDE.ui.grey_background}
+                      className="absolute inset-0 w-full h-full rounded-md"
+                    />
+                    <img
+                      src={selectedDisplay.image}
+                      className="w-2/3 h-2/3 object-contain z-10"
+                    />
+                  </>
+                )}
               </div>
               <div>
                 <p className="text-sm">{selectedDisplay.item}</p>
@@ -210,46 +237,65 @@ export const AuctionHistory: React.FC = () => {
           className="max-h-52 overflow-y-auto scrollable pr-1"
           data-testid="auction-history-list"
         >
-          {completedAuctions.map((auction) => {
-            const { image, item, typeLabel } = getAuctionItemDisplay({
-              auction,
-              skills: game.bumpkin.skills,
-              collectibles: game.collectibles,
-            });
+          {historyItems.map((item) => {
+            if (item.type === "auction") {
+              const {
+                image,
+                item: itemName,
+                typeLabel,
+              } = getAuctionItemDisplay({
+                auction: item.auction,
+                skills: game.bumpkin.skills,
+                collectibles: game.collectibles,
+              });
 
-            return (
-              <ButtonPanel
-                key={auction.auctionId}
-                onClick={() => setSelectedAuctionId(auction.auctionId)}
-                className="w-full mb-1 cursor-pointer !p-2 flex items-center"
-              >
-                <div className="relative w-12 h-12 flex items-center justify-center mr-2">
-                  <img
-                    src={SUNNYSIDE.ui.grey_background}
-                    className="absolute inset-0 w-full h-full rounded-md"
-                  />
-                  <img
-                    src={image}
-                    className="w-2/3 h-2/3 object-contain z-10"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm truncate">{item}</p>
-                  <p className="text-xxs">
-                    {new Date(auction.endAt).toLocaleString("en-AU", {
-                      timeZoneName: "shortOffset",
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    })}
-                  </p>
-                </div>
-                <Label type="transparent">{typeLabel}</Label>
-              </ButtonPanel>
-            );
+              return (
+                <ButtonPanel
+                  key={`auction-${item.id}`}
+                  onClick={() =>
+                    setSelectedItem({ type: "auction", id: item.id })
+                  }
+                  className="w-full mb-1 cursor-pointer !p-2 flex items-center"
+                >
+                  <div className="relative w-12 h-12 flex items-center justify-center mr-2">
+                    {item.auction.type === "wearable" ? (
+                      <img
+                        src={image}
+                        className="w-full object-contain z-10 rounded-md"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={SUNNYSIDE.ui.grey_background}
+                          className="absolute inset-0 w-full h-full rounded-md"
+                        />
+                        <img
+                          src={image}
+                          className="w-2/3 h-2/3 object-contain z-10"
+                        />
+                      </>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm truncate">{itemName}</p>
+                    <p className="text-xxs">
+                      {new Date(item.endAt).toLocaleString("en-AU", {
+                        timeZoneName: "shortOffset",
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}
+                    </p>
+                  </div>
+                  <Label type={"transparent"}>{typeLabel}</Label>
+                </ButtonPanel>
+              );
+            }
+
+            return null;
           })}
         </div>
       </div>

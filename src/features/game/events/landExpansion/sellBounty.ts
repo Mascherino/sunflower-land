@@ -25,13 +25,14 @@ import {
   getChapterTicket,
 } from "features/game/types/chapters";
 import {
-  SELLABLE_TREASURE,
+  SELLABLE_TREASURES,
   BeachBountyTreasure,
 } from "features/game/types/treasure";
 import { produce } from "immer";
 import { isCollectible } from "./garbageSold";
 import { CHAPTER_TICKET_BOOST_ITEMS } from "./completeNPCChore";
 import { getCountAndType } from "features/island/hud/components/inventory/utils/inventory";
+import { getChapterTaskPoints } from "features/game/types/tracks";
 
 export const BOUNTY_CATEGORIES = {
   "Flower Bounties": (bounty: BountyRequest): bounty is FlowerBounty =>
@@ -47,7 +48,7 @@ export const BOUNTY_CATEGORIES = {
           crop !== "Giant Orange",
       )
       .includes(bounty.name) ||
-    getKeys(SELLABLE_TREASURE).includes(bounty.name as BeachBountyTreasure) ||
+    getKeys(SELLABLE_TREASURES).includes(bounty.name as BeachBountyTreasure) ||
     FULL_MOON_FRUITS.includes(bounty.name as FullMoonFruit) ||
     bounty.name in RECIPE_CRAFTABLES,
   "Giant Fruit Bounties": (bounty: BountyRequest): bounty is GiantFruitBounty =>
@@ -204,6 +205,25 @@ export function sellBounty({
       `${request.name} Bountied`,
       draft.farmActivity,
     );
+
+    if (tickets > 0) {
+      draft.farmActivity = trackFarmActivity(
+        `${getChapterTicket(createdAt)} Collected`,
+        draft.farmActivity,
+        new Decimal(tickets ?? 0),
+      );
+
+      draft.farmActivity = trackFarmActivity(
+        `${getCurrentChapter(createdAt)} Points Earned`,
+        draft.farmActivity,
+        new Decimal(
+          getChapterTaskPoints({
+            task: "bounty",
+            points: tickets ?? 0,
+          }),
+        ),
+      );
+    }
 
     return draft;
   });

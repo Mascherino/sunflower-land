@@ -16,6 +16,7 @@ import { getBumpkinHoliday } from "lib/utils/getSeasonWeek";
 import { DogContainer } from "../containers/DogContainer";
 import { PetContainer } from "../containers/PetContainer";
 import { getCurrentChapter, ChapterName } from "features/game/types/chapters";
+import { hasTimeBasedFeatureAccess } from "lib/flags";
 
 const CHAPTER_BANNERS: Record<ChapterName, string | undefined> = {
   "Solar Flare": undefined,
@@ -30,6 +31,7 @@ const CHAPTER_BANNERS: Record<ChapterName, string | undefined> = {
   "Great Bloom": undefined,
   "Better Together": "world/better_together_banner.webp",
   "Paw Prints": "world/paw_prints_banner.webp",
+  "Crabs and Traps": "world/crap_chapter_banner.webp",
 };
 
 // Tiled Layer names that get enabled during a chapter
@@ -47,6 +49,7 @@ const CHAPTER_LAYERS: Record<ChapterName, string | undefined> = {
   "Great Bloom": undefined,
   "Better Together": "Better Together Decoration Base",
   "Paw Prints": "Paw Prints",
+  "Crabs and Traps": "Crabs and Traps",
 };
 
 export type FactionNPC = {
@@ -235,6 +238,7 @@ export class PlazaScene extends BaseScene {
     this.load.image("pet_specialist_hat", "world/pet_specialist_hat.webp");
 
     // Auction Items
+    this.load.image("prizes_chest", "world/prizes_chest.png");
     this.load.image("pet_nft_egg", "world/pet_nft_egg.png");
     this.load.image("pet_bed", "world/pet_bed.webp");
     this.load.image("paw_prints_rug", "world/paw_prints_rug.webp");
@@ -328,6 +332,20 @@ export class PlazaScene extends BaseScene {
         this.currentPlayer?.speak(translate("base.iam.far.away"));
       }
     });
+
+    const prizesChest = this.add.sprite(560, 245, "prizes_chest");
+    prizesChest.setInteractive({ cursor: "pointer" }).on("pointerdown", () => {
+      if (this.checkDistanceToSprite(prizesChest, 100)) {
+        interactableModalManager.open("chapter_raffles");
+      } else {
+        this.currentPlayer?.speak(translate("base.iam.far.away"));
+      }
+    });
+
+    const prizesLabel = new Label(this, "PRIZES", "gold");
+    prizesLabel.setPosition(560, 230);
+    prizesLabel.setDepth(10000000);
+    this.add.existing(prizesLabel);
 
     let bumpkins = PLAZA_BUMPKINS;
     const now = Date.now();
@@ -428,10 +446,12 @@ export class PlazaScene extends BaseScene {
         .setDepth(1000000000000);
     }
 
-    const vipGift = this.add.sprite(379, 240, "vip_gift");
-    vipGift.setInteractive({ cursor: "pointer" }).on("pointerdown", () => {
-      interactableModalManager.open("vip_chest");
-    });
+    if (!hasTimeBasedFeatureAccess("PET_CHAPTER_COMPLETE", now)) {
+      const vipGift = this.add.sprite(379, 240, "vip_gift");
+      vipGift.setInteractive({ cursor: "pointer" }).on("pointerdown", () => {
+        interactableModalManager.open("vip_chest");
+      });
+    }
 
     if (this.gameState.inventory["Treasure Key"]) {
       this.add.sprite(106, 140, "key_disc").setDepth(1000000000);
@@ -718,10 +738,6 @@ export class PlazaScene extends BaseScene {
         }
       });
 
-    this.add.image(248, 244, "magma_stone");
-
-    this.add.image(288.5, 247, "pet_specialist_hat");
-
     if (this.textures.exists("sparkle")) {
       const sparkle = this.add.sprite(567, 191, "sparkle");
       sparkle.setDepth(1000000);
@@ -760,21 +776,28 @@ export class PlazaScene extends BaseScene {
       rarecrowsSparkle.play(`sparkel_anim`, true);
     }
 
-    // Change image every chapter change
-    const nft1 = this.add.image(567, 181, "moon_fox_statue");
-    nft1.setDepth(191);
+    // After Paw Prints, items are added on the tiled map itself
+    // TODO - delete this code once Crabs and Traps is released
+    if (chapter === "Paw Prints") {
+      const nft1 = this.add.image(567, 181, "moon_fox_statue");
+      nft1.setDepth(191);
 
-    const nft2 = this.add.image(589, 200, "pet_nft_egg");
-    nft2.setDepth(205);
+      const nft2 = this.add.image(589, 200, "pet_nft_egg");
+      nft2.setDepth(205);
 
-    const nft3 = this.add.image(601, 196, "paw_prints_rug");
-    nft3.setDepth(181);
+      const nft3 = this.add.image(601, 196, "paw_prints_rug");
+      nft3.setDepth(181);
 
-    const nft4 = this.add.image(612, 200, "squirrel_onesie_npc");
-    nft4.setDepth(205);
+      const nft4 = this.add.image(612, 200, "squirrel_onesie_npc");
+      nft4.setDepth(205);
 
-    const nft5 = this.add.image(635, 193, "pet_bed");
-    nft5.setDepth(181);
+      const nft5 = this.add.image(635, 193, "pet_bed");
+      nft5.setDepth(181);
+
+      this.add.image(248, 244, "magma_stone");
+
+      this.add.image(288.5, 247, "pet_specialist_hat");
+    }
 
     const door = this.colliders
       ?.getChildren()
