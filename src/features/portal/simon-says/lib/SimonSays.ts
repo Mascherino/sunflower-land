@@ -9,6 +9,7 @@ import {
   DEFAULT_SEQUENCE_LENGTH,
   defaultBgmVolume,
   defaultEffectsVolume,
+  GAME_LIGHT_COLOR,
   IMAGE_SCALE,
   LIFEBRAZER_LIGHT_RADIUS,
 } from "../util/Constants";
@@ -19,12 +20,15 @@ import { getMemorySettings } from "../util/useSettings";
 import { MemorySettings } from "./Settings";
 import { piecesConfig } from "../util/PiecesConfig";
 import { randomInt } from "lib/utils/random";
-import { delay } from "../util/Utils";
+import {
+  delay,
+  getHumiliatingPhrase,
+  getImpressedPhrase,
+  speak,
+} from "../util/Utils";
 import { BumpkinContainer } from "features/world/containers/BumpkinContainer";
 import { placeBraziers } from "./braziers";
 import { LightName } from "./lights";
-// import { SpeechBubble } from "./SpeechBubble";
-// import debounce from "lodash.debounce";
 import { Brazier } from "./Brazier";
 import { GamePiece } from "./GamePiece";
 import { LifeBrazier } from "./LifeBrazier";
@@ -38,6 +42,7 @@ export class SimonSays {
   private braziers: Partial<Record<LightName, Brazier>> = {};
   private lifeBraziers: Partial<Record<LightName, LifeBrazier>> = {};
   private lifeBrazierOrder: LightName[] = [];
+  private gameLight: Phaser.GameObjects.Light | undefined = undefined;
 
   private bumpkin?: BumpkinContainer | undefined = undefined;
   private bumpkinPedastal?: Phaser.GameObjects.Sprite | undefined = undefined;
@@ -131,7 +136,11 @@ export class SimonSays {
       scene: this.scene,
       x: (this.scene.map.width / 2 + 4) * SQUARE_WIDTH,
       y: (this.scene.map.height / 2 + 5.75) * SQUARE_WIDTH,
-      clothing: { ...gamestate.bumpkin.equipped, updatedAt: Date.now() },
+      clothing: {
+        ...gamestate.bumpkin.equipped,
+        aura: undefined,
+        updatedAt: Date.now(),
+      },
       direction: "left",
       username: gamestate.username,
     });
@@ -142,28 +151,13 @@ export class SimonSays {
       y: (this.scene.map.height / 2 + 5.75) * SQUARE_WIDTH,
       clothing: {
         ...gamestate.bumpkin.equipped,
+        aura: undefined,
         onesie: "Maya Armor",
         updatedAt: Date.now(),
       },
       direction: "right",
     });
-
-    // const speech = new SpeechBubble(this.scene, "Pathetic...", "right");
-    // speech.setVisible(false);
-    // this.scene.cameras.main.ignore([this.npc, this.bumpkin]);
-    // glowCam.ignore(this.npc);
-    // console.log(this.npc, this.npc.cameraFilter.toString(2));
-    // unignoreGameObject(this.scene.cameras.main, this.npc);
-    // console.log(this.npc.cameraFilter.toString(2));
-    // this.npc.label?.setVisible(false);
-    // this.npc.add(speech);
-
-    // speech.setVisible(true);
-
-    // debounce(() => {
-    //   speech.destroy(true);
-    //   this.npc!.label?.setVisible(true);
-    // }, 5000)();
+    this.npc.setDepth(30);
 
     // this.hintListener = (event) => {
     //   if (event.type === "BUY_HINT") {
@@ -248,30 +242,39 @@ export class SimonSays {
       const img = this.scene.add.sprite(x, y, `${value.stem}${value.suffix}`);
       const piece = new GamePiece(img, value);
       img
-        .setScale(0.65)
+        .setScale(IMAGE_SCALE - 0.07)
         .setInteractive({ useHandCursor: true, pixelPerfect: true })
         .on("pointerdown", async () => await this.handlePointerDown(piece))
         .on("pointerup", async () => await this.handlePointerUp(piece))
         .on("pointerout", async () => await this.handlePointerUp(piece))
-        .setDepth(2)
+        .setDepth(10)
         .setPipeline("Light2D");
       this.pieces.push(piece);
       piece.glow = this.scene.add
         .sprite(x, y, `${value.stem}_glow`)
-        .setScale(IMAGE_SCALE)
+        .setScale(IMAGE_SCALE - 0.07)
         .setVisible(false)
-        .setDepth(1)
+        .setDepth(5)
         .setBlendMode(Phaser.BlendModes.ADD);
     });
+    this.scene.add
+      .sprite(
+        (this.scene.map.width / 2) * SQUARE_WIDTH,
+        (this.scene.map.height / 2) * SQUARE_WIDTH,
+        "frame",
+      )
+      .setPipeline("Light2D")
+      .setScale(IMAGE_SCALE - 0.05)
+      .setDepth(1);
 
     // Lighting
     this.scene.lights.enable();
     this.scene.lights.setAmbientColor(AMBIENT_COLOR);
-    this.scene.lights.addLight(
+    this.gameLight = this.scene.lights.addLight(
       (this.scene.map.width / 2) * SQUARE_WIDTH,
       (this.scene.map.height / 2) * SQUARE_WIDTH,
       150,
-      0xeeeeee,
+      GAME_LIGHT_COLOR,
       1,
     );
 
@@ -315,7 +318,7 @@ export class SimonSays {
 
     this.scene.add
       .image(
-        (this.scene.map.width / 2 - 7.5) * SQUARE_WIDTH,
+        (this.scene.map.width / 2 - 1) * SQUARE_WIDTH,
         (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
         "bonepile",
       )
@@ -323,7 +326,7 @@ export class SimonSays {
 
     this.scene.add
       .image(
-        (this.scene.map.width / 2 - 5.5) * SQUARE_WIDTH,
+        (this.scene.map.width / 2 - 6) * SQUARE_WIDTH,
         (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
         "headpole",
       )
@@ -331,7 +334,7 @@ export class SimonSays {
 
     this.scene.add
       .image(
-        (this.scene.map.width / 2 + 5.5) * SQUARE_WIDTH,
+        (this.scene.map.width / 2 + 6) * SQUARE_WIDTH,
         (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
         "headpole",
       )
@@ -375,7 +378,10 @@ export class SimonSays {
       if (idx == this.currentSequence[0]) {
         this.currentSequence.shift();
 
-        if (this.currentSequence.length === 0) score = score + 1;
+        if (this.currentSequence.length === 0) {
+          score = score + 1;
+          speak(this.npc!, getImpressedPhrase(score), 2500);
+        }
         const solved = score == this.scene.targetScore;
         this.scene.portalService?.send("MAKE_MOVE", {
           score: score,
@@ -391,30 +397,15 @@ export class SimonSays {
           lives: lives,
           solved: false,
         });
-
+        speak(this.npc!, getHumiliatingPhrase(score), 2500);
         const name = this.lifeBrazierOrder[this.lives - lives - 1];
-        // this.lifeBraziers[name]?.sprite
-        //   .stop()
-        //   .play("life_brazier_inactive_anim")
-        //   .on(
-        //     "animationupdate",
-        //     (
-        //       _anim: Phaser.Animations.Animation,
-        //       frame: Phaser.Animations.AnimationFrame,
-        //     ) => {
-        //       if (frame.index === 5) {
-        //         this.lifeBraziers[name]?.turnOff();
-        //         this.lifeBraziers[name]?.sprite.removeListener(
-        //           "animationupdate",
-        //         );
-        //       }
-        //     },
-        //   );
         this.lifeBraziers[name]?.turnOff();
         if (this.scene.lives <= 0) {
           await delay(500);
           await this.turnOffBraziers();
-          await delay(750);
+          await delay(500);
+          await this.turnOffGameLight();
+          await delay(1000);
           this.lightningStrike();
           return;
         }
@@ -434,6 +425,27 @@ export class SimonSays {
     await delay(750);
     this.braziers.brazier_bottomleft?.turnOff();
     this.braziers.brazier_bottomright?.turnOff();
+  }
+
+  private async turnOffGameLight() {
+    if (!this.gameLight) return;
+    const start = Phaser.Display.Color.ValueToColor(BRAZIER_LIGHT_COLOR);
+    const end = Phaser.Display.Color.ValueToColor(0x000000);
+
+    const rgb = { r: start.red, g: start.green, b: start.blue };
+
+    this.scene.tweens.add({
+      targets: rgb,
+      r: end.red,
+      g: end.green,
+      b: end.blue,
+      duration: 200,
+      onUpdate: () => {
+        this.gameLight!.setColor(
+          Phaser.Display.Color.GetColor(rgb.r, rgb.g, rgb.b),
+        );
+      },
+    });
   }
 
   /**
@@ -486,33 +498,7 @@ export class SimonSays {
     lightning.setY(
       bumpkin.y - lightning.height / 2 + bumpkin.displayHeight / 2,
     );
-
-    // Second camera for the glowing sprite
-    const glowCam = this.scene.cameras.add(
-      0,
-      0,
-      this.scene.cameras.main.width,
-      this.scene.cameras.main.height,
-    );
-    const canvasWidth = window.innerWidth / this.scene.ZOOM;
-    const canvasHeight = window.innerHeight / this.scene.ZOOM;
-    glowCam.setBounds(
-      0,
-      0,
-      Math.max(this.scene.map.widthInPixels, canvasWidth),
-      Math.max(this.scene.map.heightInPixels, canvasHeight),
-    );
-    glowCam.centerOn(
-      (this.scene.map.width / 2) * SQUARE_WIDTH,
-      (this.scene.map.height / 2) * SQUARE_WIDTH,
-    );
-    glowCam.setScroll(
-      this.scene.cameras.main.scrollX,
-      this.scene.cameras.main.scrollY,
-    );
-    glowCam.setZoom(this.scene.cameras.main.zoom);
-    glowCam.ignore(this.scene.children.list.filter((obj) => obj !== lightning));
-    this.camera = glowCam;
+    lightning.setDepth(30);
 
     lightning
       .on(
@@ -548,10 +534,9 @@ export class SimonSays {
               "death",
             );
             this.deathSprite.setFlipX(true);
-            this.deathSprite.setDepth(1);
-            this.scene.cameras.main.ignore([lightning, this.deathSprite]);
+            this.deathSprite.setDepth(30);
             this.deathSprite.on("animationcomplete", () => {
-              this.scene.endGame(0);
+              this.scene.endGame(this.scene.score);
             });
             this.deathSprite.play("death_anim");
 

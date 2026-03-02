@@ -388,13 +388,15 @@ export class SimonSaysScene extends Phaser.Scene {
     );
 
     this.load.spritesheet(
-      "32_1_5_13_18_22_23_0_0_0_0_517",
+      "maya_guard-idle",
       "world/simon-says/chaac_idle.webp",
       {
         frameHeight: 19,
         frameWidth: 20,
       },
     );
+
+    this.load.image("frame", "world/simon-says/frame.webp");
   }
 
   public initMap() {
@@ -475,12 +477,10 @@ export class SimonSaysScene extends Phaser.Scene {
         repeat: 0,
       });
 
-    if (!this.anims.exists("32_1_5_13_18_22_23_0_0_0_0_517-bumpkin-idle"))
+    if (!this.anims.exists("maya_guard-bumpkin-idle"))
       this.anims.create({
-        key: "32_1_5_13_18_22_23_0_0_0_0_517-bumpkin-idle",
-        frames: this.anims.generateFrameNumbers(
-          "32_1_5_13_18_22_23_0_0_0_0_517",
-        ),
+        key: "maya_guard-bumpkin-idle",
+        frames: this.anims.generateFrameNumbers("maya_guard-idle"),
         frameRate: 10,
         repeat: -1,
       });

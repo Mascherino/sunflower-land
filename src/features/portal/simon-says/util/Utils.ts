@@ -6,6 +6,9 @@ import {
   RESTOCK_ATTEMPTS,
   HINT_COST,
 } from "./Constants";
+import { BumpkinContainer } from "features/world/containers/BumpkinContainer";
+import debounce from "lodash.debounce";
+import { SpeechBubble } from "../lib/SpeechBubble";
 
 const getStartOfDay = (date: Date) => {
   const startOfDay = new Date(date);
@@ -68,3 +71,25 @@ export const numHintsBought = (minigame?: Minigame) => {
 
 export const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+export const speak = (npc: BumpkinContainer, msg: string, timeout: number) => {
+  const speech = new SpeechBubble(npc.scene, msg, "right");
+  npc.add(speech);
+  debounce(() => speech.destroy(true), timeout)();
+};
+
+export const getHumiliatingPhrase = (score: number) => {
+  const idx = Math.floor(Math.random() * 5);
+  return ["Pathetic...", "Hm...", "As expected.", "Seriously?", "Well..."][idx];
+};
+
+export const getImpressedPhrase = (score: number) => {
+  const idx = Math.floor(Math.random() * 5);
+  return [
+    "Hm...",
+    "Not bad.",
+    "Impressive.",
+    "Not a total failure...",
+    "At least you got one correct...",
+  ][idx];
+};

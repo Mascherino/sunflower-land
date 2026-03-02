@@ -225,6 +225,11 @@ export class BumpkinContainer extends Phaser.GameObjects.Container {
 
   private async loadSprites(scene: Phaser.Scene) {
     this.spriteKey = tokenUriBuilder(this.clothing);
+
+    if (this.clothing.onesie == "Maya Armor") {
+      this.spriteKey = "maya_guard";
+    }
+
     this.spriteKey2 = `${this.spriteKey}-2`;
     this.idleAnimationKey = `${this.spriteKey}-bumpkin-idle`;
     this.walkingAnimationKey = `${this.spriteKey}-bumpkin-walking`;
@@ -259,6 +264,8 @@ export class BumpkinContainer extends Phaser.GameObjects.Container {
       }
 
       this.ready = true;
+      this.sprite?.setPipeline("Light2D");
+      this.shadow?.setPipeline("Light2D");
     } else {
       // Set up base animations
       const url = getAnimationUrl(this.clothing, [
@@ -303,6 +310,8 @@ export class BumpkinContainer extends Phaser.GameObjects.Container {
         if (this.silhouette?.active) {
           this.silhouette?.destroy();
         }
+        this.sprite?.setPipeline("Light2D");
+        this.shadow?.setPipeline("Light2D");
       });
 
       // Load micro interactions animations
