@@ -35,7 +35,7 @@ export const NoAttempts: React.FC = () => {
       <div className="p-2">
         <div className="flex gap-1 justify-between items-center mb-2">
           <Label icon={SUNNYSIDE.icons.lock} type="danger">
-            {t("memory.noAttemptsLeft")}
+            {t("chaacsTemple.noAttemptsLeft")}
           </Label>
           <Label
             icon={flowerIcon}
@@ -43,12 +43,14 @@ export const NoAttempts: React.FC = () => {
               flowerBalance.lt(RESTOCK_ATTEMPTS_COST) ? "danger" : "default"
             }
           >
-            {t("memory.flowerRequired")}
+            {t("chaacsTemple.flowerRequired")}
           </Label>
         </div>
 
-        <p className="text-sm mb-2">{t("memory.youHaveRunOutOfAttempts")}</p>
-        <p className="text-sm mb-2">{t("memory.unlockUnlimited")}</p>
+        <p className="text-sm mb-2">
+          {t("chaacsTemple.youHaveRunOutOfAttempts")}
+        </p>
+        <p className="text-sm mb-2">{t("chaacsTemple.unlockUnlimited")}</p>
 
         <div className="flex items-center space-x-1 relative">
           <p className="balance-text">{formatNumber(flowerBalance)}</p>
@@ -74,7 +76,7 @@ export const NoAttempts: React.FC = () => {
             })
           }
         >
-          {t("memory.buyAttempts", {
+          {t("chaacsTemple.buyAttempts", {
             attempts: RESTOCK_ATTEMPTS,
             cost: RESTOCK_ATTEMPTS_COST,
           })}
@@ -88,7 +90,7 @@ export const NoAttempts: React.FC = () => {
             })
           }
         >
-          {t("memory.unlockUnlimitedAttempts", {
+          {t("chaacsTemple.unlockUnlimitedAttempts", {
             cost: UNLIMITED_ATTEMPTS_COST,
           })}
         </Button>

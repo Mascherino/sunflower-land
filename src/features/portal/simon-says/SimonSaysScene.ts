@@ -365,6 +365,12 @@ export class SimonSaysScene extends Phaser.Scene {
 
     this.load.image("pedastal", "world/simon-says/pedastal.webp");
 
+    this.load.image(
+      "vine_pillar_broken",
+      "world/simon-says/Vine-pillar-broken.webp",
+    );
+    this.load.image("pillar_broken", "world/simon-says/Pillar-broken.webp");
+
     const url = getAnimationUrl(this.gameState.bumpkin.equipped, ["death"]);
     this.load.spritesheet("death", url, {
       frameWidth: 96,

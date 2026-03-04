@@ -27,7 +27,7 @@ interface Props {
 }
 
 const minigameSel = (state: PortalMachineState) =>
-  state.context.state?.minigames.games["memory"];
+  state.context.state?.minigames.games["chaacs-temple"];
 const scoreSel = (state: PortalMachineState) => state.context.score;
 const betaSel = (state: PortalMachineState) => {
   if (state.context.state)
@@ -72,17 +72,17 @@ export const Mission: React.FC<Props> = ({
             <div className="w-full relative flex justify-between gap-1 items-center mb-1 py-1 pl-2">
               {mode === "introduction" && (
                 <Label type="default" icon={SUNNYSIDE.icons.plant}>
-                  {t("memory.portal.title")}
+                  {t("chaacsTemple.portal.title")}
                 </Label>
               )}
               {mode === "success" && (
                 <Label type="success" icon={SUNNYSIDE.icons.confirm}>
-                  {t("memory.missionSuccess")}
+                  {t("chaacsTemple.missionSuccess")}
                 </Label>
               )}
               {mode === "failed" && (
                 <Label type="danger" icon={SUNNYSIDE.icons.death}>
-                  {t("memory.missionFailed")}
+                  {t("chaacsTemple.missionFailed")}
                 </Label>
               )}
               <Attempts attemptsLeft={attemptsLeft} />
@@ -97,20 +97,20 @@ export const Mission: React.FC<Props> = ({
               <div className="flex justify-between flex-col space-y-1 px-1 mb-3 text-sm flex-grow">
                 {showScore && (
                   <span>
-                    {t("memory.score", {
+                    {t("chaacsTemple.score", {
                       score: Math.round(score),
                     })}
                   </span>
                 )}
                 <span>
-                  {t("memory.bestToday", {
+                  {t("chaacsTemple.bestToday", {
                     score: minigame?.history[dateKey]?.highscore
                       ? Math.round(minigame?.history[dateKey]?.highscore)
                       : 0,
                   })}
                 </span>
                 <span>
-                  {t("memory.bestAllTime", {
+                  {t("chaacsTemple.bestAllTime", {
                     score: Object.values(minigame?.history ?? {}).reduce(
                       (acc, { highscore }) =>
                         Math.round(Math.max(acc, highscore)),

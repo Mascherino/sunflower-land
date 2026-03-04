@@ -9,7 +9,6 @@ import { PIXEL_SCALE } from "features/game/lib/constants";
 import { Scores } from "./Scores";
 import { Target } from "./Target";
 import { Hint } from "./Hint";
-import { Healthbar } from "./Healthbar";
 import { Settings } from "./Settings";
 
 const isPlayingSel = (state: PortalMachineState) => state.matches("playing");
@@ -32,7 +31,6 @@ export const Hud: React.FC = () => {
             <>
               <Target />
               <Scores />
-              <Healthbar />
             </>
           )}
         </div>

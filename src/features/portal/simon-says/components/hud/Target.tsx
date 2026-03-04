@@ -31,7 +31,7 @@ export const Target: React.FC = () => {
         left: `${PIXEL_SCALE * 3}px`,
       }}
     >
-      {t("memory.target", {
+      {t("chaacsTemple.target", {
         maxMoves: maxMoves + 1,
         targetScore: targetScore,
       })}

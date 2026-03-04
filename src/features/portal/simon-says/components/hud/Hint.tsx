@@ -48,7 +48,7 @@ export const Hint: React.FC = () => {
             }
           }}
         >
-          {t("memory.buyHint")}
+          {t("chaacsTemple.buyHint")}
         </Button>
       </div>
     </>

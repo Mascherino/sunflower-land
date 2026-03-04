@@ -73,7 +73,9 @@ export type PortalEvent =
   | { type: "END_GAME_EARLY" }
   | GameStartEvent
   | GameOverEvent
-  | MoveEvent;
+  | MoveEvent
+  | { type: "START_BLINK" }
+  | { type: "END_BLINK" };
 
 export type PortalState = {
   value:
@@ -117,7 +119,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
     startAt: 0,
     endAt: 0,
     score: 0,
-    canBuyHint: false,
+    canBuyHint: true,
     lives: 0,
   },
   states: {
@@ -261,7 +263,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             },
             attemptsRemaining: (context: Context) =>
               context.attemptsRemaining - 1,
-            canBuyHint: false,
+            canBuyHint: true,
             lives: (context: Context, event: GameStartEvent) => {
               return event.lives;
             },
@@ -296,18 +298,23 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             solved: (context: Context, event: MoveEvent) => {
               return context.solved || (context.solved = event.solved);
             },
-            movesMade: (context: Context, event: MoveEvent) => {
-              return (context.movesMade = context.movesMade + 1);
-            },
             score: (context: Context, event: MoveEvent) => {
               return (context.score = event.score);
-            },
-            canBuyHint: (context: Context, event: MoveEvent) => {
-              return context.movesMade % 2 != 0;
             },
             lives: (context: Context, event: MoveEvent) => {
               return (context.lives = event.lives);
             },
+            canBuyHint: () => true,
+          }),
+        },
+        START_BLINK: {
+          actions: assign({
+            canBuyHint: () => false,
+          }),
+        },
+        END_BLINK: {
+          actions: assign({
+            canBuyHint: () => true,
           }),
         },
         GAME_OVER: {
@@ -340,7 +347,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
                   items: {},
                 },
               }),
-            canBuyHint: false,
+            canBuyHint: () => false,
           }) as any,
         },
       },

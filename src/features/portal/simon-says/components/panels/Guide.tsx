@@ -49,13 +49,13 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
             className={`flex flex-row w-full mb-3 text-lg justify-center`}
             style={{ marginLeft: `-${PIXEL_SCALE * 13}px` }}
           >
-            <span className="underline">{t("memory.guide.title")}</span>
+            <span className="underline">{t("chaacsTemple.guide.title")}</span>
           </div>
         </div>
       </div>
 
       <div className="flex flex-col gap-1 overflow-y-scroll scrollable pr-1">
-        <Label type="info">{t("memory.guide.howtoplay.label")}</Label>
+        <Label type="info">{t("chaacsTemple.guide.howtoplay.label")}</Label>
         <div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -63,7 +63,9 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.howtoplay.text.1")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.howtoplay.text.1")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -71,7 +73,9 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.howtoplay.text.2")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.howtoplay.text.2")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -79,7 +83,9 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.howtoplay.text.3")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.howtoplay.text.3")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -87,7 +93,9 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.howtoplay.text.4")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.howtoplay.text.4")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -95,19 +103,13 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.howtoplay.text.5")}</p>
-          </div>
-          <div className="flex items-center mb-3 mx-2">
-            <SquareIcon
-              icon={SUNNYSIDE.icons.death}
-              width={7}
-              className="flex-shrink-0"
-            />
-            <p className="text-xs ml-3">{t("memory.guide.howtoplay.text.6")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.howtoplay.text.5")}
+            </p>
           </div>
         </div>
 
-        <Label type="info">{t("memory.guide.goal.label")}</Label>
+        <Label type="info">{t("chaacsTemple.guide.goal.label")}</Label>
         <div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -115,7 +117,9 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.goal.text.1")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.goal.text.1")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -124,12 +128,12 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               className="flex-shrink-0"
             />
             <p className="text-xs ml-3">
-              {t("memory.guide.goal.text.2", { health: 5 })}
+              {t("chaacsTemple.guide.goal.text.2")}
             </p>
           </div>
         </div>
 
-        <Label type="info">{t("memory.guide.tips.label")}</Label>
+        <Label type="info">{t("chaacsTemple.guide.tips.label")}</Label>
         <div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -137,7 +141,9 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.tips.text.1")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.tips.text.1")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -145,7 +151,9 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.tips.text.2")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.tips.text.2")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -153,15 +161,19 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.tips.text.3")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.tips.text.3")}
+            </p>
           </div>
         </div>
 
-        <Label type="info">{t("memory.guide.hint.label")}</Label>
+        <Label type="info">{t("chaacsTemple.guide.hint.label")}</Label>
         <div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon icon={chores} width={7} className="flex-shrink-0" />
-            <p className="text-xs ml-3">{t("memory.guide.hint.text.1")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.hint.text.1")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -169,7 +181,9 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.hint.text.2")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.hint.text.2")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon
@@ -177,14 +191,25 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               width={7}
               className="flex-shrink-0"
             />
-            <p className="text-xs ml-3">{t("memory.guide.hint.text.3")}</p>
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.hint.text.3")}
+            </p>
           </div>
           <div className="flex items-center mb-3 mx-2">
             <SquareIcon icon={flowerIcon} width={7} className="flex-shrink-0" />
             <p className="text-xs ml-3">
-              {t("memory.guide.hint.text.4", { cost: HINT_COST })}
+              {t("chaacsTemple.guide.hint.text.4", { cost: HINT_COST })}
             </p>
           </div>
+        </div>
+        <Label type="info">{t("chaacsTemple.guide.misc.disclaimer")}</Label>
+        <div className="flex items-center mb-3 mx-2">
+          <SquareIcon
+            icon={SUNNYSIDE.icons.player}
+            width={7}
+            className="flex-shrink-0"
+          />
+          <p className="text-xs ml-3">{t("chaacsTemple.guide.misc.text.1")}</p>
         </div>
       </div>
     </div>

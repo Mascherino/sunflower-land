@@ -43,14 +43,14 @@ export const BuyHintModal: React.FC<{ show: boolean; onHide: () => void }> = ({
       >
         <div className="flex flex-col p-2 items-start">
           <span className="text-sm text-start w-full m-1">
-            {t("memory.hintDescription")}
+            {t("chaacsTemple.hintDescription")}
           </span>
           <span className="text-sm text-start w-full m-1">
-            {t("memory.buyHintQuestion")}
+            {t("chaacsTemple.buyHintQuestion")}
           </span>
           <div className="flex items-center">
             <p className="text-sm text-start w-full m-1">
-              {t("memory.hintCost", { cost: HINT_COST })}
+              {t("chaacsTemple.hintCost", { cost: HINT_COST })}
             </p>
             <img
               src={flowerIcon}
@@ -61,7 +61,7 @@ export const BuyHintModal: React.FC<{ show: boolean; onHide: () => void }> = ({
           </div>
           <div className="flex items-center">
             <p className="text-sm text-start w-full m-1">
-              {t("memory.currentBalance", {
+              {t("chaacsTemple.currentBalance", {
                 balance: formatNumber(flowerBalance),
               })}
             </p>
@@ -79,7 +79,7 @@ export const BuyHintModal: React.FC<{ show: boolean; onHide: () => void }> = ({
             disabled={flowerBalance.lt(HINT_COST) || !canBuyHint}
             onClick={onConfirm}
           >
-            {t("memory.buyHint")}
+            {t("chaacsTemple.buyHint")}
           </Button>
         </div>
       </Panel>

@@ -84,13 +84,13 @@ export const Exit: React.FC = () => {
         bumpkinParts={SIMON_SAYS_NPC_WEARABLES["Simon"]}
         show={showConfirmation}
         onHide={() => setShowConfirmation(false)}
-        messages={[t("memory.endGameConfirm")]}
+        messages={[t("chaacsTemple.endGameConfirm")]}
         onCancel={() => setShowConfirmation(false)}
         onConfirm={() => {
           portalService.send("END_GAME_EARLY");
           setShowConfirmation(false);
         }}
-        confirmButtonLabel={t("memory.endGame")}
+        confirmButtonLabel={t("chaacsTemple.endGame")}
       />
     </>
   );

@@ -41,7 +41,9 @@ export const Donations: React.FC = () => {
 
   return (
     <div className="flex flex-col mb-1 p-2 text-sm">
-      <p className="mb-2 text-center">{t("memory.donationDescription")}</p>
+      <p className="mb-2 text-center">
+        {t("chaacsTemple.donationDescription")}
+      </p>
 
       <div className="flex mt-1 mb-4 justify-center">
         {contributors.map((person, index) => (

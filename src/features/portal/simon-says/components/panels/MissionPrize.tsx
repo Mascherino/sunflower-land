@@ -13,13 +13,13 @@ import { PortalContext } from "../../lib/PortalProvider";
 
 const todayHighscoreSel = (state: PortalMachineState) => {
   const currDate = new Date().toISOString().split("T")[0];
-  const minigame = state.context.state?.minigames.games["memory"];
+  const minigame = state.context.state?.minigames.games["chaacs-temple"];
   const minigameHistory = minigame?.history ?? {};
 
   return minigameHistory[currDate]?.highscore ?? 0;
 };
 const minigamePrizeSel = (state: PortalMachineState) => {
-  return state.context.state?.minigames.prizes["memory"];
+  return state.context.state?.minigames.prizes["chaacs-temple"];
 };
 
 // const maxMovesSel = (state: PortalMachineState) => state.context.maxMoves;
@@ -40,7 +40,7 @@ export const MissionPrize: React.FC = () => {
       <OuterPanel>
         <div className="px-1">
           <Label type="danger" icon={SUNNYSIDE.icons.sad}>
-            {t("memory.noPrizeAvailable")}
+            {t("chaacsTemple.noPrizeAvailable")}
           </Label>
         </div>
       </OuterPanel>
@@ -54,14 +54,14 @@ export const MissionPrize: React.FC = () => {
     <OuterPanel>
       <div className="px-1">
         <span className="text-xs mb-2">
-          {t("memory.missionObjective", {
+          {t("chaacsTemple.missionObjective", {
             targetScore: targetScore,
           })}
         </span>
         <div className="flex justify-between mt-2 flex-wrap">
           {missionComplete ? (
             <Label type="success" icon={SUNNYSIDE.icons.confirm}>
-              {t("memory.completed")}
+              {t("chaacsTemple.completed")}
             </Label>
           ) : (
             <Label type="info" icon={SUNNYSIDE.icons.stopwatch}>

@@ -38,12 +38,12 @@ export const Overview: React.FC<Props> = ({
       tabs={[
         {
           icon: SUNNYSIDE.icons.plant,
-          name: t("memory.mission"),
+          name: t("chaacsTemple.mission"),
           id: "main",
         },
         {
           icon: chores,
-          name: t("memory.changelogTitle"),
+          name: t("chaacsTemple.changelogTitle"),
           id: "changelog",
         },
         {

@@ -5,15 +5,18 @@ export class GamePiece {
   sprite: GameObjects.Sprite;
   config: PieceConfig;
   glow: GameObjects.Sprite | undefined;
+  tweens: Phaser.Tweens.Tween[];
 
   constructor(
     sprite: GameObjects.Sprite,
     config: PieceConfig,
     glow: GameObjects.Sprite | undefined = undefined,
+    tweens: Phaser.Tweens.Tween[] = [],
   ) {
     this.sprite = sprite;
     this.config = config;
     this.glow = glow;
+    this.tweens = tweens;
   }
 
   press() {

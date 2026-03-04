@@ -11,13 +11,13 @@ export const Attempts: React.FC<Props> = ({ attemptsLeft }) => {
   const { t } = useAppTranslation();
 
   if (attemptsLeft === Infinity) {
-    return <Label type="success">{t("memory.unlimitedAttempts")}</Label>;
+    return <Label type="success">{t("chaacsTemple.unlimitedAttempts")}</Label>;
   }
 
   if (attemptsLeft > 0 && attemptsLeft !== 1) {
     return (
       <Label type="vibrant">
-        {t("memory.attemptsPlural", {
+        {t("chaacsTemple.attemptsPlural", {
           attempts: attemptsLeft,
         })}
       </Label>
@@ -27,12 +27,12 @@ export const Attempts: React.FC<Props> = ({ attemptsLeft }) => {
   if (attemptsLeft === 1) {
     return (
       <Label type="vibrant">
-        {t("memory.attemptsSingular", {
+        {t("chaacsTemple.attemptsSingular", {
           attempts: attemptsLeft,
         })}
       </Label>
     );
   }
 
-  return <Label type="danger">{t("memory.noAttemptsLeft")}</Label>;
+  return <Label type="danger">{t("chaacsTemple.noAttemptsLeft")}</Label>;
 };

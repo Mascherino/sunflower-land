@@ -43,6 +43,9 @@ export class SimonSays {
   private lifeBraziers: Partial<Record<LightName, LifeBrazier>> = {};
   private lifeBrazierOrder: LightName[] = [];
   private gameLight: Phaser.GameObjects.Light | undefined = undefined;
+  private predefinedSequence: number[] = [];
+  private currLength: number = 3;
+  private scoreThreshold: number = 6;
 
   private bumpkin?: BumpkinContainer | undefined = undefined;
   private bumpkinPedastal?: Phaser.GameObjects.Sprite | undefined = undefined;
@@ -126,6 +129,7 @@ export class SimonSays {
         this.duration = 60000 * 10000;
         this.targetScore = 3;
         this.lives = 3;
+        this.scoreThreshold = 6;
     }
     this.scene.locked = false;
 
@@ -159,36 +163,40 @@ export class SimonSays {
     });
     this.npc.setDepth(30);
 
-    // this.hintListener = (event) => {
-    //   if (event.type === "BUY_HINT") {
-    //     const game = SimonSays.current;
-    //     if (!game) return;
-    //     const flippedCard = game.flippedCards[0];
-    //     const filteredCards = game.cards.filter((value) => {
-    //       return value.name == flippedCard.name && !value.isFlipped;
-    //     });
-    //     const matchingCard = filteredCards.length > 0 ? filteredCards[0] : null;
-    //     if (!matchingCard) return;
-    //     try {
-    //       const tween = game.scene.tweens.add({
-    //         targets: matchingCard.image,
-    //         scale: 1.6,
-    //         duration: 150,
-    //         yoyo: true,
-    //         loop: Infinity,
-    //         ease: "Linear",
-    //       });
-    //       if (!matchingCard.tweens) matchingCard.tweens = [];
-    //       matchingCard.tweens?.push(tween);
-    //     } catch (err) {
-    //       window.location.reload();
-    //     }
-    //   }
-    // };
-    // this.scene.portalService?.onEvent(this.hintListener);
+    this.hintListener = (event) => {
+      if (event.type === "BUY_HINT") {
+        const game = SimonSays.current;
+        if (!game) return;
+        const sequence = game.currentSequence;
+        if (sequence.length <= 0) return;
+        const nextSequencePiece = sequence[0];
+        const nextPiece = this.pieces[nextSequencePiece];
+        nextPiece.glow?.setAlpha(0);
+        nextPiece.glow?.setVisible(true);
+        try {
+          const tween = game.scene.tweens.add({
+            targets: nextPiece.glow,
+            alpha: 1,
+            duration: 150,
+            yoyo: true,
+            loop: Infinity,
+            ease: "Linear",
+          });
+          if (nextPiece.tweens.length == 0) nextPiece.tweens.push(tween);
+        } catch (err) {
+          window.location.reload();
+        }
+      }
+    };
+    this.scene.portalService?.onEvent(this.hintListener);
 
     // Keep track of listeners to remove when doing HMR
-    // this.scene.portalService?._listeners.add(this.hintListener);
+    this.scene.portalService?._listeners.add(this.hintListener);
+
+    this.predefinedSequence = Array.from({ length: this.scoreThreshold }, () =>
+      randomInt(0, this.pieces.length),
+    );
+    this.currLength = DEFAULT_SEQUENCE_LENGTH;
 
     if (this.scene.isReady) {
       this.scene.portalService?.send("START", {
@@ -217,13 +225,15 @@ export class SimonSays {
     });
     this.pieces = [];
 
-    Object.values(this.lifeBraziers).forEach((brazier) =>
-      brazier.sprite.destroy(true),
-    );
+    Object.values(this.lifeBraziers).forEach((brazier) => {
+      brazier.sprite.destroy(true);
+      brazier.fire.destroy(true);
+    });
     this.lifeBraziers = {};
-    Object.values(this.braziers).forEach((brazier) =>
-      brazier.sprite.destroy(true),
-    );
+    Object.values(this.braziers).forEach((brazier) => {
+      brazier.sprite.destroy(true);
+      brazier.fire.destroy(true);
+    });
     this.camera ? this.scene.cameras.remove(this.camera) : null;
 
     this.npc?.destroy();
@@ -318,6 +328,25 @@ export class SimonSays {
 
     this.scene.add
       .image(
+        (this.scene.map.width / 2 - 9.5) * SQUARE_WIDTH,
+        (this.scene.map.height / 2 + 2.125) * SQUARE_WIDTH,
+        "vine_pillar_broken",
+      )
+      .setDepth(30)
+      .setPipeline("Light2D");
+
+    this.scene.add
+      .image(
+        (this.scene.map.width / 2 + 9.5) * SQUARE_WIDTH,
+        (this.scene.map.height / 2 + 2.125) * SQUARE_WIDTH,
+        "pillar_broken",
+      )
+      .setFlipX(true)
+      .setDepth(30)
+      .setPipeline("Light2D");
+
+    this.scene.add
+      .image(
         (this.scene.map.width / 2 - 1) * SQUARE_WIDTH,
         (this.scene.map.width / 2 + 2) * SQUARE_WIDTH,
         "bonepile",
@@ -369,6 +398,18 @@ export class SimonSays {
 
     // Ignore calls from pointerout event when piece is not pressed
     if (piece.sprite.texture.key == `${piece.config.stem}_pressed`) {
+      // Remove hint tween from all pieces
+      this.pieces.forEach((piece) =>
+        piece.tweens.forEach((tween) => {
+          tween.on("complete", () => {
+            piece.glow?.setVisible(false);
+            piece.glow?.setAlpha(1);
+            piece.tweens = [];
+          });
+          tween.completeAfterLoop(0);
+        }),
+      );
+
       piece.unpress();
       const idx = this.pieces.findIndex(
         (value) => value.config == piece.config,
@@ -379,8 +420,17 @@ export class SimonSays {
         this.currentSequence.shift();
 
         if (this.currentSequence.length === 0) {
-          score = score + 1;
-          speak(this.npc!, getImpressedPhrase(score), 2500);
+          if (this.currLength >= this.scoreThreshold) {
+            score = score + 1;
+            speak(this.npc!, getImpressedPhrase(score), 2500);
+            this.predefinedSequence = Array.from(
+              { length: this.scoreThreshold },
+              () => randomInt(0, this.pieces.length),
+            );
+            this.currLength = DEFAULT_SEQUENCE_LENGTH;
+          } else {
+            this.currLength++;
+          }
         }
         const solved = score == this.scene.targetScore;
         this.scene.portalService?.send("MAKE_MOVE", {
@@ -388,8 +438,10 @@ export class SimonSays {
           lives: lives,
           solved: solved,
         });
-        if (this.currentSequence.length === 0)
-          await this.blinkSequence(DEFAULT_SEQUENCE_LENGTH);
+        if (this.currentSequence.length === 0) {
+          await delay(1000);
+          await this.blinkSequence();
+        }
       } else {
         lives = lives - 1;
         this.scene.portalService?.send("MAKE_MOVE", {
@@ -401,6 +453,7 @@ export class SimonSays {
         const name = this.lifeBrazierOrder[this.lives - lives - 1];
         this.lifeBraziers[name]?.turnOff();
         if (this.scene.lives <= 0) {
+          this.pieces.forEach((piece) => piece.sprite.disableInteractive(true));
           await delay(500);
           await this.turnOffBraziers();
           await delay(500);
@@ -409,7 +462,8 @@ export class SimonSays {
           this.lightningStrike();
           return;
         }
-        await this.blinkSequence(DEFAULT_SEQUENCE_LENGTH);
+        await delay(1000);
+        await this.blinkSequence();
       }
     }
   }
@@ -452,21 +506,20 @@ export class SimonSays {
    * Create a new random sequence of pieces, and let them blink
    * @param sequenceLength The length of the sequence to generate.
    */
-  private async blinkSequence(sequenceLength: number) {
+  private async blinkSequence(sequenceLength: number = 0) {
+    this.scene.portalService?.send("START_BLINK");
     this.pieces.forEach((piece) => piece.sprite.disableInteractive(true));
-    this.currentSequence = [];
-    let i = 0;
-    while (i < sequenceLength) {
-      const rand = randomInt(0, this.pieces.length);
-      const piece = this.pieces[rand];
+    const partialSequence = this.predefinedSequence.slice(0, this.currLength);
+    this.currentSequence = partialSequence;
+    for (const val of partialSequence) {
+      const piece = this.pieces[val];
       this.blinkPiece(piece);
-      this.currentSequence.push(rand);
       await delay(blinkDuration * 1000 + 500);
-      i++;
     }
     this.pieces.forEach((piece) =>
       piece.sprite.setInteractive({ useHandCursor: true, pixelPerfect: true }),
     );
+    this.scene.portalService?.send("END_BLINK");
   }
 
   /**
@@ -474,7 +527,7 @@ export class SimonSays {
    */
   async drawGame() {
     delay(2500);
-    await this.blinkSequence(DEFAULT_SEQUENCE_LENGTH);
+    await this.blinkSequence();
   }
 
   private blinkPiece(piece: GamePiece) {
