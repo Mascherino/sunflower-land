@@ -13,6 +13,14 @@ const lightNames = [
   "game",
   "bumpkin",
   "npc",
+  "brazier_backleft_level1",
+  "brazier_backleft_level3",
+  "brazier_backright_level1",
+  "brazier_backright_level3",
+  "brazier_frontleft_level1",
+  "brazier_frontleft_level2",
+  "brazier_frontright_level1",
+  "brazier_frontright_level2",
 ] as const;
 
 export type LightName = (typeof lightNames)[number];
