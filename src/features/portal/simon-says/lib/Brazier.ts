@@ -1,3 +1,4 @@
+import { SimonSaysScene } from "../SimonSaysScene";
 import { BRAZIER_LIGHT_COLOR } from "../util/Constants";
 
 export class Brazier {
@@ -58,6 +59,9 @@ export class Brazier {
           _anim: Phaser.Animations.Animation,
           frame: Phaser.Animations.AnimationFrame,
         ) => {
+          if (frame.index == 4) {
+            (this.sprite.scene as SimonSaysScene).SOUNDS.extinguish?.play();
+          }
           if (frame.index === 6) {
             this.turnOffLight();
             this.fire.removeListener("animationupdate");

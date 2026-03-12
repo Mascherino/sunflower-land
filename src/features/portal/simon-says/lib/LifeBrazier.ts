@@ -1,3 +1,4 @@
+import { SimonSaysScene } from "../SimonSaysScene";
 import { Brazier } from "./Brazier";
 
 export class LifeBrazier extends Brazier {
@@ -22,6 +23,9 @@ export class LifeBrazier extends Brazier {
           _anim: Phaser.Animations.Animation,
           frame: Phaser.Animations.AnimationFrame,
         ) => {
+          if (frame.index === 4) {
+            (this.sprite.scene as SimonSaysScene).SOUNDS.extinguish?.play();
+          }
           if (frame.index === 6) {
             this.turnOffLight();
             this.fire.removeListener("animationupdate");

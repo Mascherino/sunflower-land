@@ -16,8 +16,8 @@ import {
 import { EventObject } from "xstate";
 import { EventBus } from "./EventBus";
 import { EVENTS } from "./Events";
-import { getMemorySettings } from "../util/useSettings";
-import { MemorySettings } from "./Settings";
+import { getChaacsTempleSettings } from "../util/useSettings";
+import { ChaacsTempleSettings } from "./Settings";
 import { piecesConfig } from "../util/PiecesConfig";
 import { randomInt } from "lib/utils/random";
 import {
@@ -54,7 +54,7 @@ export class SimonSays {
   private currentSequence: number[] = [];
   private hintListener: ((event: EventObject) => void) | null = null;
   static current: SimonSays | null = null;
-  public settings: MemorySettings = getMemorySettings();
+  public settings: ChaacsTempleSettings = getChaacsTempleSettings();
   private camera: Phaser.Cameras.Scene2D.Camera | undefined;
   constructor(scene: SimonSaysScene) {
     this.scene = scene;
@@ -71,54 +71,68 @@ export class SimonSays {
   }
 
   handleSettingsUpdate(settings: EVENTS["SETTINGS_CHANGED"]) {
-    const memorySettings = getMemorySettings();
+    const oldSettings = getChaacsTempleSettings();
 
     // Background music
-    const newBgmMuted =
-      settings.Music?.isMuted ?? !!memorySettings.Music?.isMuted;
+    const newBgmMuted = settings.Music?.isMuted ?? !!oldSettings.Music?.isMuted;
     const newBgmVolume =
-      settings.Music?.volume ??
-      memorySettings.Music?.volume ??
-      defaultBgmVolume;
+      settings.Music?.volume ?? oldSettings.Music?.volume ?? defaultBgmVolume;
     this.scene.SOUNDS.background?.setMute(newBgmMuted);
     if (!newBgmMuted) this.scene.SOUNDS.background?.setVolume(newBgmVolume);
 
     // Sound effects
     const newEffectsMuted =
-      settings.Effects?.isMuted ?? !!memorySettings.Effects?.isMuted;
+      settings.Effects?.isMuted ?? !!oldSettings.Effects?.isMuted;
     const newEffectsVolume =
       settings.Effects?.volume ??
-      memorySettings.Effects?.volume ??
+      oldSettings.Effects?.volume ??
       defaultEffectsVolume;
 
-    this.scene.SOUNDS.cardflip?.setMute(newEffectsMuted);
-    this.scene.SOUNDS.complete?.setMute(newEffectsMuted);
-    this.scene.SOUNDS.match_found?.setMute(newEffectsMuted);
-    if (!newEffectsMuted) {
-      this.scene.SOUNDS.cardflip?.setVolume(newEffectsVolume);
-      this.scene.SOUNDS.complete?.setVolume(newEffectsVolume);
-      this.scene.SOUNDS.match_found?.setVolume(newEffectsVolume);
-    }
-    this.settings = { ...memorySettings };
+    Object.keys(this.scene.SOUNDS).forEach((key) => {
+      const sound = this.scene.SOUNDS[key as keyof typeof this.scene.SOUNDS];
+      if (sound instanceof Phaser.Sound.BaseSound) {
+        sound?.setVolume(newEffectsVolume);
+        sound?.setMute(newEffectsMuted);
+      } else {
+        Object.keys(this.scene.SOUNDS.pieces!).forEach((key) => {
+          const sound =
+            this.scene.SOUNDS.pieces[
+              key as keyof typeof this.scene.SOUNDS.pieces
+            ];
+          sound.setVolume(newEffectsVolume);
+          sound.setMute(newEffectsMuted);
+        });
+      }
+    });
+    this.settings = { ...oldSettings };
   }
 
   setupSounds() {
-    this.scene.SOUNDS.background?.setMute(!!this.settings.Music?.isMuted);
-    this.scene.SOUNDS.background?.play({
-      volume: this.settings.Music?.volume ?? 0,
-      loop: true,
-      rate: 0.7,
-    });
+    // this.scene.SOUNDS.background?.setMute(!!this.settings.Music?.isMuted);
+    // this.scene.SOUNDS.background?.play({
+    //   volume: this.settings.Music?.volume ?? 0,
+    //   loop: true,
+    //   rate: 0.7,
+    // });
 
     const effectsVolume = this.settings.Effects?.volume ?? defaultEffectsVolume;
     const effectsIsMuted = !!this.settings.Effects?.isMuted;
-    this.scene.SOUNDS.cardflip?.setVolume(effectsVolume);
-    this.scene.SOUNDS.complete?.setVolume(effectsVolume);
-    this.scene.SOUNDS.match_found?.setVolume(effectsVolume);
-
-    this.scene.SOUNDS.cardflip?.setMute(effectsIsMuted);
-    this.scene.SOUNDS.complete?.setMute(effectsIsMuted);
-    this.scene.SOUNDS.match_found?.setMute(effectsIsMuted);
+    Object.keys(this.scene.SOUNDS).forEach((key) => {
+      const sound = this.scene.SOUNDS[key as keyof typeof this.scene.SOUNDS];
+      if (sound instanceof Phaser.Sound.BaseSound) {
+        sound?.setVolume(effectsVolume);
+        sound?.setMute(effectsIsMuted);
+      } else {
+        Object.keys(this.scene.SOUNDS.pieces!).forEach((key) => {
+          const sound =
+            this.scene.SOUNDS.pieces[
+              key as keyof typeof this.scene.SOUNDS.pieces
+            ];
+          sound.setVolume(effectsVolume);
+          sound.setMute(effectsIsMuted);
+        });
+      }
+    });
   }
 
   public async newGame() {
@@ -217,6 +231,7 @@ export class SimonSays {
     if (this.hintListener) this.scene.portalService?.off(this.hintListener);
     this.hintListener = null;
     if (this.deathSprite) this.deathSprite.destroy(true);
+    this.scene.SOUNDS.thunder.stop();
   }
 
   public cleanPregame() {
@@ -250,7 +265,11 @@ export class SimonSays {
       const x = (this.scene.map.width / 2 + value.xOffset) * SQUARE_WIDTH;
       const y = (this.scene.map.height / 2 + value.yOffset) * SQUARE_WIDTH;
       const img = this.scene.add.sprite(x, y, `${value.stem}${value.suffix}`);
-      const piece = new GamePiece(img, value);
+      const sound =
+        this.scene.SOUNDS.pieces[
+          `${value.stem}` as keyof typeof this.scene.SOUNDS.pieces
+        ];
+      const piece = new GamePiece(img, value, sound);
       img
         .setScale(IMAGE_SCALE - 0.07)
         .setInteractive({ useHandCursor: true, pixelPerfect: true })
@@ -398,6 +417,7 @@ export class SimonSays {
 
     // Ignore calls from pointerout event when piece is not pressed
     if (piece.sprite.texture.key == `${piece.config.stem}_pressed`) {
+      this.scene.locked = true;
       // Remove hint tween from all pieces
       this.pieces.forEach((piece) =>
         piece.tweens.forEach((tween) => {
@@ -465,6 +485,7 @@ export class SimonSays {
         await delay(1000);
         await this.blinkSequence();
       }
+      this.scene.locked = false;
     }
   }
 
@@ -536,7 +557,9 @@ export class SimonSays {
 
     piece.sprite.setTexture(active);
     piece.glow?.setVisible(true);
+    piece.sound.play();
     setTimeout(() => {
+      // piece.sound.stop();
       piece.sprite.setTexture(inactive);
       piece.glow?.setVisible(false);
     }, blinkDuration * 1000);
@@ -628,5 +651,6 @@ export class SimonSays {
         });
       });
     lightning.play("thunder_anim");
+    this.scene.SOUNDS.thunder?.play({ seek: 0.5 });
   }
 }

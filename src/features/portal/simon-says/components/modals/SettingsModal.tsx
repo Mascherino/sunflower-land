@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/use-memo */
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 
 import { Button } from "components/ui/Button";
 
@@ -13,6 +13,7 @@ import { NumberInput } from "components/ui/NumberInput";
 import Decimal from "decimal.js-light";
 import debounce from "lodash.debounce";
 import { useSettings } from "../../util/useSettings";
+import sound_on from "assets/icons/sound_on.png";
 
 export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
   show,
@@ -23,6 +24,11 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
   const { settings, setSetting } = useSettings();
   const ignoreNextBgmRef = useRef(false);
   const ignoreNextEffectsRef = useRef(false);
+  const [testAudioVolume, setTestAudioVolume] = useState<number>(
+    settings.Effects?.volume ?? 1,
+  );
+
+  const testAudio = new Audio("/world/simon-says/sounds/core.mp3");
 
   // Ignore first change after opening modal to prevent initial value setting
   // from firing event
@@ -44,13 +50,6 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
     setSetting({ Effects: { isMuted: !settings.Effects?.isMuted } });
     EventBus.emitter.emit("SETTINGS_CHANGED", {
       Effects: { isMuted: !settings.Effects?.isMuted },
-    });
-  };
-
-  const toggleAnimationsDisabled = () => {
-    setSetting({ isAnimationsDisabled: !settings.isAnimationsDisabled });
-    EventBus.emitter.emit("SETTINGS_CHANGED", {
-      isAnimationsDisabled: !settings.isAnimationsDisabled,
     });
   };
 
@@ -93,6 +92,7 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
     }
     const newValue = value.toNumber();
     if (newValue < 0.01 || newValue > 1.0) return;
+    setTestAudioVolume(newValue);
     emitEffectsVolume(value.toNumber());
   };
 
@@ -104,7 +104,7 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
       >
         <div className="flex flex-col p-2 overflow-y-auto">
           <div className="h-5 flex flex-row items-center">
-            <span className="w-3/4">{t("memory.settings.bgmMuted")}</span>
+            <span className="w-3/4">{t("chaacsTemple.settings.bgmMuted")}</span>
             <div className="h-full w-1/4 flex flex-row items-center justify-center">
               <img
                 src={
@@ -119,7 +119,9 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
           </div>
 
           <div className="h-5 flex flex-row items-center mt-2">
-            <span className="w-3/4">{t("memory.settings.effectsMuted")}</span>
+            <span className="w-3/4">
+              {t("chaacsTemple.settings.effectsMuted")}
+            </span>
             <div className="h-full w-1/4 flex flex-row items-center justify-center">
               <img
                 src={
@@ -133,7 +135,7 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
             </div>
           </div>
 
-          <div className="h-5 flex flex-row items-center mt-2">
+          {/* <div className="h-5 flex flex-row items-center mt-2">
             <span className="w-3/4">
               {t("memory.settings.disableAnimations")}
             </span>
@@ -148,7 +150,7 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
                 onClick={toggleAnimationsDisabled}
               />
             </div>
-          </div>
+          </div> */}
 
           {/* Seperator */}
           <div className="flex justify-center">
@@ -156,8 +158,10 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
           </div>
 
           <div className="flex flex-row items-center">
-            <span className="w-3/4">{t("memory.settings.bgmVolume")}</span>
-            <div className="w-1/4">
+            <span className="w-[70%]">
+              {t("chaacsTemple.settings.bgmVolume")}
+            </span>
+            <div className="w-[30%]">
               <NumberInput
                 maxDecimalPlaces={2}
                 allowNegative={false}
@@ -168,13 +172,26 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
           </div>
 
           <div className="flex flex-row items-center mt-1.5">
-            <span className="w-3/4">{t("memory.settings.effectsVolume")}</span>
-            <div className="w-1/4">
+            <span className="w-[70%]">
+              {t("chaacsTemple.settings.effectsVolume")}
+            </span>
+            <div className="w-[30%] flex flex-row items-center">
               <NumberInput
                 maxDecimalPlaces={2}
                 allowNegative={false}
                 value={settings.Effects?.volume ?? 0}
                 onValueChange={(value) => changeEffectsVolume(value)}
+              />
+              <img
+                src={sound_on}
+                className="group-active:translate-y-[2px] cursor-pointer"
+                style={{ width: "30px", height: "30px" }}
+                onClick={() => {
+                  if (!testAudio.ended) testAudio.pause();
+                  testAudio.fastSeek(0);
+                  testAudio.volume = testAudioVolume;
+                  testAudio.play();
+                }}
               />
             </div>
           </div>

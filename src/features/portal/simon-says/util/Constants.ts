@@ -15,8 +15,7 @@ export const LS_PREFIX = `minigames.${MINIGAME_NAME}`;
 export const defaultBgmMuted = false;
 export const defaultBgmVolume = 0.25;
 export const defaultEffectsMuted = false;
-export const defaultEffectsVolume = 0.65;
-export const defaultDisableAnimations = false;
+export const defaultEffectsVolume = 0.85;
 
 export const midOffset = 1.6;
 export const outerOffset = 3.67;
@@ -30,7 +29,7 @@ export const BRAZIER_LIGHT_COLOR = 0xffe685;
 export const BRAZIER_LIGHT_RADIUS = 62.5;
 export const BRAZIER_LIGHT_INTENSITY = 2;
 export const BRAZIER_DEPTH = 10;
-export const LIFEBRAZER_LIGHT_RADIUS = 65;
+export const LIFEBRAZER_LIGHT_RADIUS = 75;
 
 export type SimonSaysNPC = "Simon";
 

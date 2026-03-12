@@ -5,7 +5,7 @@ import {
   defaultEffectsVolume,
 } from "../util/Constants";
 
-export interface MemorySettings {
+export interface ChaacsTempleSettings {
   Music?: {
     volume?: number;
     isMuted?: boolean;
@@ -14,11 +14,9 @@ export interface MemorySettings {
     volume?: number;
     isMuted?: boolean;
   };
-  isAnimationsDisabled?: boolean;
 }
 
-export const defaultSettings: MemorySettings = {
+export const defaultSettings: ChaacsTempleSettings = {
   Music: { volume: defaultBgmVolume, isMuted: defaultBgmMuted },
   Effects: { volume: defaultEffectsVolume, isMuted: defaultEffectsMuted },
-  isAnimationsDisabled: false,
 };

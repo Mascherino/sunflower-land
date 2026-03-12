@@ -14,7 +14,11 @@ import { delay } from "./util/Utils";
 import { createBrazierAnimations, loadBrazierFiles } from "./lib/braziers";
 
 interface SoundConfig {
-  cardflip?:
+  extinguish:
+    | Phaser.Sound.WebAudioSound
+    | Phaser.Sound.HTML5AudioSound
+    | Phaser.Sound.NoAudioSound;
+  thunder:
     | Phaser.Sound.WebAudioSound
     | Phaser.Sound.HTML5AudioSound
     | Phaser.Sound.NoAudioSound;
@@ -30,6 +34,44 @@ interface SoundConfig {
     | Phaser.Sound.WebAudioSound
     | Phaser.Sound.HTML5AudioSound
     | Phaser.Sound.NoAudioSound;
+  pieces: {
+    core:
+      | Phaser.Sound.WebAudioSound
+      | Phaser.Sound.HTML5AudioSound
+      | Phaser.Sound.NoAudioSound;
+    midblue:
+      | Phaser.Sound.WebAudioSound
+      | Phaser.Sound.HTML5AudioSound
+      | Phaser.Sound.NoAudioSound;
+    midgreen:
+      | Phaser.Sound.WebAudioSound
+      | Phaser.Sound.HTML5AudioSound
+      | Phaser.Sound.NoAudioSound;
+    midred:
+      | Phaser.Sound.WebAudioSound
+      | Phaser.Sound.HTML5AudioSound
+      | Phaser.Sound.NoAudioSound;
+    midyellow:
+      | Phaser.Sound.WebAudioSound
+      | Phaser.Sound.HTML5AudioSound
+      | Phaser.Sound.NoAudioSound;
+    topblue:
+      | Phaser.Sound.WebAudioSound
+      | Phaser.Sound.HTML5AudioSound
+      | Phaser.Sound.NoAudioSound;
+    topgreen:
+      | Phaser.Sound.WebAudioSound
+      | Phaser.Sound.HTML5AudioSound
+      | Phaser.Sound.NoAudioSound;
+    topred:
+      | Phaser.Sound.WebAudioSound
+      | Phaser.Sound.HTML5AudioSound
+      | Phaser.Sound.NoAudioSound;
+    topyellow:
+      | Phaser.Sound.WebAudioSound
+      | Phaser.Sound.HTML5AudioSound
+      | Phaser.Sound.NoAudioSound;
+  };
 }
 
 export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
@@ -250,7 +292,7 @@ export class SimonSaysScene extends Phaser.Scene {
 
   async create() {
     // this.createCardImages();
-    // this.initSounds();
+    this.initSounds();
     this.initCamera();
     this.initMap();
     this.updateCameraBounds();
@@ -434,26 +476,52 @@ export class SimonSaysScene extends Phaser.Scene {
     });
     this.cameras.main.centerOn(
       (this.map.width / 2) * SQUARE_WIDTH,
-      (this.map.height / 2) * SQUARE_WIDTH,
+      (this.map.height / 2 - 1.5) * SQUARE_WIDTH,
     );
   }
 
   loadAudio() {
-    this.load.audio("cardflip", "world/memory/cardflip.mp3");
-    this.load.audio("complete", "world/memory/complete.wav");
-    this.load.audio("match_found", "world/memory/match_found.wav");
-    this.load.audio("background", "world/memory/bgm.wav");
+    // Celesta sounds from: https://freesound.org/people/pjcohen/packs/23108/
+    // volume normalized by me
+    const folders = ["mid", "top"];
+    const colors = ["blue", "green", "yellow", "red"];
+    folders.forEach((folder) => {
+      colors.forEach((color) => {
+        this.load.audio(
+          `${folder}${color}_sound`,
+          `world/simon-says/sounds/${folder}${color}.mp3`,
+        );
+      });
+    });
+    this.load.audio("core_sound", "world/simon-says/sounds/core.mp3");
+
+    // Extinguish sound from: https://freesound.org/people/1bob/sounds/831929/
+    this.load.audio("extinguish", "world/simon-says/sounds/extinguish.wav");
+
+    // Thunder sound from: https://freesound.org/people/seth-m/sounds/458015/
+    this.load.audio("thunder", "world/simon-says/sounds/thunder.mp3");
   }
 
   initSounds() {
-    if (!this.SOUNDS.match_found)
-      this.SOUNDS.match_found = this.sound.add("match_found");
-    if (!this.SOUNDS.cardflip)
-      this.SOUNDS.cardflip = this.sound.add("cardflip");
-    if (!this.SOUNDS.complete)
-      this.SOUNDS.complete = this.sound.add("complete");
-    if (!this.SOUNDS.background)
-      this.SOUNDS.background = this.sound.add("background");
+    if (!this.SOUNDS.extinguish)
+      this.SOUNDS.extinguish = this.sound.add("extinguish");
+    if (!this.SOUNDS.thunder) this.SOUNDS.thunder = this.sound.add("thunder");
+    // if (!this.SOUNDS.complete)
+    //   this.SOUNDS.complete = this.sound.add("complete");
+    // if (!this.SOUNDS.background)
+    //   this.SOUNDS.background = this.sound.add("background");
+    if (!this.SOUNDS.pieces)
+      this.SOUNDS.pieces = {
+        core: this.sound.add("core_sound"),
+        midblue: this.sound.add("midblue_sound"),
+        midgreen: this.sound.add("midgreen_sound"),
+        midred: this.sound.add("midred_sound"),
+        midyellow: this.sound.add("midyellow_sound"),
+        topblue: this.sound.add("topblue_sound"),
+        topgreen: this.sound.add("topgreen_sound"),
+        topred: this.sound.add("topred_sound"),
+        topyellow: this.sound.add("topyellow_sound"),
+      };
   }
 
   initAnimations() {
