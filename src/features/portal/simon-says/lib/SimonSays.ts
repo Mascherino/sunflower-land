@@ -302,9 +302,9 @@ export class SimonSays {
     this.gameLight = this.scene.lights.addLight(
       (this.scene.map.width / 2) * SQUARE_WIDTH,
       (this.scene.map.height / 2) * SQUARE_WIDTH,
-      150,
+      180,
       GAME_LIGHT_COLOR,
-      1,
+      0.75,
     );
 
     this.braziers = placeBraziers(this.scene);
@@ -345,24 +345,24 @@ export class SimonSays {
       i++;
     }
 
-    this.scene.add
-      .image(
-        (this.scene.map.width / 2 - 9.5) * SQUARE_WIDTH,
-        (this.scene.map.height / 2 + 2.125) * SQUARE_WIDTH,
-        "vine_pillar_broken",
-      )
-      .setDepth(30)
-      .setPipeline("Light2D");
+    // this.scene.add
+    //   .image(
+    //     (this.scene.map.width / 2 - 9.5) * SQUARE_WIDTH,
+    //     (this.scene.map.height / 2 + 2.125) * SQUARE_WIDTH,
+    //     "vine_pillar_broken",
+    //   )
+    //   .setDepth(30)
+    //   .setPipeline("Light2D");
 
-    this.scene.add
-      .image(
-        (this.scene.map.width / 2 + 9.5) * SQUARE_WIDTH,
-        (this.scene.map.height / 2 + 2.125) * SQUARE_WIDTH,
-        "pillar_broken",
-      )
-      .setFlipX(true)
-      .setDepth(30)
-      .setPipeline("Light2D");
+    // this.scene.add
+    //   .image(
+    //     (this.scene.map.width / 2 + 9.5) * SQUARE_WIDTH,
+    //     (this.scene.map.height / 2 + 2.125) * SQUARE_WIDTH,
+    //     "pillar_broken",
+    //   )
+    //   .setFlipX(true)
+    //   .setDepth(30)
+    //   .setPipeline("Light2D");
 
     this.scene.add
       .image(
