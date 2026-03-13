@@ -331,7 +331,7 @@ export class SimonSays {
         y,
         LIFEBRAZER_LIGHT_RADIUS,
         BRAZIER_LIGHT_COLOR,
-        BRAZIER_LIGHT_INTENSITY,
+        BRAZIER_LIGHT_INTENSITY - 0.6,
       );
       sprite.play("life_brazier_active_anim");
 
