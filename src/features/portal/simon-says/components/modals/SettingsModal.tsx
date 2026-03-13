@@ -1,19 +1,23 @@
 /* eslint-disable react-hooks/use-memo */
-import React, { useRef, useEffect, useCallback, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 
 import { Button } from "components/ui/Button";
 
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
-import { SIMON_SAYS_NPC_WEARABLES } from "../../util/Constants";
+import {
+  defaultBgmVolume,
+  defaultEffectsVolume,
+  SIMON_SAYS_NPC_WEARABLES,
+} from "../../util/Constants";
 import { Modal } from "components/ui/Modal";
 import { Panel } from "components/ui/Panel";
 import { SUNNYSIDE } from "assets/sunnyside";
 import { EventBus } from "../../lib/EventBus";
 import { NumberInput } from "components/ui/NumberInput";
 import Decimal from "decimal.js-light";
-import debounce from "lodash.debounce";
 import { useSettings } from "../../util/useSettings";
 import sound_on from "assets/icons/sound_on.png";
+import { Howl } from "howler";
 
 export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
   show,
@@ -24,11 +28,18 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
   const { settings, setSetting } = useSettings();
   const ignoreNextBgmRef = useRef(false);
   const ignoreNextEffectsRef = useRef(false);
-  const [testAudioVolume, setTestAudioVolume] = useState<number>(
-    settings.Effects?.volume ?? 1,
+  const [effectsVolume, setEffectsVolume] = useState<Decimal>(
+    new Decimal(settings.Effects?.volume ?? defaultEffectsVolume).mul(100),
+  );
+  const [bgmVolume, setBgmVolume] = useState<Decimal>(
+    new Decimal(settings.Music?.volume ?? defaultBgmVolume).mul(100),
   );
 
-  const testAudio = new Audio("/world/simon-says/sounds/core.mp3");
+  const button = new Howl({
+    src: ["/world/simon-says/sounds/core.mp3"],
+    preload: true,
+    volume: 1,
+  });
 
   // Ignore first change after opening modal to prevent initial value setting
   // from firing event
@@ -55,45 +66,46 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
 
   EventBus.emitter.removeAllListeners("SETTINGS_SYNC");
 
-  const emitBgmVolume = useCallback(
-    debounce((volume) => {
-      EventBus.emitter.emit("SETTINGS_CHANGED", {
-        Music: { volume: volume },
-      });
-      setSetting({ Music: { volume: volume } });
-    }, 300),
-    [],
-  );
+  const emitBgmVolume = (volume: number) => {
+    EventBus.emitter.emit("SETTINGS_CHANGED", {
+      Music: { volume: volume },
+    });
+    setSetting({ Music: { volume: volume } });
+  };
 
-  const emitEffectsVolume = useCallback(
-    debounce((volume) => {
-      EventBus.emitter.emit("SETTINGS_CHANGED", {
-        Effects: { volume: volume },
-      });
-      setSetting({ Effects: { volume: volume } });
-    }, 300),
-    [],
-  );
+  const emitEffectsVolume = (volume: number) => {
+    EventBus.emitter.emit("SETTINGS_CHANGED", {
+      Effects: { volume: volume },
+    });
+    setSetting({ Effects: { volume: volume } });
+  };
 
   const changeBgmVolume = (value: Decimal) => {
-    if (ignoreNextBgmRef.current) {
-      ignoreNextBgmRef.current = false;
-      return;
+    // Divide by 100 to convert scale from 1 - 100 to 0.01 - 1.0
+    let newValue = Math.floor(value.toNumber()) / 100;
+    if (value.lessThan(1)) {
+      value = new Decimal(1);
+      newValue = 0.01;
+    } else if (value.greaterThan(100)) {
+      value = new Decimal(100);
+      newValue = 1.0;
     }
-    const newValue = value.toNumber();
-    if (newValue < 0.01 || newValue > 1.0) return;
-    emitBgmVolume(value.toNumber());
+    setBgmVolume(value);
+    emitBgmVolume(newValue);
   };
 
   const changeEffectsVolume = (value: Decimal) => {
-    if (ignoreNextEffectsRef.current) {
-      ignoreNextEffectsRef.current = false;
-      return;
+    // Divide by 100 to convert scale from 1 - 100 to 0.01 - 1.0
+    let newValue = Math.floor(value.toNumber()) / 100;
+    if (value.lessThan(1)) {
+      value = new Decimal(1);
+      newValue = 0.01;
+    } else if (value.greaterThan(100)) {
+      value = new Decimal(100);
+      newValue = 1.0;
     }
-    const newValue = value.toNumber();
-    if (newValue < 0.01 || newValue > 1.0) return;
-    setTestAudioVolume(newValue);
-    emitEffectsVolume(value.toNumber());
+    setEffectsVolume(value);
+    emitEffectsVolume(newValue);
   };
 
   return (
@@ -135,64 +147,105 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
             </div>
           </div>
 
-          {/* <div className="h-5 flex flex-row items-center mt-2">
-            <span className="w-3/4">
-              {t("memory.settings.disableAnimations")}
-            </span>
-            <div className="h-full w-1/4 flex flex-row items-center justify-center">
-              <img
-                src={
-                  settings.isAnimationsDisabled
-                    ? SUNNYSIDE.ui.turn_on
-                    : SUNNYSIDE.ui.turn_off
-                }
-                className="h-full cursor-pointer"
-                onClick={toggleAnimationsDisabled}
-              />
+          {/* Seperator */}
+          <div className="flex justify-center">
+            <div className="w-full h-[1px] bg-brown-200 rounded my-4 opacity-75"></div>
+          </div>
+
+          <div className="flex flex-col mt-1.5">
+            <div className="flex items-center">
+              <span>{t("chaacsTemple.settings.bgmVolume")}</span>
             </div>
-          </div> */}
+            <div className="flex flex-row items-center">
+              <div className="w-full flex flex-row items-center mt-1.5">
+                <Button
+                  onClick={() => changeBgmVolume(effectsVolume.sub(10))}
+                  className="w-[50%]"
+                >
+                  {"-10"}
+                </Button>
+                <Button
+                  onClick={() => changeBgmVolume(effectsVolume.sub(1))}
+                  className="w-[50%] mx-1"
+                >
+                  {"-1"}
+                </Button>
+                <NumberInput
+                  readOnly={true}
+                  maxDecimalPlaces={0}
+                  allowNegative={false}
+                  value={bgmVolume}
+                  className="h-[50px] opacity-75 !cursor-not-allowed"
+                />
+                <Button
+                  onClick={() => changeBgmVolume(effectsVolume.add(1))}
+                  className="w-[50%] mx-1"
+                >
+                  {"+1"}
+                </Button>
+                <Button
+                  onClick={() => changeBgmVolume(effectsVolume.add(10))}
+                  className="w-[50%]"
+                >
+                  {"+10"}
+                </Button>
+              </div>
+            </div>
+          </div>
 
           {/* Seperator */}
           <div className="flex justify-center">
             <div className="w-full h-[1px] bg-brown-200 rounded my-4 opacity-75"></div>
           </div>
 
-          <div className="flex flex-row items-center">
-            <span className="w-[70%]">
-              {t("chaacsTemple.settings.bgmVolume")}
-            </span>
-            <div className="w-[30%]">
-              <NumberInput
-                maxDecimalPlaces={2}
-                allowNegative={false}
-                value={settings.Music?.volume ?? 0}
-                onValueChange={(value) => changeBgmVolume(value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-row items-center mt-1.5">
-            <span className="w-[70%]">
-              {t("chaacsTemple.settings.effectsVolume")}
-            </span>
-            <div className="w-[30%] flex flex-row items-center">
-              <NumberInput
-                maxDecimalPlaces={2}
-                allowNegative={false}
-                value={settings.Effects?.volume ?? 0}
-                onValueChange={(value) => changeEffectsVolume(value)}
-              />
+          <div className="flex flex-col mt-1.5">
+            <div className="flex items-center">
+              <span className="">
+                {t("chaacsTemple.settings.effectsVolume")}
+              </span>
               <img
                 src={sound_on}
-                className="group-active:translate-y-[2px] cursor-pointer"
-                style={{ width: "30px", height: "30px" }}
+                className="group-active:translate-y-[2px] cursor-pointer ml-2"
+                style={{ width: "25px", height: "25px" }}
                 onClick={() => {
-                  if (!testAudio.ended) testAudio.pause();
-                  testAudio.fastSeek(0);
-                  testAudio.volume = testAudioVolume;
-                  testAudio.play();
+                  if (button.playing()) button.stop();
+                  button.volume(Math.floor(effectsVolume.toNumber()) / 100);
+                  button.play();
                 }}
               />
+            </div>
+            <div className="w-full flex flex-row items-center mt-1.5">
+              <Button
+                onClick={() => changeEffectsVolume(effectsVolume.sub(10))}
+                className="w-[50%]"
+              >
+                {"-10"}
+              </Button>
+              <Button
+                onClick={() => changeEffectsVolume(effectsVolume.sub(1))}
+                className="w-[50%] mx-1"
+              >
+                {"-1"}
+              </Button>
+              <NumberInput
+                readOnly={true}
+                maxDecimalPlaces={0}
+                allowNegative={false}
+                value={effectsVolume}
+                className="h-[50px] opacity-75 !cursor-not-allowed"
+              />
+              <Button
+                onClick={() => changeEffectsVolume(effectsVolume.add(1))}
+                className="w-[50%] mx-1"
+              >
+                {"+1"}
+              </Button>
+              <Button
+                onClick={() => changeEffectsVolume(effectsVolume.add(10))}
+                className="w-[50%]"
+              >
+                {"+10"}
+              </Button>
             </div>
           </div>
         </div>
