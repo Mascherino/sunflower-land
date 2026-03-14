@@ -7,7 +7,6 @@ import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { PortalMachineState } from "../../lib/SimonSaysMachine";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 
-const maxMovesSel = (state: PortalMachineState) => state.context.maxMoves;
 const targetScoreSel = (state: PortalMachineState) => state.context.targetScore;
 const scoreSel = (state: PortalMachineState) => state.context.score;
 
@@ -15,7 +14,6 @@ export const Target: React.FC = () => {
   const { portalService } = useContext(PortalContext);
   const { t } = useAppTranslation();
 
-  const maxMoves = useSelector(portalService, maxMovesSel);
   const targetScore = useSelector(portalService, targetScoreSel);
   const score = useSelector(portalService, scoreSel);
 
@@ -32,7 +30,6 @@ export const Target: React.FC = () => {
       }}
     >
       {t("chaacsTemple.target", {
-        maxMoves: maxMoves + 1,
         targetScore: targetScore,
       })}
     </Label>
