@@ -10,7 +10,6 @@ import { isMobile, isTablet } from "mobile-device-detect";
 import { CONFIG } from "lib/config";
 import { EventBus } from "./lib/EventBus";
 import { getAnimationUrl } from "features/world/lib/animations";
-import { delay } from "./util/Utils";
 import { createBrazierAnimations, loadBrazierFiles } from "./lib/braziers";
 
 interface SoundConfig {
@@ -74,187 +73,77 @@ interface SoundConfig {
   };
 }
 
-export class GrayScalePipeline extends Phaser.Renderer.WebGL.Pipelines
-  .PostFXPipeline {
-  darkness: number = 0.9;
-  lightCount = 0;
-  lightPositions: Phaser.Math.Vector2[] = [];
-  lightRadii: number[] = [];
-  lightEnabled: number[] = [];
-  lightGlow: number[] = [];
-  // rawLights: Record<LightName, Light> = {} as Record<string, Light>;
-  map = { width: 0, height: 0 };
-  cam: Phaser.Cameras.Scene2D.Camera | undefined;
-  debugEnabled = false;
+export class HardLightPipeline extends Phaser.Renderer.WebGL.Pipelines
+  .LightPipeline {
   constructor(game: Phaser.Game) {
     super({
       game: game,
       fragShader: `
-      precision mediump float;
-
-      uniform sampler2D uMainSampler;
-      uniform float uDarkness;
-      uniform float uAspect;
-      uniform vec2 uLightPositions[20];
-      uniform float uLightRadii[20];
-      uniform float uLightEnabled[20];
-      uniform float uLightGlow[20];
-      uniform int uLightCount;
-      uniform bool uDebugEnabled;
-
-      uniform vec3 uLightColor;
-      uniform float uGlowStrength;
-
-      varying vec2 outTexCoord;
-
-      void main() {
-          vec4 color = texture2D(uMainSampler, outTexCoord);
-          float darknessFactor = 1.0 - uDarkness;
-          float insideLight = 0.0;
-
-          for(int i = 0; i < 20; i++) {
-            if (uLightEnabled[i] == 1.0) {
-              if(i >= uLightCount) break;
-
-              vec2 diff = outTexCoord - uLightPositions[i];
-              diff.x *= uAspect;
-              float dist = length(diff);
-              if (uDebugEnabled) {
-                if (dist < 0.00125) {
-                  color.rgb = vec3(1.0, 0.0, 0.0);
-                  gl_FragColor = color;
-                  continue;
-                }
-              }
-
-              float stepSize = 0.0;
-              if (uDebugEnabled) {
-                stepSize = 0.1;
-              } else {
-                stepSize = 0.00390625;
-              }
-              float qDist = floor(dist / stepSize) * stepSize;
-              float qRadius = floor(uLightRadii[i] / stepSize) * stepSize;
-
-              float rings = floor(qDist / stepSize);
-              float maxRings = floor(qRadius / stepSize);
-              float influence = 1.0 - clamp(rings / maxRings, 0.0, 1.0);
-            
-              darknessFactor += (1.0 - darknessFactor) * influence;
-
-              if (dist <= uLightRadii[i] && uLightGlow[i] == 1.0) {
-                insideLight = 1.0;
-              }
+        precision mediump float;
+        struct Light
+        {
+            vec2 position;
+            vec3 color;
+            float intensity;
+            float radius;
+        };
+        const int kMaxLights = %LIGHT_COUNT%;
+        uniform vec4 uCamera; /* x, y, rotation, zoom */
+        uniform vec2 uResolution;
+        uniform sampler2D uMainSampler;
+        uniform sampler2D uNormSampler;
+        uniform vec3 uAmbientLightColor;
+        uniform Light uLights[kMaxLights];
+        uniform mat3 uInverseRotationMatrix;
+        uniform int uLightCount;
+        varying vec2 outTexCoord;
+        varying float outTexId;
+        varying float outTintEffect;
+        varying vec4 outTint;
+        void main ()
+        {
+            vec3 finalColor = vec3(0.0, 0.0, 0.0);
+            vec4 texel = vec4(outTint.bgr * outTint.a, outTint.a);
+            vec4 texture = texture2D(uMainSampler, outTexCoord);
+            vec4 color = texture * texel;
+            if (outTintEffect == 1.0)
+            {
+                color.rgb = mix(texture.rgb, outTint.bgr * outTint.a, texture.a);
             }
-          }
-
-          color.rgb *= darknessFactor;
-          color.rgb = mix(
-            color.rgb,
-            color.rgb * uLightColor,
-            insideLight * uGlowStrength);
-
-          gl_FragColor = color;
-      }
-      `,
+            else if (outTintEffect == 2.0)
+            {
+                color = texel;
+            }
+            vec3 normalMap = texture2D(uNormSampler, outTexCoord).rgb;
+            vec3 normal = normalize(uInverseRotationMatrix * vec3(normalMap * 2.0 - 1.0));
+            vec2 res = vec2(min(uResolution.x, uResolution.y)) * uCamera.w;
+            for (int index = 0; index < kMaxLights; ++index)
+            {
+                if (index < uLightCount)
+                {
+                    Light light = uLights[index];
+                    vec3 lightDir = vec3((light.position.xy / res) - (gl_FragCoord.xy / res), 0.1);
+                    vec3 lightNormal = normalize(lightDir);
+                    float distToSurf = length(lightDir) * uCamera.w;
+                    float diffuseFactor = max(dot(normal, lightNormal), 0.0);
+                    float radius = (light.radius / res.x * uCamera.w) * uCamera.w;
+                    float attenuation = clamp(1.0 - distToSurf * distToSurf / (radius * radius), 0.0, 1.0);
+                    if (light.radius > 90.0) {
+                      if (distToSurf <= radius) {
+                        attenuation = 1.0;
+                        diffuseFactor = 1.0;
+                      } else {
+                        attenuation = 0.0;
+                      }
+                    }
+                    vec3 diffuse = light.color * diffuseFactor;
+                    finalColor += (attenuation * diffuse) * light.intensity;
+                }
+            }
+            vec4 colorOutput = vec4(uAmbientLightColor + finalColor, 1.0);
+            gl_FragColor = color * vec4(colorOutput.rgb * colorOutput.a, colorOutput.a);
+        }`,
     });
-    this.lightPositions = [];
-    this.lightRadii = [];
-    this.lightCount = 0;
-  }
-
-  onPreRender(): void {
-    const view = this.cam!.worldView;
-    this.set1f("uDarkness", this.darkness);
-    this.set3f("uLightColor", 1.0, 0.95, 0.7);
-    this.set1f("uGlowStrength", 1.0);
-    const positions = [];
-    const radii = [];
-    for (let i = 0; i < this.lightPositions.length; i++) {
-      const pos = this.lightPositions[i];
-      positions.push(
-        (pos.x - view.x) / view?.width,
-        (pos.y - view?.y) / view?.height,
-      );
-      // positions.push(pos.x / this.map.width, pos.y / this.map.height);
-      radii.push(
-        this.lightRadii[i] / Math.max(this.map.width, this.map.height),
-      );
-    }
-
-    this.set1f("uAspect", this.renderer.width / this.renderer.height);
-    this.set2fv("uLightPositions", positions);
-    this.set1fv("uLightRadii", radii);
-    this.set1fv("uLightEnabled", this.lightEnabled);
-    this.set1fv("uLightGlow", this.lightGlow);
-    this.set1i("uLightCount", this.lightPositions.length);
-    this.setBoolean("uDebugEnabled", this.debugEnabled);
-  }
-
-  // setLights(lights: Record<LightName, Light>): void {
-  //   const positions: Phaser.Math.Vector2[] = [];
-  //   const radii: number[] = [];
-  //   const enabled: number[] = [];
-  //   const glow: number[] = [];
-  //   Object.values(lights).forEach((light) => {
-  //     positions.push(new Phaser.Math.Vector2(light.x, light.y));
-  //     radii.push(light.radius);
-  //     enabled.push(light.enabled);
-  //     glow.push(light.glow);
-  //   });
-  //   this.lightPositions = positions;
-  //   this.lightRadii = radii;
-  //   this.lightEnabled = enabled;
-  //   this.lightGlow = glow;
-  //   this.rawLights = lights;
-
-  //   const scene = this.game.scene.getScene("chaacs-temple") as SimonSaysScene;
-  //   const map = scene.map;
-  //   this.map.height = map.height * SQUARE_WIDTH;
-  //   this.map.width = map.width * SQUARE_WIDTH;
-  //   this.cam = scene.cameras.main;
-  // }
-
-  async fadeDarkness(
-    destDarkness: number,
-    duration: number,
-    stepSize: number = 0,
-  ) {
-    if (destDarkness === this.darkness) return;
-
-    const start = this.darkness;
-    const delta = destDarkness - start;
-    const totalDiff = Math.abs(delta);
-
-    if (stepSize <= 0) {
-      stepSize = totalDiff / 60;
-    }
-    const steps = Math.ceil(totalDiff / stepSize);
-    const stepDuration = duration / steps;
-
-    const direction = delta >= 0 ? 1 : -1;
-
-    let current = start;
-
-    while (
-      (direction > 0 && current < destDarkness) ||
-      (direction < 0 && current > destDarkness)
-    ) {
-      current += stepSize * direction;
-
-      if (
-        (direction > 0 && current > destDarkness) ||
-        (direction < 0 && current < destDarkness)
-      ) {
-        current = destDarkness;
-      }
-
-      this.darkness = current;
-
-      await delay(stepDuration);
-    }
-
-    this.darkness = destDarkness;
   }
 }
 
@@ -291,6 +180,11 @@ export class SimonSaysScene extends Phaser.Scene {
   }
 
   async create() {
+    (this.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer).pipelines.add(
+      "hardLight",
+      new HardLightPipeline(this.game),
+    );
+
     // this.createCardImages();
     this.initSounds();
     this.initCamera();
@@ -299,17 +193,6 @@ export class SimonSaysScene extends Phaser.Scene {
     this.initAnimations();
     this.physics.world.drawDebug = false;
     this.gameBoard = new SimonSays(this);
-
-    (
-      this.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer
-    ).pipelines.addPostPipeline("grayScale", GrayScalePipeline);
-
-    // this.cameras.main.setPostPipeline("Light2D");
-
-    // const grayScalePipeline = this.cameras.main.getPostPipeline(
-    //   "grayScale",
-    // ) as GrayScalePipeline;
-    // grayScalePipeline.setLights(getDefaultLights(this.map));
 
     if (this.portalService) {
       if (!this.portalService._listeners) {
