@@ -41,6 +41,7 @@ export interface Context {
   lives: number;
   totalLength: number;
   currentLength: number;
+  testScore: number;
 }
 
 type GameStartEvent = {
@@ -66,6 +67,11 @@ type MoveEvent = {
   currentLength: number;
 };
 
+type TestEvent = {
+  type: "TEST";
+  score: number;
+};
+
 export type PortalEvent =
   | { type: "CLAIM" }
   | { type: "CANCEL_PURCHASE" }
@@ -79,7 +85,8 @@ export type PortalEvent =
   | GameOverEvent
   | MoveEvent
   | { type: "START_BLINK" }
-  | { type: "END_BLINK" };
+  | { type: "END_BLINK" }
+  | TestEvent;
 
 export type PortalState = {
   value:
@@ -124,6 +131,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
     lives: 0,
     totalLength: 0,
     currentLength: 0,
+    testScore: 0,
   },
   states: {
     initialising: {
@@ -416,6 +424,18 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             canBuyHint: () => false,
           }) as any,
         },
+        TEST: {
+          target: "starting",
+          actions: assign({
+            score: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
+            canBuyHint: () => false,
+            testScore: (context: Context, event: TestEvent) => {
+              return event.score;
+            },
+          }) as any,
+        },
       },
     },
 
@@ -430,6 +450,18 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             canBuyHint: () => false,
           }) as any,
         },
+        TEST: {
+          target: "starting",
+          actions: assign({
+            score: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
+            canBuyHint: () => false,
+            testScore: (context: Context, event: TestEvent) => {
+              return event.score;
+            },
+          }) as any,
+        },
       },
     },
 
@@ -442,6 +474,18 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             startAt: () => 0,
             endAt: () => 0,
             canBuyHint: () => false,
+          }) as any,
+        },
+        TEST: {
+          target: "starting",
+          actions: assign({
+            score: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
+            canBuyHint: () => false,
+            testScore: (context: Context, event: TestEvent) => {
+              return event.score;
+            },
           }) as any,
         },
       },

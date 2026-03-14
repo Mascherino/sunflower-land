@@ -137,7 +137,21 @@ export class SimonSays {
   }
 
   public async newGame() {
-    const prize = this.scene.gameState.minigames.prizes.memory;
+    let prize = this.scene.gameState.minigames.prizes["chaacs-temple"];
+
+    // Remove after testing
+    const context = this.scene.portalService?.getSnapshot().context;
+    const testScore = context?.testScore ?? 0;
+    if (testScore > 0) {
+      prize = {
+        coins: 0,
+        endAt: context!.endAt,
+        startAt: context!.startAt,
+        score: testScore,
+        items: {},
+        wearables: {},
+      };
+    }
     this.lives = 3;
     this.startLength = DEFAULT_SEQUENCE_LENGTH;
     switch (prize?.score) {
