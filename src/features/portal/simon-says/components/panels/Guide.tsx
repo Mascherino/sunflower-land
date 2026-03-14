@@ -131,6 +131,26 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
               {t("chaacsTemple.guide.goal.text.2")}
             </p>
           </div>
+          <div className="flex items-center mb-3 mx-2">
+            <SquareIcon
+              icon={SUNNYSIDE.icons.arrow_up}
+              width={7}
+              className="flex-shrink-0"
+            />
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.goal.text.3")}
+            </p>
+          </div>
+          <div className="flex items-center mb-3 mx-2">
+            <SquareIcon
+              icon={SUNNYSIDE.icons.sad}
+              width={7}
+              className="flex-shrink-0"
+            />
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.goal.text.4")}
+            </p>
+          </div>
         </div>
 
         <Label type="info">{t("chaacsTemple.guide.tips.label")}</Label>
@@ -153,16 +173,6 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
             />
             <p className="text-xs ml-3">
               {t("chaacsTemple.guide.tips.text.2")}
-            </p>
-          </div>
-          <div className="flex items-center mb-3 mx-2">
-            <SquareIcon
-              icon={SUNNYSIDE.icons.sad}
-              width={7}
-              className="flex-shrink-0"
-            />
-            <p className="text-xs ml-3">
-              {t("chaacsTemple.guide.tips.text.3")}
             </p>
           </div>
         </div>
