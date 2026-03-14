@@ -149,34 +149,6 @@ export class SimonSays {
 
     this.cleanGame();
 
-    const gamestate = this.scene.gameState;
-    this.bumpkin = new BumpkinContainer({
-      scene: this.scene,
-      x: (this.scene.map.width / 2 + 4) * SQUARE_WIDTH,
-      y: (this.scene.map.height / 2 + 5.75) * SQUARE_WIDTH,
-      clothing: {
-        ...gamestate.bumpkin.equipped,
-        aura: undefined,
-        updatedAt: Date.now(),
-      },
-      direction: "left",
-      username: gamestate.username,
-    });
-
-    this.npc = new BumpkinContainer({
-      scene: this.scene,
-      x: (this.scene.map.width / 2 - 4) * SQUARE_WIDTH,
-      y: (this.scene.map.height / 2 + 5.75) * SQUARE_WIDTH,
-      clothing: {
-        ...gamestate.bumpkin.equipped,
-        aura: undefined,
-        onesie: "Maya Armor",
-        updatedAt: Date.now(),
-      },
-      direction: "right",
-    });
-    this.npc.setDepth(30);
-
     this.hintListener = (event) => {
       if (event.type === "BUY_HINT") {
         const game = SimonSays.current;
@@ -258,6 +230,8 @@ export class SimonSays {
     [...this.scene.lights.lights].forEach((light) =>
       this.scene.lights.removeLight(light),
     );
+    this.bumpkin?.destroy(true);
+    this.npc?.destroy(true);
   }
 
   drawPregame() {
@@ -345,25 +319,6 @@ export class SimonSays {
       i++;
     }
 
-    // this.scene.add
-    //   .image(
-    //     (this.scene.map.width / 2 - 9.5) * SQUARE_WIDTH,
-    //     (this.scene.map.height / 2 + 2.125) * SQUARE_WIDTH,
-    //     "vine_pillar_broken",
-    //   )
-    //   .setDepth(30)
-    //   .setPipeline("Light2D");
-
-    // this.scene.add
-    //   .image(
-    //     (this.scene.map.width / 2 + 9.5) * SQUARE_WIDTH,
-    //     (this.scene.map.height / 2 + 2.125) * SQUARE_WIDTH,
-    //     "pillar_broken",
-    //   )
-    //   .setFlipX(true)
-    //   .setDepth(30)
-    //   .setPipeline("Light2D");
-
     this.scene.add
       .image(
         (this.scene.map.width / 2 - 1) * SQUARE_WIDTH,
@@ -405,6 +360,34 @@ export class SimonSays {
       )
       .setFlipX(true)
       .setPipeline("Light2D");
+
+    const gamestate = this.scene.gameState;
+    this.bumpkin = new BumpkinContainer({
+      scene: this.scene,
+      x: (this.scene.map.width / 2 + 4) * SQUARE_WIDTH,
+      y: (this.scene.map.height / 2 + 5.75) * SQUARE_WIDTH,
+      clothing: {
+        ...gamestate.bumpkin.equipped,
+        aura: undefined,
+        updatedAt: Date.now(),
+      },
+      direction: "left",
+      username: gamestate.username,
+    });
+
+    this.npc = new BumpkinContainer({
+      scene: this.scene,
+      x: (this.scene.map.width / 2 - 4) * SQUARE_WIDTH,
+      y: (this.scene.map.height / 2 + 5.75) * SQUARE_WIDTH,
+      clothing: {
+        ...gamestate.bumpkin.equipped,
+        aura: undefined,
+        onesie: "Maya Armor",
+        updatedAt: Date.now(),
+      },
+      direction: "right",
+    });
+    this.npc.setDepth(30);
   }
 
   private async handlePointerDown(piece: GamePiece) {
