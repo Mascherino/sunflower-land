@@ -9,9 +9,13 @@ import {
 import { Brazier } from "./Brazier";
 import { LightName } from "./lights";
 
-function getDefaultBraziers(
-  scene: SimonSaysScene,
-): { name: LightName; x: number; y: number; radius?: number }[] {
+function getDefaultBraziers(scene: SimonSaysScene): {
+  name: LightName;
+  x: number;
+  y: number;
+  radius?: number;
+  intensity?: number;
+}[] {
   return [
     {
       name: "brazier_lefttop",
@@ -54,25 +58,15 @@ function getDefaultBraziers(
       x: (scene.map.width / 2 - 16) * SQUARE_WIDTH,
       y: (scene.map.height / 2 - 5) * SQUARE_WIDTH,
       radius: 80,
+      intensity: 1.4,
     },
-    // {
-    //   name: "brazier_backleft_level4",
-    //   x: (scene.map.width / 2 - 18) * SQUARE_WIDTH,
-    //   y: (scene.map.height / 2 - 3) * SQUARE_WIDTH,
-    //   radius: 65,
-    // },
     {
       name: "brazier_backright_level3",
       x: (scene.map.width / 2 + 16) * SQUARE_WIDTH,
       y: (scene.map.height / 2 - 5) * SQUARE_WIDTH,
       radius: 80,
+      intensity: 1.4,
     },
-    // {
-    //   name: "brazier_backright_level4",
-    //   x: (scene.map.width / 2 + 18) * SQUARE_WIDTH,
-    //   y: (scene.map.height / 2 - 3) * SQUARE_WIDTH,
-    //   radius: 65,
-    // },
     {
       name: "brazier_frontleft_level1",
       x: (scene.map.width / 2 - 12) * SQUARE_WIDTH,
@@ -124,12 +118,13 @@ export function placeBraziers(scene: SimonSaysScene) {
       .setPipeline("Light2D")
       .play({ key: "brazier_fire_active_anim", randomFrame: true });
     const radius = brazier.radius ? brazier.radius : BRAZIER_LIGHT_RADIUS;
+    const intensity = brazier.intensity ?? BRAZIER_LIGHT_INTENSITY;
     const light = scene.lights.addLight(
       brazier.x,
       brazier.y,
       radius,
       BRAZIER_LIGHT_COLOR,
-      BRAZIER_LIGHT_INTENSITY,
+      intensity,
     );
     sprite.play("brazier_anim");
     res[brazier.name] = new Brazier(sprite, brazier.x, brazier.y, fire, light);

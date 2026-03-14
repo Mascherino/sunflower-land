@@ -27,7 +27,7 @@ export const IMAGE_SCALE = 0.65;
 
 export const BRAZIER_LIGHT_COLOR = 0xffe685;
 export const BRAZIER_LIGHT_RADIUS = 62.5;
-export const BRAZIER_LIGHT_INTENSITY = 2;
+export const BRAZIER_LIGHT_INTENSITY = 1.8;
 export const BRAZIER_DEPTH = 10;
 export const LIFEBRAZER_LIGHT_RADIUS = 75;
 
