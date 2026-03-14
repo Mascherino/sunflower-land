@@ -6,13 +6,16 @@ import { PortalMachineState } from "../../lib/SimonSaysMachine";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 
 const scoreSel = (state: PortalMachineState) => state.context.score;
-// const movesMadeSel = (state: PortalMachineState) => state.context.movesMade;
+const totalLengthSel = (state: PortalMachineState) => state.context.totalLength;
+const currentLengthSel = (state: PortalMachineState) =>
+  state.context.currentLength;
 
 export const Scores: React.FC = () => {
   const { portalService } = useContext(PortalContext);
   const { t } = useAppTranslation();
   const score = useSelector(portalService, scoreSel);
-  // const movesMade = useSelector(portalService, movesMadeSel);
+  const totalLength = useSelector(portalService, totalLengthSel);
+  const currentLength = useSelector(portalService, currentLengthSel);
 
   return (
     <div
@@ -29,12 +32,12 @@ export const Scores: React.FC = () => {
             }}
           >
             <span className="flex items-center balance-text">
-              {t("memory.score", { score: score })}
+              {t("chaacsTemple.score", { score: score })}
             </span>
           </div>
         </div>
       </div>
-      {/* <div className="relative">
+      <div className="relative">
         <div className="h-6 w-full mt-0.5 bg-black bg-opacity-30 flex items-center rounded">
           <div
             className="flex items-center space-x-2 text-white"
@@ -44,11 +47,26 @@ export const Scores: React.FC = () => {
             }}
           >
             <span className="flex items-center balance-text">
-              {t("memory.moves", { movesMade: movesMade })}
+              {t("chaacsTemple.totalLength", { totalLength: totalLength })}
             </span>
           </div>
         </div>
-      </div> */}
+        <div className="h-6 w-full mt-0.5 bg-black bg-opacity-30 flex items-center rounded">
+          <div
+            className="flex items-center space-x-2 text-white"
+            style={{
+              width: "200px",
+              paddingLeft: "4px",
+            }}
+          >
+            <span className="flex items-center balance-text">
+              {t("chaacsTemple.currentLength", {
+                currentLength: currentLength,
+              })}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
