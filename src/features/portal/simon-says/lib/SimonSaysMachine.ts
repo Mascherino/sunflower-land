@@ -31,9 +31,7 @@ export interface Context {
   id: number;
   jwt: string | null;
   state: GameState | undefined;
-  maxMoves: number;
   targetScore: number;
-  movesMade: number;
   startAt: number;
   endAt: number;
   solved: boolean;
@@ -41,6 +39,8 @@ export interface Context {
   score: number;
   canBuyHint: boolean;
   lives: number;
+  totalLength: number;
+  currentLength: number;
 }
 
 type GameStartEvent = {
@@ -48,6 +48,8 @@ type GameStartEvent = {
   duration: number;
   targetScore: number;
   lives: number;
+  totalLength: number;
+  currentLength: number;
 };
 
 type GameOverEvent = {
@@ -60,6 +62,8 @@ type MoveEvent = {
   solved: boolean;
   score: number;
   lives: number;
+  totalLength: number;
+  currentLength: number;
 };
 
 export type PortalEvent =
@@ -109,10 +113,7 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
   context: {
     id: 0,
     jwt: getJWT(),
-
     state: CONFIG.API_URL ? undefined : OFFLINE_FARM,
-    movesMade: 0,
-    maxMoves: 0,
     targetScore: 0,
     attemptsRemaining: 0,
     solved: false,
@@ -121,6 +122,8 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
     score: 0,
     canBuyHint: true,
     lives: 0,
+    totalLength: 0,
+    currentLength: 0,
   },
   states: {
     initialising: {
@@ -243,14 +246,16 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
             endAt: (context: Context, event: GameStartEvent) => {
               return Date.now() + event.duration;
             },
-            maxMoves: (context: Context, event: GameStartEvent) => {
-              return event.lives;
-            },
-            movesMade: 0,
             targetScore: (context: Context, event: GameStartEvent) => {
               return event.targetScore;
             },
             score: 0,
+            totalLength: (context: Context, event: GameStartEvent) => {
+              return event.totalLength;
+            },
+            currentLength: (context: Context, event: GameStartEvent) => {
+              return event.currentLength;
+            },
             state: (context: any) => {
               startAttempt();
               return startMinigameAttempt({
@@ -305,6 +310,12 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
               return (context.lives = event.lives);
             },
             canBuyHint: () => true,
+            totalLength: (context: Context, event: MoveEvent) => {
+              return event.totalLength;
+            },
+            currentLength: (context: Context, event: MoveEvent) => {
+              return event.currentLength;
+            },
           }),
         },
         START_BLINK: {

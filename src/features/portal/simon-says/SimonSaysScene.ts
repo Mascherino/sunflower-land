@@ -365,7 +365,7 @@ export class SimonSaysScene extends Phaser.Scene {
 
   loadAudio() {
     // Celesta sounds from: https://freesound.org/people/pjcohen/packs/23108/
-    // volume normalized by me
+    // volume normalized, faster fade out and trimmed by me
     const folders = ["mid", "top"];
     const colors = ["blue", "green", "yellow", "red"];
     folders.forEach((folder) => {
@@ -458,11 +458,6 @@ export class SimonSaysScene extends Phaser.Scene {
 
   public get score() {
     return this.portalService?.getSnapshot().context.score ?? 0;
-  }
-  public get movesMade() {
-    return this.portalService
-      ? this.portalService?.getSnapshot().context.movesMade
-      : 0;
   }
   public get targetScore() {
     return this.portalService

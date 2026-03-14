@@ -46,6 +46,8 @@ export class SimonSays {
   private predefinedSequence: number[] = [];
   private currLength: number = 3;
   private scoreThreshold: number = 6;
+  private lostLifePrev: boolean = false;
+  private startLength: number = 0;
 
   private bumpkin?: BumpkinContainer | undefined = undefined;
   private bumpkinPedastal?: Phaser.GameObjects.Sprite | undefined = undefined;
@@ -55,7 +57,6 @@ export class SimonSays {
   private hintListener: ((event: EventObject) => void) | null = null;
   static current: SimonSays | null = null;
   public settings: ChaacsTempleSettings = getChaacsTempleSettings();
-  private camera: Phaser.Cameras.Scene2D.Camera | undefined;
   constructor(scene: SimonSaysScene) {
     this.scene = scene;
 
@@ -137,14 +138,39 @@ export class SimonSays {
 
   public async newGame() {
     const prize = this.scene.gameState.minigames.prizes.memory;
+    this.lives = 3;
+    this.startLength = DEFAULT_SEQUENCE_LENGTH;
     switch (prize?.score) {
-      case undefined:
-      default:
-        this.duration = 60000 * 10000;
+      case 3.6:
         this.targetScore = 3;
-        this.lives = 3;
         this.scoreThreshold = 6;
+        break;
+      case 3.7:
+        this.startLength = 4;
+        this.targetScore = 3;
+        this.scoreThreshold = 7;
+        break;
+      case 3.8:
+        this.startLength = 5;
+        this.targetScore = 3;
+        this.scoreThreshold = 8;
+        break;
+      case 3.9:
+        this.startLength = 6;
+        this.targetScore = 3;
+        this.scoreThreshold = 9;
+        break;
+      case 3.1:
+        this.startLength = 7;
+        this.targetScore = 3;
+        this.scoreThreshold = 10;
+        break;
+      default:
+        this.targetScore = 3;
+        this.scoreThreshold = 6;
+        this.duration = 60000 * 10000;
     }
+    this.currLength = this.startLength;
     this.scene.locked = false;
 
     this.cleanGame();
@@ -182,13 +208,15 @@ export class SimonSays {
     this.predefinedSequence = Array.from({ length: this.scoreThreshold }, () =>
       randomInt(0, this.pieces.length),
     );
-    this.currLength = DEFAULT_SEQUENCE_LENGTH;
+    this.lostLifePrev = false;
 
     if (this.scene.isReady) {
       this.scene.portalService?.send("START", {
         duration: this.duration,
         targetScore: this.targetScore,
         lives: this.lives,
+        totalLength: this.scoreThreshold,
+        currentLength: this.currLength,
       });
     }
 
@@ -221,7 +249,6 @@ export class SimonSays {
       brazier.sprite.destroy(true);
       brazier.fire.destroy(true);
     });
-    this.camera ? this.scene.cameras.remove(this.camera) : null;
 
     this.npc?.destroy();
     this.bumpkin?.destroy();
@@ -422,15 +449,20 @@ export class SimonSays {
       if (idx == this.currentSequence[0]) {
         this.currentSequence.shift();
 
+        // Empty sequence == reached score threshold
         if (this.currentSequence.length === 0) {
           if (this.currLength >= this.scoreThreshold) {
             score = score + 1;
             speak(this.npc!, getImpressedPhrase(score), 2500);
+            if (!this.lostLifePrev) {
+              this.scoreThreshold++;
+            }
+            this.lostLifePrev = false;
+            this.currLength = this.startLength;
             this.predefinedSequence = Array.from(
               { length: this.scoreThreshold },
               () => randomInt(0, this.pieces.length),
             );
-            this.currLength = DEFAULT_SEQUENCE_LENGTH;
           } else {
             this.currLength++;
           }
@@ -440,6 +472,8 @@ export class SimonSays {
           score: score,
           lives: lives,
           solved: solved,
+          totalLength: this.scoreThreshold,
+          currentLength: this.currLength,
         });
         if (this.currentSequence.length === 0) {
           await delay(1000);
@@ -447,10 +481,13 @@ export class SimonSays {
         }
       } else {
         lives = lives - 1;
+        this.lostLifePrev = true;
         this.scene.portalService?.send("MAKE_MOVE", {
           score: score,
           lives: lives,
           solved: false,
+          totalLength: this.scoreThreshold,
+          currentLength: this.currLength,
         });
         speak(this.npc!, getHumiliatingPhrase(score), 2500);
         const name = this.lifeBrazierOrder[this.lives - lives - 1];
