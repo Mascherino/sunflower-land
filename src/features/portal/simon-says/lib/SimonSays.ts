@@ -90,7 +90,7 @@ export class SimonSays {
       oldSettings.Effects?.volume ??
       defaultEffectsVolume;
 
-    Object.keys(this.scene.SOUNDS).forEach((key) => {
+    ["extinguish", "thunder", "pieces"].forEach((key) => {
       const sound = this.scene.SOUNDS[key as keyof typeof this.scene.SOUNDS];
       if (sound instanceof Phaser.Sound.BaseSound) {
         sound?.setVolume(newEffectsVolume);
@@ -110,16 +110,16 @@ export class SimonSays {
   }
 
   setupSounds() {
-    // this.scene.SOUNDS.background?.setMute(!!this.settings.Music?.isMuted);
-    // this.scene.SOUNDS.background?.play({
-    //   volume: this.settings.Music?.volume ?? 0,
-    //   loop: true,
-    //   rate: 0.7,
-    // });
+    this.scene.SOUNDS.background?.setMute(!!this.settings.Music?.isMuted);
+    this.scene.SOUNDS.background?.play({
+      volume: this.settings.Music?.volume ?? defaultBgmVolume,
+      loop: true,
+      rate: 1.0,
+    });
 
     const effectsVolume = this.settings.Effects?.volume ?? defaultEffectsVolume;
     const effectsIsMuted = !!this.settings.Effects?.isMuted;
-    Object.keys(this.scene.SOUNDS).forEach((key) => {
+    ["extinguish", "thunder", "pieces"].forEach((key) => {
       const sound = this.scene.SOUNDS[key as keyof typeof this.scene.SOUNDS];
       if (sound instanceof Phaser.Sound.BaseSound) {
         sound?.setVolume(effectsVolume);

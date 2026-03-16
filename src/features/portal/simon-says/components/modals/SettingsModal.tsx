@@ -159,13 +159,13 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
             <div className="flex flex-row items-center">
               <div className="w-full flex flex-row items-center mt-1.5">
                 <Button
-                  onClick={() => changeBgmVolume(effectsVolume.sub(10))}
+                  onClick={() => changeBgmVolume(bgmVolume.sub(10))}
                   className="w-[50%]"
                 >
                   {"-10"}
                 </Button>
                 <Button
-                  onClick={() => changeBgmVolume(effectsVolume.sub(1))}
+                  onClick={() => changeBgmVolume(bgmVolume.sub(1))}
                   className="w-[50%] mx-1"
                 >
                   {"-1"}
@@ -178,13 +178,13 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
                   className="h-[50px] opacity-75 !cursor-not-allowed"
                 />
                 <Button
-                  onClick={() => changeBgmVolume(effectsVolume.add(1))}
+                  onClick={() => changeBgmVolume(bgmVolume.add(1))}
                   className="w-[50%] mx-1"
                 >
                   {"+1"}
                 </Button>
                 <Button
-                  onClick={() => changeBgmVolume(effectsVolume.add(10))}
+                  onClick={() => changeBgmVolume(bgmVolume.add(10))}
                   className="w-[50%]"
                 >
                   {"+10"}

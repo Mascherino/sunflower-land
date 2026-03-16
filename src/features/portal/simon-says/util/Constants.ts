@@ -14,7 +14,7 @@ export const DEFAULT_SEQUENCE_LENGTH = 3;
 export const LS_PREFIX = `minigames.${MINIGAME_NAME}`;
 
 export const defaultBgmMuted = false;
-export const defaultBgmVolume = 0.25;
+export const defaultBgmVolume = 0.1;
 export const defaultEffectsMuted = false;
 export const defaultEffectsVolume = 0.85;
 

@@ -383,6 +383,10 @@ export class SimonSaysScene extends Phaser.Scene {
 
     // Thunder sound from: https://freesound.org/people/seth-m/sounds/458015/
     this.load.audio("thunder", "world/simon-says/sounds/thunder.mp3");
+
+    // yucatan jungle.mp3 by folkart films -- https://freesound.org/s/122767/
+    // Shortened, added fade in & fade out
+    this.load.audio("bgm", "world/simon-says/sounds/bgm.mp3");
   }
 
   initSounds() {
@@ -391,8 +395,7 @@ export class SimonSaysScene extends Phaser.Scene {
     if (!this.SOUNDS.thunder) this.SOUNDS.thunder = this.sound.add("thunder");
     // if (!this.SOUNDS.complete)
     //   this.SOUNDS.complete = this.sound.add("complete");
-    // if (!this.SOUNDS.background)
-    //   this.SOUNDS.background = this.sound.add("background");
+    if (!this.SOUNDS.background) this.SOUNDS.background = this.sound.add("bgm");
     if (!this.SOUNDS.pieces)
       this.SOUNDS.pieces = {
         core: this.sound.add("core_sound"),
