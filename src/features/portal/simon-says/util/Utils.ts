@@ -81,17 +81,25 @@ export const speak = (npc: BumpkinContainer, msg: string, timeout: number) => {
 };
 
 export const getHumiliatingPhrase = (score: number) => {
-  const idx = Math.floor(Math.random() * 5);
-  return ["Pathetic...", "Hm...", "As expected.", "Seriously?", "Well..."][idx];
+  const idx = Math.floor(Math.random() * 6);
+  return [
+    "Pathetic...",
+    "As expected.",
+    "Seriously?",
+    "Do you have the memory of a goldfish?!",
+    "You amuse me, mortal.",
+    "You are more dull than my dagger!",
+  ][idx];
 };
 
 export const getImpressedPhrase = (score: number) => {
-  const idx = Math.floor(Math.random() * 5);
+  const idx = Math.floor(Math.random() * 6);
   return [
     "Hm...",
     "Not bad.",
     "Impressive.",
     "Not a total failure...",
     "At least you got one correct...",
+    "Maybe you'll get to live.",
   ][idx];
 };
