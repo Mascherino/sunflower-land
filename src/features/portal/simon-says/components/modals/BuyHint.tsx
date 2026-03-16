@@ -43,14 +43,14 @@ export const BuyHintModal: React.FC<{ show: boolean; onHide: () => void }> = ({
       >
         <div className="flex flex-col p-2 items-start">
           <span className="text-sm text-start w-full m-1">
-            {t("chaacsTemple.hintDescription")}
+            {t("chaacsTemple.shop.hint.description")}
           </span>
           <span className="text-sm text-start w-full m-1">
-            {t("chaacsTemple.buyHintQuestion")}
+            {t("chaacsTemple.shop.hint.question")}
           </span>
           <div className="flex items-center">
             <p className="text-sm text-start w-full m-1">
-              {t("chaacsTemple.hintCost", { cost: HINT_COST })}
+              {t("chaacsTemple.shop.hint.cost", { cost: HINT_COST })}
             </p>
             <img
               src={flowerIcon}
