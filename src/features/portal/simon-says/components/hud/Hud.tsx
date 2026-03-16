@@ -8,7 +8,7 @@ import { Exit } from "./Exit";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 import { Scores } from "./Scores";
 import { Target } from "./Target";
-import { Shop } from "./Shop";
+import { BottomRow } from "./BottomRow";
 import { Settings } from "./Settings";
 
 const isPlayingSel = (state: PortalMachineState) => state.matches("playing");
@@ -44,7 +44,7 @@ export const Hud: React.FC = () => {
         {isPlaying && (
           <>
             <Time />
-            <Shop />
+            <BottomRow />
           </>
         )}
       </div>

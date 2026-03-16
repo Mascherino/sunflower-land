@@ -13,6 +13,9 @@ import { BuyHintPanel } from "../panels/Shop/Hint";
 import { Separator } from "../Separator";
 import { BuyLowerThresholdPanel } from "../panels/Shop/ScoreThreshold";
 import { hasBoughtLowerThreshold } from "../../util/Utils";
+import { PIXEL_SCALE } from "features/game/lib/constants";
+import { SUNNYSIDE } from "assets/sunnyside";
+import { useSound } from "lib/utils/hooks/useSound";
 
 const hintEnabledSel = (state: PortalMachineState) => state.context.canBuyHint;
 const minigameSel = (state: PortalMachineState) =>
@@ -36,6 +39,8 @@ export const ShopModal: React.FC<{ show: boolean; onHide: () => void }> = ({
   const totalLength = useSelector(portalService, totalLengthSel);
   const hasBoughtThreshold = hasBoughtLowerThreshold(minigame);
 
+  const button = useSound("button");
+
   return (
     <Modal show={show} onHide={onHide}>
       {currentPage === "shop" && (
@@ -44,8 +49,36 @@ export const ShopModal: React.FC<{ show: boolean; onHide: () => void }> = ({
           bumpkinParts={SIMON_SAYS_NPC_WEARABLES["Simon"]}
         >
           <div className="flex flex-col p-2 w-full">
-            <div className="w-full flex flex-row justify-center">
-              <span className="text-lg">{"Shop"}</span>
+            <div className="flex flex-col gap-1">
+              <div className="flex text-center items-center">
+                <div
+                  className={`flex flex-row w-full mb-3 text-lg justify-center`}
+                  style={{ marginRight: `-${PIXEL_SCALE * 11}px` }}
+                >
+                  <span>{t("chaacsTemple.shop")}</span>
+                </div>
+                <div
+                  style={{
+                    width: `${PIXEL_SCALE * 9}px`,
+                    height: `${PIXEL_SCALE * 9}px`,
+                    marginRight: `${PIXEL_SCALE * 2}px`,
+                  }}
+                  className="z-10"
+                >
+                  <img
+                    src={SUNNYSIDE.icons.close}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      button.play();
+                      onHide();
+                    }}
+                    style={{
+                      width: `${PIXEL_SCALE * 9}px`,
+                      height: `${PIXEL_SCALE * 9}px`,
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
             <Separator />
