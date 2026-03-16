@@ -165,30 +165,33 @@ export const Mission: React.FC<Props> = ({
           {/* Remove after testing */}
           <div className="flex flex-col mt-2">
             <Label type="chill">{"Testing"}</Label>
-            <div className="flex mt-2">
+            <div className="flex flex-wrap flex-row mt-2 justify-evenly">
               <Button
+                className="w-20 h-20"
                 onClick={() => portalService.send("TEST", { score: 3.6 })}
               >
                 {"20 marks"}
               </Button>
               <Button
                 onClick={() => portalService.send("TEST", { score: 3.7 })}
-                className="mx-1"
+                className="mx-1 w-20 h-20"
               >
                 {"30 marks"}
               </Button>
               <Button
+                className="w-20 h-20"
                 onClick={() => portalService.send("TEST", { score: 3.8 })}
               >
                 {"40 marks"}
               </Button>
               <Button
                 onClick={() => portalService.send("TEST", { score: 3.9 })}
-                className="mx-1"
+                className="mx-1 w-20 h-20"
               >
                 {"50 marks"}
               </Button>
               <Button
+                className="w-20 h-20"
                 onClick={() => portalService.send("TEST", { score: 3.1 })}
               >
                 {"60 marks"}
