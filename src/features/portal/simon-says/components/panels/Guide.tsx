@@ -6,7 +6,7 @@ import { PIXEL_SCALE } from "features/game/lib/constants";
 import { useSound } from "lib/utils/hooks/useSound";
 import { Label } from "components/ui/Label";
 import { SquareIcon } from "components/ui/SquareIcon";
-import { HINT_COST } from "../../util/Constants";
+import { HINT_COST, THRESHOLD_COST } from "../../util/Constants";
 
 import flowerIcon from "assets/icons/flower_token.webp";
 import chores from "assets/icons/chores.webp";
@@ -209,6 +209,53 @@ export const Guide: React.FC<Props> = ({ onBack }) => {
             <SquareIcon icon={flowerIcon} width={7} className="flex-shrink-0" />
             <p className="text-xs ml-3">
               {t("chaacsTemple.guide.hint.text.4", { cost: HINT_COST })}
+            </p>
+          </div>
+        </div>
+        <Label type="info">{t("chaacsTemple.guide.threshold.label")}</Label>
+        <div>
+          <div className="flex items-center mb-3 mx-2">
+            <SquareIcon icon={chores} width={7} className="flex-shrink-0" />
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.threshold.text.1")}
+            </p>
+          </div>
+          <div className="flex items-center mb-3 mx-2">
+            <SquareIcon
+              icon={SUNNYSIDE.icons.expression_alerted}
+              width={7}
+              className="flex-shrink-0"
+            />
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.threshold.text.2")}
+            </p>
+          </div>
+          <div className="flex items-center mb-3 mx-2">
+            <SquareIcon
+              icon={SUNNYSIDE.icons.cancel}
+              width={7}
+              className="flex-shrink-0"
+            />
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.threshold.text.3")}
+            </p>
+          </div>
+          <div className="flex items-center mb-3 mx-2">
+            <SquareIcon
+              icon={SUNNYSIDE.icons.expression_confused}
+              width={7}
+              className="flex-shrink-0"
+            />
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.threshold.text.4")}
+            </p>
+          </div>
+          <div className="flex items-center mb-3 mx-2">
+            <SquareIcon icon={flowerIcon} width={7} className="flex-shrink-0" />
+            <p className="text-xs ml-3">
+              {t("chaacsTemple.guide.threshold.text.5", {
+                cost: THRESHOLD_COST,
+              })}
             </p>
           </div>
         </div>
