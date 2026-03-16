@@ -1,4 +1,4 @@
-import { getKeys } from "features/game/types/craftables";
+import { getKeys } from "lib/object";
 import { MemoryScene } from "../MemoryScene";
 import { SQUARE_WIDTH } from "features/game/lib/constants";
 import { SEASONAL_SEEDS, SEEDS } from "features/game/types/seeds";
