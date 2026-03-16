@@ -17,6 +17,7 @@ import { hasBoughtLowerThreshold } from "../../util/Utils";
 const hintEnabledSel = (state: PortalMachineState) => state.context.canBuyHint;
 const minigameSel = (state: PortalMachineState) =>
   state.context.state?.minigames.games["chaacs-temple"];
+const totalLengthSel = (state: PortalMachineState) => state.context.totalLength;
 
 export const ShopModal: React.FC<{ show: boolean; onHide: () => void }> = ({
   show,
@@ -32,6 +33,7 @@ export const ShopModal: React.FC<{ show: boolean; onHide: () => void }> = ({
   );
 
   const minigame = useSelector(portalService, minigameSel);
+  const totalLength = useSelector(portalService, totalLengthSel);
   const hasBoughtThreshold = hasBoughtLowerThreshold(minigame);
 
   return (
@@ -57,7 +59,7 @@ export const ShopModal: React.FC<{ show: boolean; onHide: () => void }> = ({
                 {t("chaacsTemple.buyHint")}
               </Button>
               <Button
-                disabled={hasBoughtThreshold}
+                disabled={hasBoughtThreshold || totalLength <= 6}
                 className="w-4/5"
                 onClick={() => setCurrentPage("threshold")}
               >
