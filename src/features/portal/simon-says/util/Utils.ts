@@ -5,6 +5,7 @@ import {
   DAILY_ATTEMPTS,
   RESTOCK_ATTEMPTS,
   HINT_COST,
+  THRESHOLD_COST,
 } from "./Constants";
 import { BumpkinContainer } from "features/world/containers/BumpkinContainer";
 import debounce from "lodash.debounce";
@@ -69,6 +70,22 @@ export const numHintsBought = (minigame?: Minigame) => {
       p.purchasedAt >= startOfToday &&
       p.purchasedAt < endOfToday,
   ).length;
+};
+
+export const hasBoughtLowerThreshold = (minigame?: Minigame) => {
+  const nowDate = new Date();
+  const startOfToday = getStartOfDay(nowDate);
+  const endOfToday = getEndOfDay(nowDate);
+
+  const purchases = minigame?.purchases ?? [];
+  return (
+    purchases.filter(
+      (p) =>
+        p.sfl === THRESHOLD_COST &&
+        p.purchasedAt >= startOfToday &&
+        p.purchasedAt < endOfToday,
+    ).length > 0
+  );
 };
 
 export const delay = (ms: number) =>

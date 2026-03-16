@@ -24,6 +24,7 @@ import {
   delay,
   getHumiliatingPhrase,
   getImpressedPhrase,
+  hasBoughtLowerThreshold,
   speak,
 } from "../util/Utils";
 import { BumpkinContainer } from "features/world/containers/BumpkinContainer";
@@ -184,6 +185,12 @@ export class SimonSays {
         this.scoreThreshold = 6;
         this.duration = 60000 * 10000;
     }
+    const minigame =
+      this.scene.portalService?.getSnapshot().context.state?.minigames.games[
+        "chaacs-temple"
+      ];
+    if (hasBoughtLowerThreshold(minigame) && this.scoreThreshold > 6)
+      this.scoreThreshold--;
     this.currLength = this.startLength;
     this.scene.locked = false;
 
@@ -212,6 +219,13 @@ export class SimonSays {
         } catch (err) {
           window.location.reload();
         }
+      } else if (event.type === "BUY_THRESHOLD") {
+        const game = SimonSays.current;
+        if (!game) return;
+        if (this.scoreThreshold > 6) this.scoreThreshold--;
+        this.scene.portalService?.send("LOWER_THRESHOLD", {
+          totalLength: this.scoreThreshold,
+        });
       }
     };
     this.scene.portalService?.onEvent(this.hintListener);
@@ -581,8 +595,10 @@ export class SimonSays {
    * Draw new game board
    */
   async drawGame() {
-    delay(2500);
-    await this.blinkSequence();
+    // delay(2500);
+    setTimeout(async () => {
+      await this.blinkSequence();
+    }, 1500);
   }
 
   private blinkPiece(piece: GamePiece) {
@@ -593,7 +609,6 @@ export class SimonSays {
     piece.glow?.setVisible(true);
     piece.sound.play();
     setTimeout(() => {
-      // piece.sound.stop();
       piece.sprite.setTexture(inactive);
       piece.glow?.setVisible(false);
     }, blinkDuration * 1000);

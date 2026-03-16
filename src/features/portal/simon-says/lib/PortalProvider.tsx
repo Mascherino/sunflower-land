@@ -4,6 +4,7 @@ import { MachineInterpreter, portalMachine } from "./SimonSaysMachine";
 import {
   HINT_COST,
   RESTOCK_ATTEMPTS_COST,
+  THRESHOLD_COST,
   UNLIMITED_ATTEMPTS_COST,
 } from "../util/Constants";
 
@@ -34,6 +35,8 @@ export const PortalProvider: React.FC<React.PropsWithChildren> = ({
           portalService.send("PURCHASED_UNLIMITED");
         } else if (event.data.sfl === HINT_COST) {
           portalService.send("BUY_HINT");
+        } else if (event.data.sfl === THRESHOLD_COST) {
+          portalService.send("BUY_THRESHOLD");
         }
       }
     };

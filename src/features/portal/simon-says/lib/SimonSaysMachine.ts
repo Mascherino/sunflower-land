@@ -13,6 +13,7 @@ import {
   UNLIMITED_ATTEMPTS_COST,
   DAILY_ATTEMPTS,
   HINT_COST,
+  THRESHOLD_COST,
 } from "../util/Constants";
 import { GameState } from "features/game/types/game";
 import { purchaseMinigameItem } from "features/game/events/minigames/purchaseMinigameItem";
@@ -72,12 +73,19 @@ type TestEvent = {
   score: number;
 };
 
+type LowerThresholdEvent = {
+  type: "LOWER_THRESHOLD";
+  totalLength: number;
+};
+
 export type PortalEvent =
   | { type: "CLAIM" }
   | { type: "CANCEL_PURCHASE" }
   | { type: "PURCHASED_RESTOCK" }
   | { type: "PURCHASED_UNLIMITED" }
   | { type: "BUY_HINT" }
+  | { type: "BUY_THRESHOLD" }
+  | LowerThresholdEvent
   | { type: "RETRY" }
   | { type: "CONTINUE" }
   | { type: "END_GAME_EARLY" }
@@ -242,6 +250,18 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
         CONTINUE: {
           target: "starting",
         },
+        TEST: {
+          target: "starting",
+          actions: assign({
+            score: () => 0,
+            startAt: () => 0,
+            endAt: () => 0,
+            canBuyHint: () => false,
+            testScore: (context: Context, event: TestEvent) => {
+              return event.score;
+            },
+          }) as any,
+        },
       },
     },
 
@@ -368,6 +388,27 @@ export const portalMachine = createMachine<Context, PortalEvent, PortalState>({
               }),
             canBuyHint: () => false,
           }) as any,
+        },
+        BUY_THRESHOLD: {
+          actions: assign<Context>({
+            state: (context: Context) =>
+              purchaseMinigameItem({
+                state: context.state!,
+                action: {
+                  id: "chaacs-temple",
+                  sfl: THRESHOLD_COST,
+                  type: "minigame.itemPurchased",
+                  items: {},
+                },
+              }),
+          }) as any,
+        },
+        LOWER_THRESHOLD: {
+          actions: assign<Context, any>({
+            totalLength: (context: Context, event: MoveEvent) => {
+              return event.totalLength;
+            },
+          }),
         },
       },
     },
