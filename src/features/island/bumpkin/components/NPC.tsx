@@ -39,13 +39,16 @@ export type NPCParts = Omit<
 
 export interface NPCProps {
   parts: Partial<NPCParts>;
-  width?: number; // Add width prop
+  width?: number;
+  // Set to true if an NPC is manually placed on the island (e.g. Bumpkin or FarmHand)
+  isManuallyPlaced?: boolean;
 }
 
 export const NPCPlaceable: React.FC<NPCProps & { onClick?: () => void }> = ({
   parts,
   onClick,
   width = PIXEL_SCALE * 16, // Default to original width if not passed
+  isManuallyPlaced = false,
 }) => {
   const { scale } = useContext(ZoomContext);
 
@@ -57,15 +60,19 @@ export const NPCPlaceable: React.FC<NPCProps & { onClick?: () => void }> = ({
     parts.aura &&
     `${CONFIG.PROTECTED_IMAGE_URL}/aura/front/${ITEM_IDS[parts.aura]}.png`;
 
+  const height = isManuallyPlaced ? width : width * 2;
+  const frontAuraTop = width * 0.3 * (isManuallyPlaced ? -1 : 1);
+  const backAuraTop = width * 0.125 * (isManuallyPlaced ? -1 : 1);
+
   return (
     <div
-      className={classNames(`absolute `, {
+      className={classNames("absolute", {
         "cursor-pointer hover:img-highlight": !!onClick,
       })}
       onClick={() => !!onClick && onClick()}
       style={{
         width: `${width}px`, // Use passed width for character
-        height: `${width * 2}px`, // Adjust height based on the width
+        height: `${height}px`, // Adjust height based on the width
       }}
     >
       {auraBack && (
@@ -73,9 +80,9 @@ export const NPCPlaceable: React.FC<NPCProps & { onClick?: () => void }> = ({
           className="absolute w-full inset-0 pointer-events-none"
           style={{
             width: `${width * 1.25}px`,
-            top: `${width * 0.125}px`,
+            top: `${backAuraTop}px`,
             left: `${width * -0.125}px`,
-            imageRendering: "pixelated" as const,
+            imageRendering: "pixelated",
           }}
           image={auraBack}
           widthFrame={AURA_WIDTH}
@@ -91,9 +98,9 @@ export const NPCPlaceable: React.FC<NPCProps & { onClick?: () => void }> = ({
         className="absolute w-full inset-0 pointer-events-none"
         style={{
           width: `${width * 1.25}px`,
-          top: `${width * 0.31}px`,
+          top: `${width * 0.31 * (isManuallyPlaced ? -1 : 1)}px`,
           left: `${width * -0.125}px`,
-          imageRendering: "pixelated" as const,
+          imageRendering: "pixelated",
         }}
       >
         <img src={idle} style={{ width: `${width * 1.25}px` }} />
@@ -104,9 +111,9 @@ export const NPCPlaceable: React.FC<NPCProps & { onClick?: () => void }> = ({
           className="absolute w-full inset-0 pointer-events-none"
           style={{
             width: `${width * 1.25}px`,
-            top: `${width * 0.44}px`,
+            top: `${frontAuraTop}px`,
             left: `${width * -0.125}px`,
-            imageRendering: "pixelated" as const,
+            imageRendering: "pixelated",
           }}
           image={auraFront}
           widthFrame={AURA_WIDTH}
@@ -143,7 +150,7 @@ export const NPCIcon: React.FC<NPCProps> = ({
           style={{
             width: `${width}px`,
             top: `${width * -0.21}px`,
-            imageRendering: "pixelated" as const,
+            imageRendering: "pixelated",
           }}
           image={auraBack}
           widthFrame={AURA_WIDTH}
@@ -159,7 +166,7 @@ export const NPCIcon: React.FC<NPCProps> = ({
         className="w-full inset-0 pointer-events-none"
         style={{
           width: `${width}px`,
-          imageRendering: "pixelated" as const,
+          imageRendering: "pixelated",
         }}
       >
         <div
@@ -187,7 +194,7 @@ export const NPCIcon: React.FC<NPCProps> = ({
           style={{
             width: `${width}px`,
             top: `${width * 0.14}px`,
-            imageRendering: "pixelated" as const,
+            imageRendering: "pixelated",
           }}
           image={auraFront}
           widthFrame={AURA_WIDTH}
@@ -219,7 +226,7 @@ export const NPCFixed: React.FC<NPCProps & { width: number }> = ({
     <div
       className="relative overflow-hidden"
       style={{
-        imageRendering: "pixelated" as const,
+        imageRendering: "pixelated",
         width: `${width}px`,
         height: `${width}px`,
       }}

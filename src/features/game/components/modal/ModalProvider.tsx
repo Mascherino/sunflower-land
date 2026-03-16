@@ -1,5 +1,4 @@
 import React, { FC, useState } from "react";
-
 import { createContext } from "react";
 import { Modal } from "components/ui/Modal";
 import { StoreOnChainModal } from "./components/StoreOnChainModal";
@@ -8,6 +7,7 @@ import { NPC_WEARABLES } from "lib/npcs";
 import { translate } from "lib/i18n/translate";
 import { CurrenciesModal } from "features/island/hud/components/CurrenciesModal";
 import { VIPItems } from "./components/VIPItems";
+import { VIPSavings } from "./components/VIPSavings";
 import { OuterPanel, Panel } from "components/ui/Panel";
 import { ReputationSystem } from "features/island/hud/components/reputation/Reputation";
 import { Telegram } from "features/auth/components/Telegram/Telegram";
@@ -18,6 +18,7 @@ import { DiscordBonus } from "features/game/expansion/components/DiscordBoat";
 import { Streams } from "./components/Streams";
 import { Rewards } from "features/island/hud/components/referral/Rewards";
 import { ChapterTracks } from "features/world/ui/tracks/ChapterTracks";
+import { MarketplaceTutorialModal } from "./MarketplaceTutorialModal";
 type GlobalModal =
   | "BUY_GEMS"
   | "DISCORD"
@@ -31,6 +32,7 @@ type GlobalModal =
   | "BETTY"
   | "BLACKSMITH"
   | "VIP_ITEMS"
+  | "VIP_SAVINGS"
   | "REPUTATION"
   | "TELEGRAM"
   | "TWITTER"
@@ -38,7 +40,8 @@ type GlobalModal =
   | "STREAMS"
   | "DEPOSIT"
   | "DAILY_REWARD"
-  | "EARN";
+  | "EARN"
+  | "MARKETPLACE_TUTORIAL";
 
 export const ModalContext = createContext<{
   openModal: (type: GlobalModal) => void;
@@ -89,6 +92,12 @@ export const ModalProvider: FC<React.PropsWithChildren> = ({ children }) => {
         <Panel>
           <VIPItems />
         </Panel>
+      </Modal>
+
+      <Modal show={opened === "VIP_SAVINGS"} onHide={handleClose}>
+        <CloseButtonPanel onClose={handleClose}>
+          <VIPSavings showBuyButton />
+        </CloseButtonPanel>
       </Modal>
 
       <Modal show={opened === "CHAPTER_TRACKS"} onHide={handleClose}>
@@ -213,6 +222,10 @@ export const ModalProvider: FC<React.PropsWithChildren> = ({ children }) => {
           onClose={handleClose}
           bumpkinParts={NPC_WEARABLES["pumpkin' pete"]}
         />
+      </Modal>
+
+      <Modal show={opened === "MARKETPLACE_TUTORIAL"}>
+        <MarketplaceTutorialModal onClose={handleClose} />
       </Modal>
 
       <Rewards show={opened === "EARN"} onHide={handleClose} tab={"Earn"} />

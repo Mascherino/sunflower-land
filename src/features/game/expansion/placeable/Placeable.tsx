@@ -40,16 +40,19 @@ import {
   getSortedResourcePositions,
 } from "../lib/utils";
 import { MachineState } from "features/game/lib/gameMachine";
+import { FarmHand } from "features/island/farmhand/FarmHand";
+import { PlacedBumpkin } from "features/island/bumpkin/components/PlacedBumpkin";
 
 type PlaceableArgs = {
   island: GameState["island"];
   season: TemperateSeasonName;
   henHouseLevel: number;
   barnLevel: number;
+  placeableId?: string;
 };
 
 export const PLACEABLES = (args: PlaceableArgs) => {
-  const { island, season, henHouseLevel, barnLevel } = args;
+  const { island, season, henHouseLevel, barnLevel, placeableId } = args;
   const biome: LandBiomeName = getCurrentBiome(island);
 
   return {
@@ -59,6 +62,8 @@ export const PLACEABLES = (args: PlaceableArgs) => {
       island,
     }),
     ...READONLY_BUILDINGS({ island, season, henHouseLevel, barnLevel }),
+    FarmHand: () => <FarmHand id={placeableId ?? ""} />,
+    Bumpkin: () => <PlacedBumpkin />,
     "Dirt Path": () => (
       <img
         src={DIRT_PATH_VARIANTS[biome]}
@@ -175,6 +180,10 @@ export const Placeable: React.FC<Props> = ({ location }) => {
     dimensions = { width: 1, height: 1 };
   } else if (placeable?.name === "Pet") {
     dimensions = { width: 2, height: 2 };
+  } else if (placeable?.name === "FarmHand") {
+    dimensions = { width: 1, height: 1 };
+  } else if (placeable?.name === "Bumpkin") {
+    dimensions = { width: 1, height: 1 };
   } else if (placeable?.name) {
     dimensions = {
       ...BUILDINGS_DIMENSIONS,
@@ -259,14 +268,13 @@ export const Placeable: React.FC<Props> = ({ location }) => {
 
   if (!placeable) return null;
 
-  const Collectible =
-    placeable?.name === "Bud"
-      ? PLACEABLES({ island, season, henHouseLevel, barnLevel })["Bud"]
-      : placeable?.name === "Pet"
-        ? PLACEABLES({ island, season, henHouseLevel, barnLevel })["PetNFT"]
-        : PLACEABLES({ island, season, henHouseLevel, barnLevel })[
-            placeable.name
-          ];
+  const Collectible = PLACEABLES({
+    island,
+    season,
+    henHouseLevel,
+    barnLevel,
+    placeableId: placeable.id,
+  })[placeable.name];
 
   return (
     <>
@@ -345,6 +353,7 @@ export const Placeable: React.FC<Props> = ({ location }) => {
               }}
             >
               <Collectible
+                index={0}
                 buildingId={"123"}
                 buildingIndex={0}
                 createdAt={0}
@@ -356,12 +365,8 @@ export const Placeable: React.FC<Props> = ({ location }) => {
                 grid={grid}
                 showTimers={showTimers}
                 skills={bumpkin.skills}
-                id={
-                  placeable?.name === "Bud" || placeable?.name === "Pet"
-                    ? placeable.id
-                    : "123"
-                }
-                location="farm"
+                id={placeable.id ?? "123"}
+                location={location}
                 name={placeable?.name as CollectibleName}
               />
             </div>

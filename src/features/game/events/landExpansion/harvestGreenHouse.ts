@@ -1,4 +1,8 @@
-import { BoostName, GameState } from "features/game/types/game";
+import {
+  BoostName,
+  CriticalHitName,
+  GameState,
+} from "features/game/types/game";
 import { isGreenhouseCrop, MAX_POTS } from "./plantGreenhouse";
 import {
   GREENHOUSE_CROPS,
@@ -18,6 +22,10 @@ import {
   FarmActivityName,
   trackFarmActivity,
 } from "features/game/types/farmActivity";
+import { prngChance } from "lib/prng";
+import { KNOWN_IDS } from "features/game/types";
+import { isCollectibleBuilt } from "features/game/lib/collectibleBuilt";
+import { isWearableActive } from "features/game/lib/wearables";
 
 export const GREENHOUSE_CROP_TIME_SECONDS: Record<
   GreenHouseCropName | GreenHouseFruitName,
@@ -49,19 +57,89 @@ export function getGreenhouseCropYieldAmount({
   crop: GreenHouseCropName | GreenHouseFruitName;
   game: GameState;
   createdAt: number;
-  prngArgs?: { farmId: number; counter: number };
-}): { amount: number; boostsUsed: BoostName[] } {
+  prngArgs: { farmId: number; counter: number };
+}): { amount: number; boostsUsed: { name: BoostName; value: string }[] } {
+  let amount = 1;
+  const boostsUsed: { name: BoostName; value: string }[] = [];
+
   if (isGreenhouseCrop(crop)) {
-    const { amount, boostsUsed } = getCropYieldAmount({
-      crop,
+    const { amount: cropAmount, boostsUsed: cropBoostsUsed } =
+      getCropYieldAmount({
+        crop,
+        game,
+        createdAt,
+        prngArgs,
+      });
+    amount = cropAmount;
+    boostsUsed.push(...cropBoostsUsed);
+
+    if (
+      crop === "Olive" &&
+      isWearableActive({ game, name: "Olive Royalty Shirt" })
+    ) {
+      amount += 0.25;
+      boostsUsed.push({ name: "Olive Royalty Shirt", value: "+0.25" });
+    }
+
+    if (crop === "Olive" && isWearableActive({ name: "Olive Shield", game })) {
+      amount += 1;
+      boostsUsed.push({ name: "Olive Shield", value: "+1" });
+    }
+
+    // Rice
+    if (crop === "Rice" && isWearableActive({ name: "Non La Hat", game })) {
+      amount += 1;
+      boostsUsed.push({ name: "Non La Hat", value: "+1" });
+    }
+
+    if (crop === "Rice" && isCollectibleBuilt({ name: "Rice Panda", game })) {
+      amount += 0.25;
+      boostsUsed.push({ name: "Rice Panda", value: "+0.25" });
+    }
+  } else {
+    const { amount: fruitAmount, boostsUsed: fruitBoostsUsed } = getFruitYield({
+      name: crop,
       game,
-      createdAt,
       prngArgs,
     });
-    return { amount, boostsUsed };
+    amount = fruitAmount;
+    boostsUsed.push(...fruitBoostsUsed);
   }
 
-  return getFruitYield({ name: crop, game, prngArgs });
+  const itemId = KNOWN_IDS[crop];
+  const criticalDrop = (criticalHitName: CriticalHitName, chance: number) =>
+    prngChance({ ...prngArgs, itemId, chance, criticalHitName });
+
+  const {
+    bumpkin: { skills },
+  } = game;
+
+  if (skills["Greenhouse Gamble"] && criticalDrop("Greenhouse Gamble", 25)) {
+    amount += 1;
+    boostsUsed.push({ name: "Greenhouse Gamble", value: "+1" });
+  }
+
+  if (isCollectibleBuilt({ name: "Pharaoh Gnome", game })) {
+    amount += 2;
+    boostsUsed.push({ name: "Pharaoh Gnome", value: "+2" });
+  }
+
+  if (skills["Glass Room"]) {
+    amount += 0.1;
+    boostsUsed.push({ name: "Glass Room", value: "+0.1" });
+  }
+
+  if (skills["Seeded Bounty"]) {
+    amount += 0.5;
+    boostsUsed.push({ name: "Seeded Bounty", value: "+0.5" });
+  }
+
+  if (skills["Greasy Plants"]) {
+    amount += 1;
+    boostsUsed.push({ name: "Greasy Plants", value: "+1" });
+  }
+
+  return { amount, boostsUsed };
 }
 
 export type HarvestGreenhouseAction = {

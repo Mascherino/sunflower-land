@@ -9,7 +9,7 @@ import factionPoint from "assets/icons/faction_point.webp";
 import vip from "assets/icons/vip.webp";
 import xpIcon from "assets/icons/xp.png";
 import recipeIcon from "assets/decorations/page.png";
-import { getKeys } from "features/game/types/craftables";
+import { getKeys } from "lib/object";
 import { ITEM_DETAILS } from "features/game/types/images";
 import { SUNNYSIDE } from "assets/sunnyside";
 import { BumpkinItem, ITEM_IDS } from "features/game/types/bumpkin";
@@ -28,12 +28,12 @@ import { InlineDialogue } from "features/world/ui/TypingMessage";
 import { getImageUrl } from "lib/utils/getImageURLS";
 import { getFoodExpBoost } from "../lib/boosts";
 import { MachineState } from "features/game/lib/gameMachine";
-import { useSelector } from "@xstate/react";
 import { BUMPKIN_ITEM_BUFF_LABELS } from "features/game/types/bumpkinItemBuffs";
 import { ButtonPanel } from "components/ui/Panel";
 import { OPEN_SEA_WEARABLES } from "metadata/metadata";
 import { RECIPES } from "features/game/lib/crafting";
 import blueLightning from "assets/icons/blue_lightning.png";
+import { useNow } from "lib/utils/hooks/useNow";
 
 const _game = (state: MachineState) => state.context.state;
 
@@ -42,6 +42,8 @@ interface ClaimRewardProps {
   onClaim?: () => void;
   onClose?: () => void;
   label?: string;
+  /** Item that was a VIP bonus gift – show crown icon next to it */
+  vipGiftItem?: InventoryItemName;
 }
 
 export const ClaimReward: React.FC<ClaimRewardProps> = ({
@@ -49,10 +51,10 @@ export const ClaimReward: React.FC<ClaimRewardProps> = ({
   onClaim,
   onClose,
   label,
+  vipGiftItem,
 }) => {
   const { t } = useAppTranslation();
-  const { showAnimations, gameService } = useContext(Context);
-  const game = useSelector(gameService, _game);
+  const { showAnimations } = useContext(Context);
 
   useEffect(() => {
     if (showAnimations) confetti();
@@ -73,7 +75,7 @@ export const ClaimReward: React.FC<ClaimRewardProps> = ({
             <InlineDialogue message={airdrop.message} />
           </div>
         )}
-        <Rewards reward={airdrop} />
+        <Rewards reward={airdrop} vipGiftItem={vipGiftItem} />
       </div>
 
       <div className="flex items-center mt-1">
@@ -101,11 +103,17 @@ export const Rewards: React.FC<{
     | "wearables"
     | "recipes"
   >;
-}> = ({ reward }) => {
+  /** Item that was a VIP bonus gift – show crown icon next to it */
+  vipGiftItem?: InventoryItemName;
+}> = ({ reward, vipGiftItem }) => {
   const { t } = useAppTranslation();
   const { gameState } = useGame();
   const game = gameState.context.state;
   const itemNames = getKeys(reward.items);
+  const now = useNow({
+    live: getKeys(CONSUMABLES).some((name) => (reward.items[name] ?? 0) > 0),
+  });
+
   return (
     <div className="flex flex-col space-y-0.5">
       {!!reward.sfl && (
@@ -195,6 +203,7 @@ export const Rewards: React.FC<{
             skills: game.bumpkin.skills,
             collectibles: game.collectibles,
           });
+          const isVipGift = vipGiftItem === name;
           return (
             <ButtonPanel
               className="flex items-start cursor-context-menu hover:brightness-100"
@@ -209,6 +218,13 @@ export const Rewards: React.FC<{
                   <Label type="default" className="mr-1 mb-1">
                     {`${formatNumber(reward.items[name] ?? 1)} x ${name}`}
                   </Label>
+                  {isVipGift && (
+                    <img
+                      src={vip}
+                      className="h-5 w-5 inline-block ml-1 -mb-0.5"
+                      alt="VIP gift"
+                    />
+                  )}
                   {name in CONSUMABLES && (
                     <Label
                       type="success"
@@ -218,6 +234,7 @@ export const Rewards: React.FC<{
                       getFoodExpBoost({
                         food: CONSUMABLES[name as ConsumableName],
                         game,
+                        createdAt: now,
                       }).boostedExp,
                       { decimalPlaces: 0 },
                     )} XP`}</Label>

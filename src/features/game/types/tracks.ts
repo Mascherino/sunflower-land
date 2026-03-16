@@ -8,12 +8,13 @@ export type MilestoneRewards = {
   flower?: number;
 };
 
-export type ChapterTask = "delivery" | "chore" | "bounty";
+export type ChapterTask = "delivery" | "chore" | "bounty" | "coinDelivery";
 
 const CHAPTER_TASK_POINTS: Record<ChapterTask, number> = {
   delivery: 5,
   bounty: 3,
   chore: 1,
+  coinDelivery: 1,
 };
 
 export function getChapterTaskPoints({
@@ -24,6 +25,24 @@ export function getChapterTaskPoints({
   points: number;
 }) {
   return CHAPTER_TASK_POINTS[task] * points;
+}
+
+export function getTrackMilestonesCrossed({
+  chapterTrack,
+  previousPoints,
+  nextPoints,
+}: {
+  chapterTrack: ChapterTrack;
+  previousPoints: number;
+  nextPoints: number;
+}) {
+  return chapterTrack.milestones
+    .map((milestone, index) => ({ milestone, index }))
+    .filter(
+      ({ milestone }) =>
+        milestone.points > previousPoints && milestone.points <= nextPoints,
+    )
+    .map(({ index }) => index + 1);
 }
 
 export type TrackName = "free" | "premium";

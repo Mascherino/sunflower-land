@@ -3,7 +3,6 @@ import { CONFIG } from "./config";
 import { Currency, InventoryItemName } from "features/game/types/game";
 import { BumpkinItem } from "features/game/types/bumpkin";
 import { DigAnalytics } from "features/world/scenes/BeachScene";
-import { ExperimentName } from "./flags";
 import { VipBundle } from "features/game/lib/vipAccess";
 
 // Their type definition has some issues, extract to here
@@ -23,13 +22,7 @@ enum EGAResourceFlowType {
 class GameAnalyticTracker {
   private executed: Record<string, boolean> = {};
 
-  public async initialise({
-    id,
-    experiments,
-  }: {
-    id: number;
-    experiments: ExperimentName[];
-  }) {
+  public async initialise({ id }: { id: number }) {
     try {
       if (!id) {
         throw new Error("Missing User ID for analytics");
@@ -40,16 +33,6 @@ class GameAnalyticTracker {
       GameAnalytics.configureBuild(CONFIG.RELEASE_VERSION);
 
       GameAnalytics.configureUserId(`account${id}`);
-
-      const validExperiments: ExperimentName[] = ["ONBOARDING_CHALLENGES"];
-      GameAnalytics.configureAvailableCustomDimensions01([
-        "NONE",
-        ...validExperiments,
-      ]);
-
-      if (experiments.length > 0) {
-        GameAnalytics.setCustomDimension01(experiments[0]);
-      }
 
       GameAnalytics.configureAvailableResourceCurrencies([
         "SFL",
@@ -206,6 +189,154 @@ class GameAnalyticTracker {
       `DailyReward:Return:Box${totalClaimed}`,
       Math.max(0, daysSinceLastClaim),
     );
+  }
+
+  public trackTracksViewed({
+    chapter,
+    hasVip,
+  }: {
+    chapter: string;
+    hasVip: boolean;
+  }) {
+    try {
+      GameAnalytics.addDesignEvent(`Tracks:Viewed:${chapter}`, hasVip ? 1 : 0);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Game analytics error: `, e);
+    }
+  }
+
+  public trackTracksReturn({
+    chapter,
+    lastTier,
+    inactiveDays,
+  }: {
+    chapter: string;
+    lastTier: number;
+    inactiveDays: number;
+  }) {
+    try {
+      GameAnalytics.addDesignEvent(
+        `Tracks:Return:${chapter}:LastTier${lastTier}`,
+        inactiveDays,
+      );
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Game analytics error: `, e);
+    }
+  }
+
+  public trackTracksPremiumUpsellOpened({ chapter }: { chapter: string }) {
+    try {
+      GameAnalytics.addDesignEvent(`Tracks:Premium:UpsellOpened:${chapter}`);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Game analytics error: `, e);
+    }
+  }
+
+  public trackTracksPremiumActivated({ chapter }: { chapter: string }) {
+    try {
+      GameAnalytics.addDesignEvent(`Tracks:Premium:Activated:${chapter}`, 1);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Game analytics error: `, e);
+    }
+  }
+
+  public trackTracksActivated({
+    chapter,
+    source,
+  }: {
+    chapter: string;
+    source: "delivery" | "chore" | "bounty" | "coinDelivery";
+  }) {
+    try {
+      GameAnalytics.addDesignEvent(`Tracks:Activated:${chapter}:${source}`);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Game analytics error: `, e);
+    }
+  }
+
+  public trackTracksPoints({
+    chapter,
+    source,
+    points,
+  }: {
+    chapter: string;
+    source: "delivery" | "chore" | "bounty" | "coinDelivery";
+    points: number;
+  }) {
+    try {
+      GameAnalytics.addDesignEvent(
+        `Tracks:Points:${chapter}:${source}`,
+        points,
+      );
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Game analytics error: `, e);
+    }
+  }
+
+  public trackTracksMilestoneReached({
+    chapter,
+    milestone,
+    daysSinceStart,
+  }: {
+    chapter: string;
+    milestone: number;
+    daysSinceStart: number;
+  }) {
+    try {
+      GameAnalytics.addDesignEvent(
+        `Tracks:Milestone:Reached:${chapter}:M${milestone}`,
+        daysSinceStart,
+      );
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Game analytics error: `, e);
+    }
+  }
+
+  public trackTracksMilestoneClaimed({
+    chapter,
+    track,
+    milestone,
+    daysSinceStart,
+  }: {
+    chapter: string;
+    track: "free" | "premium";
+    milestone: number;
+    daysSinceStart: number;
+  }) {
+    try {
+      GameAnalytics.addDesignEvent(
+        `Tracks:Milestone:Claimed:${chapter}:${track}:M${milestone}`,
+        daysSinceStart,
+      );
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Game analytics error: `, e);
+    }
+  }
+
+  public trackTracksComplete({
+    chapter,
+    daysSinceStart,
+  }: {
+    chapter: string;
+    daysSinceStart: number;
+  }) {
+    try {
+      GameAnalytics.addDesignEvent(
+        `Tracks:Complete:${chapter}`,
+        daysSinceStart,
+      );
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Game analytics error: `, e);
+    }
   }
 }
 

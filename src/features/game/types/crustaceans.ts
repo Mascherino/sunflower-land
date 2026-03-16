@@ -1,6 +1,7 @@
-import { translate } from "lib/i18n/translate";
 import { InventoryItemName } from "./game";
-import { getKeys } from "../lib/crafting";
+import { SUNNYSIDE } from "assets/sunnyside";
+import { translate } from "lib/i18n/translate";
+import { getKeys } from "lib/object";
 
 export type WaterTrapName = "Crab Pot" | "Mariner Pot";
 
@@ -10,23 +11,26 @@ type WaterTrap = {
   chums: CrustaceanChum[];
 };
 
-export type CrustaceanName =
-  | "Isopod"
-  | "Blue Crab"
-  | "Lobster"
-  | "Hermit Crab"
-  | "Shrimp"
-  | "Mussel"
-  | "Oyster"
-  | "Anemone"
-  | "Barnacle"
-  | "Sea Slug"
-  | "Sea Snail"
-  | "Garden Eel"
-  | "Sea Grapes"
-  | "Octopus"
-  | "Sea Urchin"
-  | "Horseshoe Crab";
+export const CRUSTACEANS = [
+  "Isopod",
+  "Blue Crab",
+  "Lobster",
+  "Hermit Crab",
+  "Shrimp",
+  "Mussel",
+  "Oyster",
+  "Anemone",
+  "Barnacle",
+  "Sea Slug",
+  "Sea Snail",
+  "Garden Eel",
+  "Sea Grapes",
+  "Octopus",
+  "Sea Urchin",
+  "Horseshoe Crab",
+] as const;
+
+export type CrustaceanName = (typeof CRUSTACEANS)[number];
 
 export type MarinerPotChum = Extract<
   InventoryItemName,
@@ -58,7 +62,7 @@ export type CrabPotChum = Extract<
 
 export type CrustaceanChum = CrabPotChum | MarinerPotChum;
 
-export const CRUSTACEANS: Record<CrustaceanName, string> = {
+export const CRUSTACEANS_DESCRIPTIONS: Record<CrustaceanName, string> = {
   Isopod: translate("description.isopod"),
   "Blue Crab": translate("description.blueCrab"),
   Lobster: translate("description.lobster"),
@@ -107,6 +111,65 @@ export const CRUSTACEAN_CHUM_AMOUNTS: Record<CrustaceanChum, number> = {
   ...CRAB_POT_CHUMS,
   ...MARINER_POT_CHUMS,
 };
+
+export type Crustacean = {
+  chum?: Partial<Record<CrustaceanChum, number>>;
+  waterTrap: WaterTrapName;
+};
+
+export const WATER_TRAP_ANIMATIONS: Record<WaterTrapName, string> = {
+  "Crab Pot": SUNNYSIDE.tools.crab_pot_placed,
+  "Mariner Pot": SUNNYSIDE.tools.mariner_pot_placed,
+};
+
+export const CRUSTACEANS_LOOKUP: Record<
+  WaterTrapName,
+  Partial<Record<CrustaceanChum | "none", CrustaceanName>>
+> = {
+  "Crab Pot": {
+    none: "Isopod",
+    "Heart leaf": "Blue Crab",
+    Ribbon: "Blue Crab",
+    "Wild Grass": "Lobster",
+    "Frost Pebble": "Lobster",
+    Grape: "Hermit Crab",
+    Rice: "Hermit Crab",
+    Crimstone: "Shrimp",
+    Moonfur: "Mussel",
+    "Fish Stick": "Oyster",
+    "Fish Oil": "Anemone",
+    "Crab Stick": "Anemone",
+  },
+  "Mariner Pot": {
+    none: "Barnacle",
+    Crimstone: "Sea Slug",
+    "Chewed Bone": "Sea Snail",
+    Ruffroot: "Sea Snail",
+    Dewberry: "Garden Eel",
+    Duskberry: "Garden Eel",
+    Lunara: "Sea Grapes",
+    Moonfur: "Octopus",
+    "Fish Stick": "Sea Urchin",
+    "Crab Stick": "Horseshoe Crab",
+  },
+};
+
+export function caughtCrustacean(
+  trapType: WaterTrapName,
+  chum?: CrustaceanChum,
+): Partial<Record<CrustaceanName, number>> {
+  const trapMapping = CRUSTACEANS_LOOKUP[trapType];
+
+  const crustacean = trapMapping[chum ?? "none"];
+
+  if (!crustacean) {
+    throw new Error(`Invalid trap and chum combination: ${trapType} ${chum}`);
+  }
+
+  return {
+    [crustacean]: 1,
+  };
+}
 
 export const WATER_TRAP: Record<WaterTrapName, WaterTrap> = {
   "Crab Pot": {

@@ -43,7 +43,7 @@ export const getRemainingReels = (state: GameState, now = new Date()) => {
   const { fishing } = state;
   const reelCount = fishing.dailyAttempts?.[date] ?? 0;
   const { extraReels = { count: 0 } } = fishing;
-  const { limit: regularMaxReels } = getDailyFishingLimit(state);
+  const { limit: regularMaxReels } = getDailyFishingLimit(state, now.getTime());
   let reelsLeft = regularMaxReels - reelCount;
 
   if (reelsLeft < 0) {
@@ -99,8 +99,8 @@ export function castRod({
     const extraReels = game.fishing.extraReels;
 
     const { limit: fishingLimit, boostsUsed: fishingBoostsUsed } =
-      getDailyFishingLimit(game);
-    const boostsUsed: BoostName[] = [];
+      getDailyFishingLimit(game, createdAt);
+    const boostsUsed: { name: BoostName; value: string }[] = [];
     boostsUsed.push(...fishingBoostsUsed);
 
     const multiplier = Math.max(1, Math.floor(action.multiplier ?? 1));
@@ -177,10 +177,7 @@ export function castRod({
         throw new Error("Missing guaranteed catch");
       }
 
-      const allowedFish = getSeasonalGuaranteedCatch(
-        action.bait,
-        game.season.season,
-      );
+      const allowedFish = getSeasonalGuaranteedCatch(action.bait);
 
       if (!allowedFish.includes(action.guaranteedCatch)) {
         throw new Error("Invalid guaranteed catch");
@@ -220,7 +217,7 @@ export function castRod({
     } else {
       game.boostsUsedAt = updateBoostUsed({
         game,
-        boostNames: ["Ancient Rod"],
+        boostNames: [{ name: "Ancient Rod", value: "Free" }],
         createdAt,
       });
     }

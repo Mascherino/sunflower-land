@@ -2,7 +2,7 @@ import { claimDailyReward } from "./claimDailyReward";
 import Decimal from "decimal.js-light";
 import { INITIAL_FARM } from "features/game/lib/constants";
 import { TEST_BUMPKIN } from "features/game/lib/bumpkinData";
-import { getChapterTicket } from "features/game/types/chapters";
+import { CHAPTERS, getChapterTicket } from "features/game/types/chapters";
 import { calculateXPPotion } from "features/game/types/dailyRewards";
 import { LEVEL_EXPERIENCE } from "features/game/lib/level";
 
@@ -65,6 +65,29 @@ describe("claimDailyReward", () => {
     expect(state.inventory["Cheer"]).toEqual(new Decimal(3));
     expect(state.inventory[getChapterTicket(now)]).toEqual(new Decimal(1));
   });
+
+  it("gives VIP players a bonus daily reward based on level", () => {
+    const now = new Date("2025-01-01T05:00:00.000Z").getTime();
+    const state = claimDailyReward({
+      state: {
+        ...INITIAL_FARM,
+        bumpkin: {
+          ...TEST_BUMPKIN,
+          experience: LEVEL_3_EXPERIENCE, // level 3
+        },
+        vip: {
+          trialStartedAt: now - 24 * 60 * 60 * 1000,
+          expiresAt: 0,
+          bundles: [],
+        },
+      },
+      action: { type: "dailyReward.claimed" },
+      createdAt: now,
+    });
+
+    expect(state.inventory["Bumpkin Broth"]).toEqual(new Decimal(1));
+  });
+
   it("keeps streak for first 7 days even if a day is missed", () => {
     const now = new Date("2025-01-10T05:00:00.000Z").getTime();
     const state = claimDailyReward({
@@ -378,5 +401,96 @@ describe("claimDailyReward", () => {
 
     expect(state.inventory["Cheer"]).toEqual(new Decimal(5));
     expect(state.boostsUsedAt?.["Giant Gold Bone"]).toBe(now);
+  });
+
+  it("should reward a banner if they have a vip pass and have not claimed a banner yet during crabs and traps chapter", () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(CHAPTERS["Crabs and Traps"].startDate);
+    const now = Date.now();
+    const state = claimDailyReward({
+      state: {
+        ...INITIAL_FARM,
+        bumpkin: {
+          ...TEST_BUMPKIN,
+          experience: LEVEL_3_EXPERIENCE,
+        },
+        inventory: {},
+        vip: {
+          expiresAt: now + 1000 * 60 * 60 * 24,
+          bundles: [],
+        },
+        dailyRewards: {
+          streaks: 8, // beyond onboarding
+          chest: {
+            collectedAt: now - 48 * 60 * 60 * 1000, // missed a day
+            code: 1,
+          },
+        },
+      },
+      action: { type: "dailyReward.claimed" },
+      createdAt: now,
+    });
+    expect(state.inventory["Crabs and Traps Banner"]).toEqual(new Decimal(1));
+    jest.useRealTimers();
+  });
+
+  it("should not reward a banner if they have don't have vip access", () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(CHAPTERS["Crabs and Traps"].startDate);
+    const now = Date.now();
+    const state = claimDailyReward({
+      state: {
+        ...INITIAL_FARM,
+        bumpkin: {
+          ...TEST_BUMPKIN,
+          experience: LEVEL_3_EXPERIENCE,
+        },
+        inventory: {},
+        dailyRewards: {
+          streaks: 8, // beyond onboarding
+          chest: {
+            collectedAt: now - 48 * 60 * 60 * 1000, // missed a day
+            code: 1,
+          },
+        },
+      },
+      action: { type: "dailyReward.claimed" },
+      createdAt: now,
+    });
+    expect(state.inventory["Crabs and Traps Banner"]).toBeUndefined();
+    jest.useRealTimers();
+  });
+
+  it("shouldn't reward a banner if they have claimed a banner already during crabs and traps chapter", () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(CHAPTERS["Crabs and Traps"].startDate);
+    const now = Date.now();
+    const state = claimDailyReward({
+      state: {
+        ...INITIAL_FARM,
+        bumpkin: {
+          ...TEST_BUMPKIN,
+          experience: LEVEL_3_EXPERIENCE,
+        },
+        inventory: {
+          "Crabs and Traps Banner": new Decimal(1),
+        },
+        vip: {
+          expiresAt: now + 1000 * 60 * 60 * 24,
+          bundles: [],
+        },
+        dailyRewards: {
+          streaks: 8, // beyond onboarding
+          chest: {
+            collectedAt: now - 48 * 60 * 60 * 1000, // missed a day
+            code: 1,
+          },
+        },
+      },
+      action: { type: "dailyReward.claimed" },
+      createdAt: now,
+    });
+    expect(state.inventory["Crabs and Traps Banner"]).toEqual(new Decimal(1));
+    jest.useRealTimers();
   });
 });

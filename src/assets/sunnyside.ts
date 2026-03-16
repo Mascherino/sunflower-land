@@ -96,6 +96,11 @@ export const SUNNYSIDE = {
     cleaning: `${CONFIG.PROTECTED_IMAGE_URL}/announcements/cleanup.png`,
     pawPrintsSeason: `${CONFIG.PROTECTED_IMAGE_URL}/announcements/paw_prints_banner.png`,
     pawPrintsSeasonRares: `${CONFIG.PROTECTED_IMAGE_URL}/announcements/paw_prints_rares.png`,
+    crabsAndTrapsChapter: `${CONFIG.PROTECTED_IMAGE_URL}/announcements/crab_chapter_banner.png`,
+    crabsAndTrapsChapterRares: `${CONFIG.PROTECTED_IMAGE_URL}/announcements/crab_and_traps_rares.png`,
+    grass_bg: `${CONFIG.PROTECTED_IMAGE_URL}/announcements/grass_banner_bg.png`,
+    spring_bg: `${CONFIG.PROTECTED_IMAGE_URL}/announcements/spring_background_bg.png`,
+    autumn_bg: `${CONFIG.PROTECTED_IMAGE_URL}/announcements/autumn_background_bg.png`,
   },
   //Badges(Pre-LandExpansion Skills)
   badges: {
@@ -364,6 +369,10 @@ export const SUNNYSIDE = {
     spring_building_bg: `${CONFIG.PROTECTED_IMAGE_URL}/land/spring_building_bg.png`,
     desert_building_bg: `${CONFIG.PROTECTED_IMAGE_URL}/land/desert_building_bg.png`,
     volcano_building_bg: `${CONFIG.PROTECTED_IMAGE_URL}/land/volcano_building_bg.webp`,
+
+    pet_house_inside_one: `${CONFIG.PROTECTED_IMAGE_URL}/land/pet_house_inside_1.png`,
+    pet_house_inside_two: `${CONFIG.PROTECTED_IMAGE_URL}/land/pet_house_inside_2.png`,
+    pet_house_inside_three: `${CONFIG.PROTECTED_IMAGE_URL}/land/pet_house_inside_3.png`,
   },
   //Soil
   soil: {
@@ -491,6 +500,9 @@ export const SUNNYSIDE = {
     fruitPatchDirt: `${CONFIG.PROTECTED_IMAGE_URL}/fruit/fruit_patch.png`,
     barn: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/barn_sm.webp`,
     feederMachine: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/feeder_machine.webp`,
+    petHouse1: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/pet_house_red.webp`,
+    petHouse2: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/pet_house_blue.webp`,
+    petHouse3: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/pet_house_purple.webp`,
 
     //DESERT
     desertFirePit: `${CONFIG.PROTECTED_IMAGE_URL}/desert/buildings/fire_pit.webp`,
@@ -1450,6 +1462,8 @@ export const SUNNYSIDE = {
     wood_pickaxe: `${CONFIG.PROTECTED_IMAGE_URL}/tools/wood_pickaxe.png`,
     crab_pot: `${CONFIG.PROTECTED_IMAGE_URL}/tools/crab_pot.webp`,
     mariner_pot: `${CONFIG.PROTECTED_IMAGE_URL}/tools/mariner_pot.webp`,
+    crab_pot_placed: `${CONFIG.PROTECTED_IMAGE_URL}/tools/crab_pot_placed_sheet.webp`,
+    mariner_pot_placed: `${CONFIG.PROTECTED_IMAGE_URL}/tools/marine_pot_placed_sheet.webp`,
   },
   //UIs
   ui: {
@@ -1472,6 +1486,7 @@ export const SUNNYSIDE = {
     site_bg: `${CONFIG.PROTECTED_IMAGE_URL}/ui/site_bg.png`,
     more: `${CONFIG.PROTECTED_IMAGE_URL}/ui/more.png`,
     grey_background: `${CONFIG.PROTECTED_IMAGE_URL}/ui/grey_background.png`,
+    brown_background_flipped: `${CONFIG.PROTECTED_IMAGE_URL}/ui/brown_background_flipped.png`,
     coins: `${CONFIG.PROTECTED_IMAGE_URL}/ui/coins.png`,
     coinsImg: `${CONFIG.PROTECTED_IMAGE_URL}/ui/coins.png`,
     speechBubble: `${CONFIG.PROTECTED_IMAGE_URL}/ui/speech_border.png`,

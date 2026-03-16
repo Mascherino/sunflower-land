@@ -1,8 +1,13 @@
 import { BuffName } from "./buffs";
 import { BoostName, GameState, InventoryItemName } from "./game";
 import { getBumpkinLevel, getExperienceToNextLevel } from "../lib/level";
-import { getChapterTicket } from "./chapters";
+import {
+  getChapterBanner,
+  getChapterTicket,
+  getCurrentChapter,
+} from "./chapters";
 import { isCollectibleBuilt } from "../lib/collectibleBuilt";
+import { hasVipAccess } from "../lib/vipAccess";
 
 export type DailyRewardDefinition = {
   id: DailyRewardName;
@@ -267,12 +272,17 @@ export function getRewardsForStreak({
   game,
   streak,
   currentDate,
+  now,
 }: {
   game: GameState;
   streak: number;
   currentDate: string;
-}): { rewards: DailyRewardDefinition[]; boosts: BoostName[] } {
-  const boosts: BoostName[] = [];
+  now: number;
+}): {
+  rewards: DailyRewardDefinition[];
+  boosts: { name: BoostName; value: string }[];
+} {
+  const boosts: { name: BoostName; value: string }[] = [];
   const defaultReward: DailyRewardDefinition = {
     id: "default-reward",
     label: "Default Reward",
@@ -294,7 +304,20 @@ export function getRewardsForStreak({
       ...defaultReward.items,
       Cheer: (defaultReward.items?.Cheer ?? 0) + 2,
     };
-    boosts.push("Giant Gold Bone");
+    boosts.push({ name: "Giant Gold Bone", value: "+2" });
+  }
+
+  const currentChapter = getCurrentChapter(now);
+
+  if (hasVipAccess({ game, now }) && currentChapter === "Crabs and Traps") {
+    const currentBanner = getChapterBanner(now);
+    const bannerCount = game.inventory[currentBanner];
+    if (!bannerCount || bannerCount.lt(1)) {
+      defaultReward.items = {
+        ...defaultReward.items,
+        [currentBanner]: 1,
+      };
+    }
   }
 
   return {

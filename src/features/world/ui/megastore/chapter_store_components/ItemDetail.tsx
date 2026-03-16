@@ -29,7 +29,7 @@ import {
   ChapterStoreWearable,
 } from "features/game/types/megastore";
 import { getItemDescription } from "../ChapterStore";
-import { getKeys } from "features/game/types/craftables";
+import { getKeys } from "lib/object";
 import { ARTEFACT_SHOP_KEYS } from "features/game/types/collectibles";
 import { SFLDiscount } from "features/game/lib/SFLDiscount";
 import {
@@ -40,7 +40,7 @@ import {
 import { REWARD_BOXES } from "features/game/types/rewardBoxes";
 import { secondsToString } from "lib/utils/time";
 import {
-  BUMPKIN_RELEASES,
+  WEARABLE_RELEASES,
   INVENTORY_RELEASES,
 } from "features/game/types/withdrawables";
 
@@ -308,7 +308,7 @@ export const ItemDetail: React.FC<ItemOverlayProps> = ({
   };
 
   const isTradeable = isWearable
-    ? !!BUMPKIN_RELEASES[(item as ChapterStoreWearable)?.wearable]
+    ? !!WEARABLE_RELEASES[(item as ChapterStoreWearable)?.wearable]
     : !!INVENTORY_RELEASES[(item as ChapterStoreCollectible)?.collectible];
 
   return (
@@ -377,8 +377,11 @@ export const ItemDetail: React.FC<ItemOverlayProps> = ({
                         )}
                       </div>
                     )}
-                    <span className="text-xs leading-none">{description}</span>
-
+                    {description && (
+                      <span className="text-xs leading-none">
+                        {description}
+                      </span>
+                    )}
                     {itemName === "Pet Egg" ? (
                       <Label
                         type={isPetEggBoughtThisChapter ? "danger" : "default"}
@@ -414,7 +417,6 @@ export const ItemDetail: React.FC<ItemOverlayProps> = ({
                         })}
                       </Label>
                     )}
-
                     {!isTradeable && (
                       <Label
                         type="formula"
@@ -424,7 +426,6 @@ export const ItemDetail: React.FC<ItemOverlayProps> = ({
                         {t("season.megastore.nonTradeable")}
                       </Label>
                     )}
-
                     {itemReq && (
                       <div className="flex flex-1 content-start flex-col flex-wrap gap-1">
                         {getKeys(itemReq).map((itemName, index) => {

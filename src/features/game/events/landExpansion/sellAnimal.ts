@@ -1,6 +1,6 @@
 import Decimal from "decimal.js-light";
 import { getAnimalLevel } from "features/game/lib/animals";
-import { getKeys } from "features/game/types/decorations";
+import { getKeys } from "lib/object";
 import { trackFarmActivity } from "features/game/types/farmActivity";
 import { Animal, BountyRequest, GameState } from "features/game/types/game";
 import {
@@ -10,6 +10,7 @@ import {
 import { produce } from "immer";
 import { generateBountyTicket, generateBountyCoins } from "./sellBounty";
 import { getChapterTaskPoints } from "features/game/types/tracks";
+import { handleChapterAnalytics } from "features/game/lib/trackAnalytics";
 
 export function isValidDeal({
   animal,
@@ -116,6 +117,17 @@ export function sellAnimal({
           bounty: request,
           now: createdAt,
         });
+        const chapter = getCurrentChapter(createdAt);
+        const pointsAwarded = getChapterTaskPoints({
+          task: "bounty",
+          points: amount ?? 0,
+        });
+        handleChapterAnalytics({
+          task: "bounty",
+          points: amount ?? 0,
+          farmActivity: game.farmActivity,
+          createdAt,
+        });
 
         game.farmActivity = trackFarmActivity(
           `${getChapterTicket(createdAt)} Collected`,
@@ -123,11 +135,9 @@ export function sellAnimal({
           new Decimal(amount ?? 0),
         );
         game.farmActivity = trackFarmActivity(
-          `${getCurrentChapter(createdAt)} Points Earned`,
+          `${chapter} Points Earned`,
           game.farmActivity,
-          new Decimal(
-            getChapterTaskPoints({ task: "bounty", points: amount ?? 0 }),
-          ),
+          new Decimal(pointsAwarded),
         );
       }
 

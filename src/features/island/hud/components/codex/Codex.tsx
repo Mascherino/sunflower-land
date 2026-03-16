@@ -13,7 +13,6 @@ import { Fish } from "./pages/Fish";
 import { Flowers } from "./pages/Flowers";
 import { Deliveries } from "./pages/Deliveries";
 import { ChoreBoard } from "./pages/ChoreBoard";
-import { Chapter } from "./pages/Chapter";
 import { FactionLeaderboard } from "./pages/FactionLeaderboard";
 import { LeagueLeaderboard } from "./pages/LeaguesLeaderboard";
 import { ChapterCollections } from "./pages/ChapterCollections";
@@ -29,10 +28,7 @@ import factions from "assets/icons/factions.webp";
 import chores from "assets/icons/chores.webp";
 import { Leaderboards } from "features/game/expansion/components/leaderboard/actions/cache";
 import { fetchLeaderboardData } from "features/game/expansion/components/leaderboard/actions/leaderboard";
-import {
-  getCurrentChapter,
-  getChapterTicket,
-} from "features/game/types/chapters";
+import { getChapterTicket } from "features/game/types/chapters";
 import { CompetitionDetails } from "features/competition/CompetitionBoard";
 import { MachineState } from "features/game/lib/gameMachine";
 import { ANIMALS } from "features/game/types/animals";
@@ -43,6 +39,8 @@ import { hasFeatureAccess } from "lib/flags";
 import { AuthMachineState } from "features/auth/lib/authMachine";
 import * as AuthProvider from "features/auth/lib/Provider";
 import { useNow } from "lib/utils/hooks/useNow";
+import { ChapterBounties } from "./pages/ChapterBounties";
+import deliveryIcon from "assets/icons/delivery.webp";
 
 interface Props {
   show: boolean;
@@ -62,7 +60,6 @@ export const Codex: React.FC<Props> = ({ show, onHide }) => {
   const state = useSelector(gameService, _state);
   const token = useSelector(authService, _token);
   const now = useNow();
-  const chapter = getCurrentChapter(now);
   const chapterTicket = getChapterTicket(now);
 
   const bumpkinLevel = getBumpkinLevel(state.bumpkin?.experience ?? 0);
@@ -100,10 +97,6 @@ export const Codex: React.FC<Props> = ({ show, onHide }) => {
   const handleTabClick = (index: CodexCategoryName) => {
     tab.play();
     setCurrentTab(index);
-  };
-
-  const handleHide = () => {
-    onHide();
   };
 
   const handleMilestoneReached = (milestoneName: MilestoneName) => {
@@ -149,7 +142,7 @@ export const Codex: React.FC<Props> = ({ show, onHide }) => {
   const categories: CodexCategory[] = [
     {
       name: "Deliveries",
-      icon: SUNNYSIDE.icons.player,
+      icon: deliveryIcon,
       count: incompleteDeliveries,
     },
     {
@@ -204,7 +197,7 @@ export const Codex: React.FC<Props> = ({ show, onHide }) => {
 
   return (
     // TODO feat/marks-leaderboard ADD SHOW
-    <Modal show={show} onHide={handleHide} dialogClassName="md:max-w-3xl">
+    <Modal show={show} onHide={onHide} dialogClassName="md:max-w-3xl">
       <div className="h-[500px] relative">
         {/* Header */}
         <OuterPanel className="flex flex-col h-full">
@@ -216,7 +209,7 @@ export const Codex: React.FC<Props> = ({ show, onHide }) => {
             <img
               src={SUNNYSIDE.icons.close}
               className="float-right cursor-pointer z-20 ml-3"
-              onClick={handleHide}
+              onClick={onHide}
               style={{
                 width: `${PIXEL_SCALE * 11}px`,
               }}
@@ -266,15 +259,7 @@ export const Codex: React.FC<Props> = ({ show, onHide }) => {
               <Deliveries onClose={onHide} state={state} />
             )}
             {currentTab === "Chore Board" && <ChoreBoard state={state} />}
-            {currentTab === "Leaderboard" && (
-              <Chapter
-                isLoading={data?.tickets === undefined}
-                data={data?.tickets ?? null}
-                chapter={chapter}
-                state={state}
-                farmId={farmId}
-              />
-            )}
+            {currentTab === "Leaderboard" && <ChapterBounties />}
             {currentTab === "Checklist" && <Checklist />}
             {currentTab === "Fish" && (
               <Fish onMilestoneReached={handleMilestoneReached} state={state} />
@@ -286,7 +271,7 @@ export const Codex: React.FC<Props> = ({ show, onHide }) => {
               />
             )}
             {currentTab === "Collections" && (
-              <ChapterCollections state={state} />
+              <ChapterCollections state={state} onClose={onHide} />
             )}
             {currentTab === "Marks" && faction && (
               <FactionLeaderboard

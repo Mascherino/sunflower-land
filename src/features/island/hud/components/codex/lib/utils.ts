@@ -5,14 +5,14 @@ import {
   FishType,
   MarineMarvelName,
 } from "features/game/types/fishing";
-import { getKeys } from "features/game/types/craftables";
+import { getKeys } from "lib/object";
 import { AssetType } from "features/game/types/codex";
 import {
   FLOWERS,
   FlowerName,
   FlowerSeedName,
 } from "features/game/types/flowers";
-import { getObjectEntries } from "features/game/expansion/lib/utils";
+import { getObjectEntries } from "lib/object";
 
 export type ItemCounts = {
   available: number;
@@ -49,6 +49,16 @@ export const getFishByType = () => {
 
   return fishByType;
 };
+
+export function getFishSection(fishName: FishName | MarineMarvelName): string {
+  const fishByType = getFishByType();
+  for (const [type, fishList] of Object.entries(fishByType)) {
+    if (fishList.includes(fishName)) {
+      return `fish-${type}`;
+    }
+  }
+  return "fish-common";
+}
 
 export const getFlowerBySeed = () => {
   const flowersBySeed: Record<FlowerSeedName, FlowerName[]> = {

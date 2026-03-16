@@ -49,7 +49,7 @@ import { WeatherShopItem } from "./calendar";
 import { PetShopItemName } from "./petShop";
 import { MonumentName } from "./monuments";
 import { BumpkinItem } from "./bumpkin";
-import { WaterTrapName } from "./crustaceans";
+import { CrustaceanChum, CrustaceanName, WaterTrapName } from "./crustaceans";
 import { ProcessedResource } from "./processedFood";
 import { ChapterName, ChapterTicket } from "./chapters";
 import { TrackName } from "./tracks";
@@ -67,7 +67,8 @@ export type BountiedEvent = `${
   | FullMoonFruit
   | RecipeCraftableName
   | DollName
-  | "Mark"} Bountied`;
+  | "Mark"
+  | CrustaceanName} Bountied`;
 
 export type ResourceBought = `${ResourceName} Bought`;
 export type BiomeBought = `${LandBiomeName} Bought`;
@@ -219,6 +220,12 @@ export type FarmActivityName =
   | "Farm Helped"
   | `${MonumentName} Completed`
   | "Daily Reward Collected"
+  | "VIP Coins Saved"
+  | "VIP FLOWER Saved"
+  | "VIP Ticket Earned"
+  | "VIP Gift Claimed"
+  | "Recipe Queued"
+  | "VIP XP Earned"
   | "Fish Missed"
   | "Fish Retried"
   | `${WaterTrapName} Collected`
@@ -228,7 +235,9 @@ export type FarmActivityName =
   | `${ChapterTicket} Collected`
   | `${ChapterName} Points Earned`
   | `${ChapterName} ${TrackName} Milestone Claimed`
-  | `${BonusName} Bonus Claimed`;
+  | `${BonusName} Bonus Claimed`
+  | `${CrustaceanName} Caught with ${CrustaceanChum}`
+  | "Crafting Queue Cancelled";
 
 export function trackFarmActivity(
   activityName: FarmActivityName,

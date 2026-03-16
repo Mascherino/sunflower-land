@@ -9,7 +9,7 @@ import { InventoryItemName } from "features/game/types/game";
 
 import { getUTCDateString } from "lib/utils/time";
 import { BumpkinContainer } from "../containers/BumpkinContainer";
-import { getKeys } from "features/game/types/decorations";
+import { getKeys } from "lib/object";
 import {
   DESERT_GRID_HEIGHT,
   DESERT_GRID_WIDTH,
@@ -157,6 +157,7 @@ export class BeachScene extends BaseScene {
     this.load.image("coprolite", "world/coprolite.webp");
     this.load.image("moon_crystal", "world/moon_crystal.webp");
     this.load.image("sand", "world/sand.webp");
+    this.load.image("ammonite_shell", "world/ammonite_shell.webp");
 
     this.load.image("shovel_select", "world/shovel_select_new.webp");
     this.load.image("confirm_select", "world/select_confirm_new.webp");

@@ -1,7 +1,7 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { SimpleBox } from "../SimpleBox";
 import { Label } from "components/ui/Label";
-import { getKeys } from "features/game/types/craftables";
+import { getKeys } from "lib/object";
 import { ITEM_DETAILS } from "features/game/types/images";
 import { MilestonePanel } from "../components/Milestone";
 import { MilestoneTracker } from "../components/MilestoneTracker";
@@ -10,17 +10,24 @@ import {
   MILESTONES,
   MilestoneName,
 } from "features/game/types/milestones";
-import { getFishByType } from "../lib/utils";
+import { getFishByType, getFishSection } from "../lib/utils";
 import { SUNNYSIDE } from "assets/sunnyside";
 import {
   CHAPTER_FISH,
   ChapterFish,
   FISH,
   FishName,
-  MAP_PIECES,
+  MAP_PIECE_CHAPTERS,
+  MAP_PIECE_MARVELS,
   MarineMarvelName,
 } from "features/game/types/fishing";
-import { CRUSTACEANS, CrustaceanName } from "features/game/types/crustaceans";
+import {
+  CRUSTACEANS,
+  CRUSTACEANS_LOOKUP,
+  CrustaceanName,
+  CrustaceanChum,
+  WaterTrapName,
+} from "features/game/types/crustaceans";
 import { Detail } from "../components/Detail";
 import { GameState } from "features/game/types/game";
 import { ButtonPanel, InnerPanel } from "components/ui/Panel";
@@ -40,11 +47,6 @@ import {
 } from "features/game/types/chapters";
 import { useNow } from "lib/utils/hooks/useNow";
 import { Box } from "components/ui/Box";
-import { useAuth } from "features/auth/lib/Provider";
-import {
-  loadCrustaceanChums,
-  CrustaceanChumMapping,
-} from "../actions/loadCrustaceanChums";
 
 const FISH_BY_TYPE = getFishByType();
 
@@ -53,19 +55,14 @@ type Props = {
   state: GameState;
 };
 
-const ALL_CRUSTACEANS = getKeys(CRUSTACEANS);
-
 export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
   const { gameService } = useContext(Context);
-  const { authState } = useAuth();
   const [selectedFish, setSelectedFish] = useState<
     FishName | MarineMarvelName
   >();
   const [selectedCrustacean, setSelectedCrustacean] =
     useState<CrustaceanName>();
-  const [chumMapping, setChumMapping] = useState<CrustaceanChumMapping | null>(
-    null,
-  );
+  const [snapToSection, setSnapToSection] = useState<string | null>(null);
   const now = useNow();
 
   const { t } = useAppTranslation();
@@ -73,15 +70,83 @@ export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
 
   const { farmActivity, milestones } = state;
 
-  useEffect(() => {
-    const caught = ALL_CRUSTACEANS.filter(
-      (name) => (farmActivity[`${name} Caught`] ?? 0) > 0,
-    );
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-    loadCrustaceanChums(authState.context.user.rawToken!, caught).then(
-      setChumMapping,
-    );
-  }, [farmActivity, authState.context.user.rawToken]);
+  const caughtCrustaceans = CRUSTACEANS.filter(
+    (name) => (farmActivity[`${name} Caught`] ?? 0) > 0,
+  );
+
+  // Filter mapping to only include caught crustaceans
+  // with the chum that was used to catch them
+  const chumMapping = caughtCrustaceans.reduce(
+    (acc, name: CrustaceanName) => {
+      let waterTrap: WaterTrapName | undefined;
+      const chumsForCrustacean: CrustaceanChum[] = [];
+
+      (["Crab Pot", "Mariner Pot"] as WaterTrapName[]).forEach((trapType) => {
+        const mapping = CRUSTACEANS_LOOKUP[trapType];
+
+        Object.entries(mapping).forEach(([chumKey, mappedName]) => {
+          if (mappedName === name) {
+            waterTrap = trapType;
+
+            if (chumKey !== "none") {
+              chumsForCrustacean.push(chumKey as CrustaceanChum);
+            }
+          }
+        });
+      });
+
+      if (!waterTrap) {
+        return acc;
+      }
+
+      const chumsUsed = chumsForCrustacean.filter(
+        (chum) => (farmActivity[`${name} Caught with ${chum}`] ?? 0) > 0,
+      );
+      const chumsToShow = chumsUsed.length > 0 ? chumsUsed : chumsForCrustacean;
+      acc[name] = {
+        chums: chumsToShow,
+        waterTrap,
+      };
+
+      return acc;
+    },
+    {} as Record<
+      CrustaceanName,
+      { chums: CrustaceanChum[]; waterTrap: WaterTrapName }
+    >,
+  );
+
+  // Snap scroll to section when navigating back from detail view
+  useEffect(() => {
+    if (!snapToSection) return;
+
+    const targetElement = sectionRefs.current[snapToSection];
+    const scrollContainer = scrollContainerRef.current;
+
+    if (!targetElement || !scrollContainer) return;
+
+    // Calculate scroll position relative to container
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const elementRect = targetElement.getBoundingClientRect();
+    const currentScrollTop = scrollContainer.scrollTop;
+    const offsetFromTop = 10; // Small offset for visual spacing
+
+    const targetScrollPosition =
+      currentScrollTop + elementRect.top - containerRect.top - offsetFromTop;
+
+    scrollContainer.scrollTo({
+      top: targetScrollPosition,
+      behavior: "auto",
+    });
+
+    // Reset snap target
+    Promise.resolve().then(() => {
+      setSnapToSection(null);
+    });
+  }, [snapToSection]);
 
   const handleClaimReward = (milestone: MilestoneName) => {
     gameService.send("milestone.claimed", { milestone });
@@ -90,6 +155,20 @@ export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
   };
 
   const milestoneNames = getKeys(FISH_MILESTONES);
+
+  const handleBack = (
+    type: "fish" | "crustacean",
+    itemName?: FishName | MarineMarvelName,
+  ) => {
+    if (type === "fish" && itemName) {
+      const section = getFishSection(itemName);
+      setSelectedFish(undefined);
+      setSnapToSection(section);
+    } else if (type === "crustacean") {
+      setSelectedCrustacean(undefined);
+      setSnapToSection("crustaceans");
+    }
+  };
 
   if (selectedCrustacean) {
     const hasCaught = (farmActivity[`${selectedCrustacean} Caught`] ?? 0) > 0;
@@ -100,13 +179,13 @@ export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
       <Detail
         name={selectedCrustacean}
         caught={hasCaught}
-        onBack={() => setSelectedCrustacean(undefined)}
+        onBack={() => handleBack("crustacean")}
         additionalLabels={
           <div className="flex gap-2">
             <div className="flex flex-wrap items-center">
               <Label
                 type="default"
-                className="px-0.5 text-xxs mb-1"
+                className="px-0.5 text-xxs whitespace-nowrap mr-4 mb-1"
                 icon={
                   crustaceanInfo
                     ? ITEM_DETAILS[crustaceanInfo.waterTrap].image
@@ -115,33 +194,23 @@ export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
               >
                 {`${farmActivity[`${selectedCrustacean} Caught`] ?? 0} ${t("caught")}`}
               </Label>
+              {hasCaught && (
+                <>
+                  {chums.length > 0 &&
+                    chums.map((chum) => (
+                      <Label
+                        key={chum}
+                        type="chill"
+                        className="px-0.5 text-xxs whitespace-nowrap mr-4 mb-1"
+                        icon={ITEM_DETAILS[chum].image}
+                        secondaryIcon={SUNNYSIDE.icons.heart}
+                      >
+                        {chum}
+                      </Label>
+                    ))}
+                </>
+              )}
             </div>
-            {crustaceanInfo && (
-              <div className="flex flex-wrap items-center">
-                <Label
-                  type="chill"
-                  className="px-0.5 text-xxs whitespace-nowrap"
-                  icon={ITEM_DETAILS[crustaceanInfo.waterTrap].image}
-                >
-                  {crustaceanInfo.waterTrap}
-                </Label>
-              </div>
-            )}
-            {hasCaught && chums.length > 0 && (
-              <div className="flex flex-wrap items-center">
-                {chums.map((chum) => (
-                  <Label
-                    key={chum}
-                    type="chill"
-                    className="px-0.5 text-xxs whitespace-nowrap"
-                    icon={ITEM_DETAILS[chum].image}
-                    secondaryIcon={SUNNYSIDE.icons.heart}
-                  >
-                    {chum}
-                  </Label>
-                ))}
-              </div>
-            )}
           </div>
         }
         state={state}
@@ -156,7 +225,7 @@ export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
       <Detail
         name={selectedFish}
         caught={hasCaught}
-        onBack={() => setSelectedFish(undefined)}
+        onBack={() => handleBack("fish", selectedFish)}
         additionalLabels={
           <div>
             <div className="flex flex-wrap">
@@ -218,6 +287,7 @@ export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
   return (
     <>
       <div
+        ref={scrollContainerRef}
         className={classNames(
           "flex flex-col h-full overflow-y-auto scrollable pr-1 gap-2",
         )}
@@ -285,9 +355,16 @@ export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
                 ITEM_DETAILS[
                   type === "chapter" ? chapterMarvelFish : FISH_BY_TYPE[type][0]
                 ];
+              const sectionId = `fish-${type}`;
 
               return (
-                <div key={type} className="flex flex-col mb-2">
+                <div
+                  key={type}
+                  ref={(el) => {
+                    sectionRefs.current[sectionId] = el;
+                  }}
+                  className="flex flex-col mb-2"
+                >
                   <Label
                     type="default"
                     className="capitalize ml-3"
@@ -314,7 +391,13 @@ export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
           </div>
         </InnerPanel>
 
-        <Crustaceans state={state} onSelect={setSelectedCrustacean} />
+        <Crustaceans
+          state={state}
+          onSelect={setSelectedCrustacean}
+          sectionRef={(el: HTMLDivElement | null) => {
+            sectionRefs.current["crustaceans"] = el;
+          }}
+        />
 
         <MarineMarvelMaps state={state} />
       </div>
@@ -338,15 +421,32 @@ export const Fish: React.FC<Props> = ({ onMilestoneReached, state }) => {
 export const Crustaceans: React.FC<{
   state: GameState;
   onSelect: (name: CrustaceanName) => void;
-}> = ({ state, onSelect }) => {
+  sectionRef?: (el: HTMLDivElement | null) => void;
+}> = ({ state, onSelect, sectionRef }) => {
   const { t } = useAppTranslation();
   const { farmActivity } = state;
 
-  const crustaceanNames = getKeys(CRUSTACEANS);
+  const crabPotCrustaceans = new Set(
+    Object.values(CRUSTACEANS_LOOKUP["Crab Pot"]).filter(
+      (name): name is CrustaceanName => name !== undefined,
+    ),
+  );
+  const marinerPotCrustaceans = new Set(
+    Object.values(CRUSTACEANS_LOOKUP["Mariner Pot"]).filter(
+      (name): name is CrustaceanName => name !== undefined,
+    ),
+  );
+
+  const crabPotList = CRUSTACEANS.filter((name) =>
+    crabPotCrustaceans.has(name),
+  );
+  const marinerPotList = CRUSTACEANS.filter((name) =>
+    marinerPotCrustaceans.has(name),
+  );
 
   return (
     <InnerPanel>
-      <div className="flex flex-col">
+      <div ref={sectionRef} className="flex flex-col">
         <Label
           type="default"
           className="capitalize ml-3"
@@ -354,16 +454,44 @@ export const Crustaceans: React.FC<{
         >
           {t("crustaceans")}
         </Label>
-        <div className="flex flex-wrap">
-          {crustaceanNames.map((name) => (
-            <SimpleBox
-              silhouette={!farmActivity[`${name} Caught`]}
-              onClick={() => onSelect(name)}
-              key={name}
-              inventoryCount={state.inventory[name]?.toNumber()}
-              image={ITEM_DETAILS[name].image}
-            />
-          ))}
+        <div className="flex flex-col">
+          <Label
+            type="default"
+            className="capitalize ml-3 mt-2"
+            icon={ITEM_DETAILS["Crab Pot"].image}
+          >
+            {t("crustaceans.crabPot")}
+          </Label>
+          <div className="flex flex-wrap">
+            {crabPotList.map((name) => (
+              <SimpleBox
+                silhouette={!farmActivity[`${name} Caught`]}
+                onClick={() => onSelect(name)}
+                key={`crab-pot-${name}`}
+                inventoryCount={state.inventory[name]?.toNumber()}
+                image={ITEM_DETAILS[name].image}
+              />
+            ))}
+          </div>
+
+          <Label
+            type="default"
+            className="capitalize ml-3 mt-2"
+            icon={ITEM_DETAILS["Mariner Pot"].image}
+          >
+            {t("crustaceans.marinerPot")}
+          </Label>
+          <div className="flex flex-wrap">
+            {marinerPotList.map((name) => (
+              <SimpleBox
+                silhouette={!farmActivity[`${name} Caught`]}
+                onClick={() => onSelect(name)}
+                key={`mariner-pot-${name}`}
+                inventoryCount={state.inventory[name]?.toNumber()}
+                image={ITEM_DETAILS[name].image}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </InnerPanel>
@@ -389,10 +517,10 @@ export const MarineMarvelMaps: React.FC<{ state: GameState }> = ({ state }) => {
     secondsLeft !== undefined ? Math.max(0, Math.ceil(secondsLeft / 86400)) : 0;
 
   // If caught them all already, show nothing here.
-  const remainingMarvels = getKeys(MAP_PIECES).filter((marvel) => {
+  const remainingMarvels = MAP_PIECE_MARVELS.filter((marvel) => {
     if (state.farmActivity[`${marvel} Caught`]) return false;
 
-    const chapter = MAP_PIECES[marvel]?.chapter;
+    const chapter = MAP_PIECE_CHAPTERS[marvel];
     if (!CHAPTER_FISH[marvel as ChapterFish]) return true;
 
     // Do not show Marine Marvels for non-current Chapters
@@ -431,7 +559,7 @@ export const MarineMarvelMaps: React.FC<{ state: GameState }> = ({ state }) => {
                     total: 9,
                   })}
                 </p>
-                {MAP_PIECES[map]?.chapter && secondsLeft !== undefined && (
+                {MAP_PIECE_CHAPTERS[map] && secondsLeft !== undefined && (
                   <>
                     <Label type={daysLeft < 5 ? "danger" : "vibrant"}>
                       {`${daysLeft} days left`}

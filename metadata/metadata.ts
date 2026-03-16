@@ -1,7 +1,7 @@
 import { BumpkinItem } from "features/game/types/bumpkin";
 import { InventoryItemName } from "../src/features/game/types/game";
 import { Attribute } from "./models";
-import { getKeys } from "features/game/types/craftables";
+import { getKeys } from "lib/object";
 import {
   DECORATION_TEMPLATES,
   TemplateDecorationName,
@@ -17321,7 +17321,7 @@ export const OPEN_SEA_WEARABLES: Record<BumpkinItem, Metadata> = {
       { trait_type: "Boost", value: "Fish" },
       {
         display_type: "boost_percentage",
-        trait_type: "Increase Chance of Marine Marvels",
+        trait_type: "Increase Chance of Marvel Map Pieces",
         value: 200,
       },
       { trait_type: "Tradable", value: "No" },

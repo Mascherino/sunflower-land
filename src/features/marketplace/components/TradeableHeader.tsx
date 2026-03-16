@@ -119,7 +119,10 @@ export const TradeableHeader: React.FC<TradeableHeaderProps> = ({
     tradeable?.isVip &&
     !hasVipAccess({
       game: gameService.getSnapshot().context.state,
+      type: "full",
     });
+
+  const isTutorialItem = tradeable?.id === 2129;
 
   const showBuyNow =
     !isResources &&
@@ -127,7 +130,9 @@ export const TradeableHeader: React.FC<TradeableHeaderProps> = ({
     tradeable?.isActive &&
     !vipIsRequired &&
     // Don't show buy now if the listing is mine
-    cheapestListing.listedById !== farmId;
+    cheapestListing.listedById !== farmId &&
+    // Don't show buy if they have already bought the tutorial item
+    (!isTutorialItem || count === 0);
   // const showFreeListing = !isVIP && dailyListings === 0;
 
   const usd = gameService.getSnapshot().context.prices.sfl?.usd ?? 0.0;
@@ -137,6 +142,13 @@ export const TradeableHeader: React.FC<TradeableHeaderProps> = ({
   }, 0);
 
   const availableCount = count - totalListed;
+
+  const canBuy =
+    cheapestListing &&
+    balance.gte(cheapestListing.sfl) &&
+    limitedPurchasesLeft > 0;
+
+  const isTutorialBuy = canBuy && isTutorialItem && count === 0;
 
   return (
     <>
@@ -257,16 +269,15 @@ export const TradeableHeader: React.FC<TradeableHeaderProps> = ({
                 {showBuyNow && (
                   <Button
                     onClick={() => setShowPurchaseModal(true)}
-                    disabled={
-                      !balance.gt(cheapestListing.sfl) ||
-                      limitedPurchasesLeft <= 0
-                    }
-                    className="mr-1 w-full sm:w-auto"
+                    disabled={!canBuy}
+                    className={classNames("mr-1 w-full sm:w-auto", {
+                      "animate-pulsate": isTutorialBuy,
+                    })}
                   >
                     {t("marketplace.buyNow")}
                   </Button>
                 )}
-                {tradeable?.isActive && !vipIsRequired && (
+                {tradeable?.isActive && !vipIsRequired && !isTutorialItem && (
                   <Button
                     disabled={
                       !availableCount ||
@@ -297,15 +308,15 @@ export const TradeableHeader: React.FC<TradeableHeaderProps> = ({
             {showBuyNow && (
               <Button
                 onClick={() => setShowPurchaseModal(true)}
-                disabled={
-                  !balance.gt(cheapestListing.sfl) || limitedPurchasesLeft <= 0
-                }
-                className="mr-1 w-full sm:w-auto"
+                disabled={!canBuy}
+                className={classNames("mr-1 w-full sm:w-auto", {
+                  "animate-pulsate": isTutorialBuy,
+                })}
               >
                 {t("marketplace.buyNow")}
               </Button>
             )}
-            {tradeable?.isActive && !vipIsRequired && (
+            {tradeable?.isActive && !vipIsRequired && !isTutorialItem && (
               <Button
                 onClick={onListClick}
                 disabled={

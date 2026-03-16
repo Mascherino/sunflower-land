@@ -1,6 +1,7 @@
 import Decimal from "decimal.js-light";
-import { Decoration, getKeys } from "./decorations";
-import { GameState, InventoryItemName } from "./game";
+import { Decoration } from "./decorations";
+import { getKeys } from "lib/object";
+import { BoostName, GameState, InventoryItemName } from "./game";
 import { ClutterName } from "./clutter";
 import { PetName, PetNFTName } from "./pets";
 import { isCollectibleBuilt } from "../lib/collectibleBuilt";
@@ -10,7 +11,10 @@ type HelpLimitMonumentName =
   | "Miner's Monument"
   | "Woodcutter's Monument";
 
-type MegastoreMonumentName = "Teamwork Monument" | "Cornucopia";
+type MegastoreMonumentName =
+  | "Teamwork Monument"
+  | "Cornucopia"
+  | "Poseidon's Throne";
 
 export type WorkbenchMonumentName =
   | HelpLimitMonumentName
@@ -52,6 +56,12 @@ export const MEGASTORE_MONUMENTS: Record<
   },
   Cornucopia: {
     name: "Cornucopia",
+    description: "",
+    coins: 0,
+    ingredients: {},
+  },
+  "Poseidon's Throne": {
+    name: "Poseidon's Throne",
     description: "",
     coins: 0,
     ingredients: {},
@@ -162,6 +172,7 @@ export const REQUIRED_CHEERS: Record<MonumentName, number> = {
   "Miner's Monument": 10000,
   "Teamwork Monument": 100,
   Cornucopia: 1000,
+  "Poseidon's Throne": 2000,
 };
 
 export type VillageProjectName = Exclude<
@@ -202,7 +213,31 @@ export const REWARD_ITEMS: Record<
   },
 };
 
-export function isMonumentComplete({
+export function getProjectReward({
+  project,
+  game,
+  amount,
+}: {
+  amount: number;
+  project: MonumentName;
+  game: GameState;
+}) {
+  let newAmount = amount;
+  const boostsUsed: BoostName[] = [];
+
+  if (
+    isMonumentActive({ game, monument: "Cornucopia" }) &&
+    (project === "Big Orange" ||
+      project === "Big Apple" ||
+      project === "Big Banana")
+  ) {
+    newAmount += 1;
+    boostsUsed.push("Cornucopia");
+  }
+  return { amount: newAmount, boostsUsed };
+}
+
+function isMonumentComplete({
   game,
   monument,
 }: {
@@ -215,6 +250,19 @@ export function isMonumentComplete({
   );
 }
 
+export function isMonumentActive({
+  game,
+  monument,
+}: {
+  game: GameState;
+  monument: MonumentName;
+}) {
+  return (
+    isMonumentComplete({ game, monument }) &&
+    isCollectibleBuilt({ name: monument, game })
+  );
+}
+
 export function isHelpComplete({ game }: { game: GameState }) {
   return getHelpRequired({ game }).totalCount <= 0;
 }
@@ -224,6 +272,7 @@ export function getHelpRequired({ game }: { game: GameState }) {
   const villageProjects = game.socialFarming.villageProjects;
   const collectibles = game.collectibles;
   const homeCollectibles = game.home.collectibles;
+  const petHouseCollectibles = game.petHouse?.pets ?? {};
   const clutterLocations = game.socialFarming.clutter?.locations;
   const pets = game.pets;
 
@@ -274,11 +323,14 @@ export function getHelpRequired({ game }: { game: GameState }) {
     { pendingLandProjects: [], pendingHomeProjects: [] },
   );
 
-  const { pendingLandCommonPets, pendingHomeCommonPets } = getKeys(
-    pets?.common ?? {},
-  ).reduce<{
+  const {
+    pendingLandCommonPets,
+    pendingHomeCommonPets,
+    pendingPetHouseCommonPets,
+  } = getKeys(pets?.common ?? {}).reduce<{
     pendingLandCommonPets: PetName[];
     pendingHomeCommonPets: PetName[];
+    pendingPetHouseCommonPets: PetName[];
   }>(
     (acc, name) => {
       const pet = pets?.common?.[name];
@@ -291,6 +343,9 @@ export function getHelpRequired({ game }: { game: GameState }) {
         (item) => !!item.coordinates,
       );
       const isPetPlacedOnHome = !!homeCollectibles[name]?.some(
+        (item) => !!item.coordinates,
+      );
+      const isPetPlacedOnPetHouse = !!petHouseCollectibles[name]?.some(
         (item) => !!item.coordinates,
       );
 
@@ -306,48 +361,73 @@ export function getHelpRequired({ game }: { game: GameState }) {
         return acc;
       }
 
+      if (isPetPlacedOnPetHouse) {
+        acc.pendingPetHouseCommonPets = [
+          ...acc.pendingPetHouseCommonPets,
+          name,
+        ];
+
+        return acc;
+      }
+
       return acc;
     },
     {
       pendingLandCommonPets: [],
       pendingHomeCommonPets: [],
+      pendingPetHouseCommonPets: [],
     },
   );
 
-  const { pendingLandNftPets, pendingHomeNftPets } = getKeys(
-    pets?.nfts ?? {},
-  ).reduce<{
-    pendingLandNftPets: PetNFTName[];
-    pendingHomeNftPets: PetNFTName[];
-  }>(
-    (acc, id) => {
-      const pet = pets?.nfts?.[id];
-      if (!pet) return acc;
+  const { pendingLandNftPets, pendingHomeNftPets, pendingPetHouseNftPets } =
+    getKeys(pets?.nfts ?? {}).reduce<{
+      pendingLandNftPets: PetNFTName[];
+      pendingHomeNftPets: PetNFTName[];
+      pendingPetHouseNftPets: PetNFTName[];
+    }>(
+      (acc, id) => {
+        const pet = pets?.nfts?.[id];
+        if (!pet) return acc;
 
-      if (pet.visitedAt) return acc;
+        if (pet.visitedAt) return acc;
 
-      if (pet.location === "farm") {
-        acc.pendingLandNftPets = [...acc.pendingLandNftPets, pet.name];
+        if (pet.location === "farm") {
+          acc.pendingLandNftPets = [...acc.pendingLandNftPets, pet.name];
+
+          return acc;
+        }
+
+        if (pet.location === "home") {
+          acc.pendingHomeNftPets = [...acc.pendingHomeNftPets, pet.name];
+
+          return acc;
+        }
+
+        if (pet.location === "petHouse") {
+          acc.pendingPetHouseNftPets = [
+            ...acc.pendingPetHouseNftPets,
+            pet.name,
+          ];
+
+          return acc;
+        }
 
         return acc;
-      }
-
-      if (pet.location === "home") {
-        acc.pendingHomeNftPets = [...acc.pendingHomeNftPets, pet.name];
-
-        return acc;
-      }
-
-      return acc;
-    },
-    { pendingLandNftPets: [], pendingHomeNftPets: [] },
-  );
+      },
+      {
+        pendingLandNftPets: [],
+        pendingHomeNftPets: [],
+        pendingPetHouseNftPets: [],
+      },
+    );
 
   const totalPendingPets =
     pendingLandCommonPets.length +
     pendingHomeCommonPets.length +
+    pendingPetHouseCommonPets.length +
     pendingLandNftPets.length +
-    pendingHomeNftPets.length;
+    pendingHomeNftPets.length +
+    pendingPetHouseNftPets.length;
 
   const totalClutter = Object.values(clutter).reduce(
     (acc, count: number) => acc + count,
@@ -379,6 +459,10 @@ export function getHelpRequired({ game }: { game: GameState }) {
         projects: pendingHomeProjects,
         pets: [...pendingHomeCommonPets, ...pendingHomeNftPets],
       },
+      petHouse: {
+        count: pendingPetHouseCommonPets.length + pendingPetHouseNftPets.length,
+        pets: [...pendingPetHouseCommonPets, ...pendingPetHouseNftPets],
+      },
     },
   };
 }
@@ -399,18 +483,12 @@ export function getHelpLimit({
   };
 
   getKeys(monuments).forEach((monument) => {
-    if (
-      isMonumentComplete({ game, monument }) &&
-      isCollectibleBuilt({ name: monument, game })
-    ) {
+    if (isMonumentActive({ game, monument })) {
       limit += 1;
     }
   });
 
-  if (
-    isCollectibleBuilt({ name: "Teamwork Monument", game }) &&
-    isMonumentComplete({ game, monument: "Teamwork Monument" })
-  ) {
+  if (isMonumentActive({ game, monument: "Teamwork Monument" })) {
     limit += 1;
   }
 

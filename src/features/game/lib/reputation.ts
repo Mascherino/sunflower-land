@@ -1,5 +1,5 @@
 import { getDayOfYear } from "lib/utils/time";
-import { getKeys } from "../types/decorations";
+import { getKeys } from "lib/object";
 import { GameState } from "../types/game";
 import { getBumpkinLevel } from "./level";
 import { hasVipAccess } from "./vipAccess";
@@ -57,7 +57,7 @@ export const REPUTATION_TASKS: Record<
   Level100: ({ game }) => getBumpkinLevel(game.bumpkin.experience) >= 100,
   Level15: ({ game }) => getBumpkinLevel(game.bumpkin.experience) >= 15,
   Bud: ({ game }) => getKeys(game.buds ?? {}).length > 0,
-  VIP: ({ game }) => hasVipAccess({ game: game }),
+  VIP: ({ game }) => hasVipAccess({ game: game, type: "full" }),
 };
 
 export function getReputationPoints({ game }: { game: GameState }): number {

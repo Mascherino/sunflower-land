@@ -6,7 +6,8 @@ import classNames from "classnames";
 import { Section, useScrollIntoView } from "lib/utils/hooks/useScrollIntoView";
 import { MapPlacement } from "./components/MapPlacement";
 import { Context } from "../GameProvider";
-import { COLLECTIBLES_DIMENSIONS, getKeys } from "../types/craftables";
+import { COLLECTIBLES_DIMENSIONS } from "../types/craftables";
+import { getKeys } from "lib/object";
 import { LandBase } from "./components/LandBase";
 import { UpcomingExpansion } from "./components/UpcomingExpansion";
 import { BUILDINGS_DIMENSIONS, Home } from "../types/buildings";
@@ -36,8 +37,8 @@ import { createPortal } from "react-dom";
 import { NON_COLLIDING_OBJECTS } from "./placeable/lib/collisionDetection";
 import { getCurrentBiome } from "features/island/biomes/biomes";
 import { useVisiting } from "lib/utils/visitUtils";
+import { getObjectEntries } from "lib/object";
 import {
-  getObjectEntries,
   comparePositions,
   getSortedResourcePositions,
   getSortedCollectiblePositions,
@@ -45,6 +46,8 @@ import {
 import { Clutter } from "features/island/clutter/Clutter";
 import { PetNFT } from "features/island/pets/PetNFT";
 import { WaterTrapSpot } from "features/island/fisherman/WaterTrapSpot";
+import { FarmHand } from "features/island/farmhand/FarmHand";
+import { PlacedBumpkin } from "features/island/bumpkin/components/PlacedBumpkin";
 
 export const LAND_WIDTH = 6;
 
@@ -210,6 +213,26 @@ const _petNFTPositions = (state: MachineState) => {
   };
 };
 
+const _bumpkinPlacement = (state: MachineState) => state.context.state.bumpkin;
+
+const _farmHandPositions = (state: MachineState) => {
+  const bumpkins = state.context.state.farmHands?.bumpkins;
+
+  if (!bumpkins) return { farmHands: {}, positions: [] };
+
+  return {
+    farmHands: bumpkins,
+    positions: Object.entries(bumpkins).flatMap(([, fh]) => {
+      if (!fh.coordinates) return undefined;
+
+      return {
+        x: fh.coordinates.x,
+        y: fh.coordinates.y,
+      };
+    }),
+  };
+};
+
 const _airdropPositions = (state: MachineState) => {
   const airdrops = state.context.state.airdrops;
 
@@ -327,6 +350,12 @@ export const LandComponent: React.FC = () => {
     _petNFTPositions,
     comparePositions,
   );
+  const { farmHands } = useSelector(
+    gameService,
+    _farmHandPositions,
+    comparePositions,
+  );
+  const bumpkin = useSelector(gameService, _bumpkinPlacement);
   const { airdrops } = useSelector(
     gameService,
     _airdropPositions,
@@ -427,7 +456,7 @@ export const LandComponent: React.FC = () => {
         const items = collectibles[name]!;
         return items
           .filter((collectible) => collectible.coordinates)
-          .map((collectible) => {
+          .map((collectible, index) => {
             const { readyAt, createdAt, coordinates, id } = collectible;
             const { x, y } = coordinates!;
             const { width, height } = COLLECTIBLES_DIMENSIONS[name];
@@ -453,6 +482,7 @@ export const LandComponent: React.FC = () => {
                   y={coordinates!.y}
                   grid={gameGrid}
                   flipped={collectible.flipped}
+                  index={index}
                 />
               </MapPlacement>
             );
@@ -461,12 +491,13 @@ export const LandComponent: React.FC = () => {
   }, [collectibles, gameGrid]);
 
   const buildingElements = useMemo(() => {
-    const home = new Set<Home | "Town Center">([
+    const home = new Set<Home | "Town Center" | "Pet House">([
       "Town Center",
       "Tent",
       "House",
       "Manor",
       "Mansion",
+      "Pet House",
     ]);
 
     return getKeys(buildings)
@@ -486,7 +517,9 @@ export const LandComponent: React.FC = () => {
                 y={y}
                 height={height}
                 width={width}
-                enableOnVisitClick={home.has(name as Home)}
+                enableOnVisitClick={home.has(
+                  name as Home | "Town Center" | "Pet House",
+                )}
               >
                 <Building
                   name={name}
@@ -874,6 +907,34 @@ export const LandComponent: React.FC = () => {
       });
   }, [petNFTs]);
 
+  const farmHandElements = useMemo(() => {
+    if (!farmHands || Object.keys(farmHands).length === 0) return [];
+
+    return Object.entries(farmHands).flatMap(([id, fh]) => {
+      if (!fh.coordinates || fh.location === "home") return [];
+
+      const { x, y } = fh.coordinates;
+
+      return (
+        <MapPlacement key={`farmhand-${id}`} x={x} y={y} height={1} width={1}>
+          <FarmHand id={id} />
+        </MapPlacement>
+      );
+    });
+  }, [farmHands]);
+
+  const bumpkinElement = useMemo(() => {
+    if (!bumpkin?.coordinates || bumpkin.location === "home") return [];
+
+    const { x, y } = bumpkin.coordinates;
+
+    return [
+      <MapPlacement key="main-bumpkin" x={x} y={y} height={1} width={1}>
+        <PlacedBumpkin />
+      </MapPlacement>,
+    ];
+  }, [bumpkin]);
+
   const airdropElements = useMemo(() => {
     if (!airdrops) return [];
 
@@ -938,6 +999,8 @@ export const LandComponent: React.FC = () => {
       clutterElements,
       budElements,
       petNFTElements,
+      farmHandElements,
+      bumpkinElement,
       airdropElements,
     ].flat();
 
@@ -980,6 +1043,8 @@ export const LandComponent: React.FC = () => {
     clutterElements,
     budElements,
     petNFTElements,
+    farmHandElements,
+    bumpkinElement,
     airdropElements,
     mushroomElements,
   ]);
