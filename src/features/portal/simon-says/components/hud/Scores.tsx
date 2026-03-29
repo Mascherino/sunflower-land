@@ -38,7 +38,7 @@ export const Scores: React.FC = () => {
         </div>
       </div>
       <div className="relative">
-        <div className="h-6 w-full mt-0.5 bg-black bg-opacity-30 flex items-center rounded">
+        {/* <div className="h-6 w-full mt-0.5 bg-black bg-opacity-30 flex items-center rounded">
           <div
             className="flex items-center space-x-2 text-white"
             style={{
@@ -50,7 +50,7 @@ export const Scores: React.FC = () => {
               {t("chaacsTemple.totalLength", { totalLength: totalLength })}
             </span>
           </div>
-        </div>
+        </div> */}
         <div className="h-6 w-60 mt-0.5 bg-black bg-opacity-30 flex items-center rounded">
           <div
             className="flex items-center space-x-2 text-white"

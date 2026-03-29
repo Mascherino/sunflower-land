@@ -156,32 +156,32 @@ export class SimonSays {
     this.lives = 3;
     this.startLength = DEFAULT_SEQUENCE_LENGTH;
     switch (prize?.score) {
-      case 3.6:
-        this.targetScore = 3;
+      case 7:
+        this.targetScore = 5;
+        this.scoreThreshold = 3;
+        break;
+      case 8:
+        this.startLength = 4;
+        this.targetScore = 5;
+        this.scoreThreshold = 4;
+        break;
+      case 9:
+        this.startLength = 5;
+        this.targetScore = 5;
+        this.scoreThreshold = 5;
+        break;
+      case 10:
+        this.startLength = 6;
+        this.targetScore = 5;
         this.scoreThreshold = 6;
         break;
-      case 3.7:
-        this.startLength = 4;
-        this.targetScore = 3;
+      case 11:
+        this.startLength = 7;
+        this.targetScore = 5;
         this.scoreThreshold = 7;
         break;
-      case 3.8:
-        this.startLength = 5;
-        this.targetScore = 3;
-        this.scoreThreshold = 8;
-        break;
-      case 3.9:
-        this.startLength = 6;
-        this.targetScore = 3;
-        this.scoreThreshold = 9;
-        break;
-      case 3.1:
-        this.startLength = 7;
-        this.targetScore = 3;
-        this.scoreThreshold = 10;
-        break;
       default:
-        this.targetScore = 3;
+        this.targetScore = 5;
         this.scoreThreshold = 6;
         this.duration = 60000 * 10000;
     }
@@ -189,7 +189,7 @@ export class SimonSays {
       this.scene.portalService?.getSnapshot().context.state?.minigames.games[
         "chaacs-temple"
       ];
-    if (hasBoughtLowerThreshold(minigame) && this.scoreThreshold > 6)
+    if (hasBoughtLowerThreshold(minigame) && this.scoreThreshold > 3)
       this.scoreThreshold--;
     this.currLength = this.startLength;
     this.scene.locked = false;
@@ -222,7 +222,7 @@ export class SimonSays {
       } else if (event.type === "BUY_THRESHOLD") {
         const game = SimonSays.current;
         if (!game) return;
-        if (this.scoreThreshold > 6) this.scoreThreshold--;
+        if (this.scoreThreshold > 3) this.scoreThreshold--;
         this.scene.portalService?.send("LOWER_THRESHOLD", {
           totalLength: this.scoreThreshold,
         });
@@ -233,8 +233,9 @@ export class SimonSays {
     // Keep track of listeners to remove when doing HMR
     this.scene.portalService?._listeners.add(this.hintListener);
 
-    this.predefinedSequence = Array.from({ length: this.scoreThreshold }, () =>
-      randomInt(0, this.pieces.length),
+    this.predefinedSequence = Array.from(
+      { length: this.scoreThreshold + this.targetScore },
+      () => randomInt(0, this.pieces.length),
     );
     this.lostLifePrev = false;
 
@@ -479,21 +480,20 @@ export class SimonSays {
 
         // Empty sequence == reached score threshold
         if (this.currentSequence.length === 0) {
-          if (this.currLength >= this.scoreThreshold) {
-            score = score + 1;
-            speak(this.npc!, getImpressedPhrase(score), 2500);
-            if (!this.lostLifePrev) {
-              this.scoreThreshold++;
-            }
-            this.lostLifePrev = false;
-            this.currLength = this.startLength;
-            this.predefinedSequence = Array.from(
-              { length: this.scoreThreshold },
-              () => randomInt(0, this.pieces.length),
-            );
-          } else {
-            this.currLength++;
-          }
+          // if (this.currLength >= this.scoreThreshold) {
+          score = score + 1;
+          speak(this.npc!, getImpressedPhrase(score), 2500);
+          // if (!this.lostLifePrev) {
+          //   this.scoreThreshold++;
+          // }
+          // this.lostLifePrev = false;
+          // this.currLength = this.startLength;
+          // this.predefinedSequence = Array.from(
+          //   { length: this.scoreThreshold },
+          //   () => randomInt(0, this.pieces.length),
+          // );
+          this.currLength++;
+          // }
         }
         const solved = score == this.scene.targetScore;
         this.scene.portalService?.send("MAKE_MOVE", {
@@ -509,7 +509,7 @@ export class SimonSays {
         }
       } else {
         lives = lives - 1;
-        this.lostLifePrev = true;
+        // this.lostLifePrev = true;
         this.scene.portalService?.send("MAKE_MOVE", {
           score: score,
           lives: lives,
