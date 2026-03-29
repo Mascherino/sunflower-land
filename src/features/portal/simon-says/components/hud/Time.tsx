@@ -9,16 +9,16 @@ import useUiRefresher from "lib/utils/hooks/useUiRefresher";
 import { Label } from "components/ui/Label";
 import { PortalMachineState } from "../../lib/SimonSaysMachine";
 
-const endAtSel = (state: PortalMachineState) => state.context.endAt;
+const startAtSel = (state: PortalMachineState) => state.context.startAt;
 
 export const Time: React.FC = () => {
   useUiRefresher({ delay: 100 });
 
   const { portalService } = useContext(PortalContext);
 
-  const endAt = useSelector(portalService, endAtSel);
+  const startAt = useSelector(portalService, startAtSel);
 
-  const secondsLeft = Math.max(endAt - Date.now(), 0) / 1000;
+  const timeElapsed = (Date.now() - startAt) / 1000;
 
   return (
     <Label
@@ -30,7 +30,7 @@ export const Time: React.FC = () => {
         right: `${PIXEL_SCALE * 3}px`,
       }}
     >
-      {secondsToString(secondsLeft, {
+      {secondsToString(timeElapsed, {
         length: "full",
       })}
     </Label>
