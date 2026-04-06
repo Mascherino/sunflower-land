@@ -61,6 +61,7 @@ export class BumpkinContainer extends Phaser.GameObjects.Container {
   public isVip: boolean | undefined;
   public createdAt: number | undefined;
   public islandType: IslandType | undefined;
+  public pipeline: string | undefined;
 
   private ready = false;
 
@@ -97,6 +98,7 @@ export class BumpkinContainer extends Phaser.GameObjects.Container {
     createdAt,
     islandType,
     showDeliveryIcon,
+    pipeline,
   }: {
     scene: Phaser.Scene;
     x: number;
@@ -116,6 +118,7 @@ export class BumpkinContainer extends Phaser.GameObjects.Container {
     createdAt?: number;
     islandType?: IslandType;
     showDeliveryIcon?: boolean;
+    pipeline?: string;
   }) {
     super(scene, x, y);
     this.scene = scene;
@@ -126,6 +129,7 @@ export class BumpkinContainer extends Phaser.GameObjects.Container {
     this.silhouette = scene.add.sprite(0, 0, "silhouette");
     this.add(this.silhouette);
     this.sprite = this.silhouette;
+    this.pipeline = pipeline;
 
     this.shadow = this.scene.add
       .sprite(0.5, 8, "shadow")
@@ -292,8 +296,10 @@ export class BumpkinContainer extends Phaser.GameObjects.Container {
       }
 
       this.ready = true;
-      this.sprite?.setPipeline("Light2D");
-      this.shadow?.setPipeline("Light2D");
+      if (this.pipeline) {
+        this.sprite?.setPipeline("Light2D");
+        this.shadow?.setPipeline("Light2D");
+      }
     } else {
       // Set up base animations
       const url = getAnimationUrl(this.clothing, [
@@ -338,8 +344,10 @@ export class BumpkinContainer extends Phaser.GameObjects.Container {
         if (this.silhouette?.active) {
           this.silhouette?.destroy();
         }
-        this.sprite?.setPipeline("Light2D");
-        this.shadow?.setPipeline("Light2D");
+        if (this.pipeline) {
+          this.sprite?.setPipeline("Light2D");
+          this.shadow?.setPipeline("Light2D");
+        }
       });
 
       // Load micro interactions animations

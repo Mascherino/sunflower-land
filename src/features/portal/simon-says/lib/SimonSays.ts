@@ -429,6 +429,7 @@ export class SimonSays {
       },
       direction: "left",
       username: gamestate.username,
+      pipeline: "Light2D",
     });
 
     this.npc = new BumpkinContainer({
@@ -442,6 +443,7 @@ export class SimonSays {
         updatedAt: Date.now(),
       },
       direction: "right",
+      pipeline: "Light2D",
     });
     this.npc.setDepth(30);
   }
