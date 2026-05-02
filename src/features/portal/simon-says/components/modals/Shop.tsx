@@ -92,7 +92,7 @@ export const ShopModal: React.FC<{ show: boolean; onHide: () => void }> = ({
                 {t("chaacsTemple.buyHint")}
               </Button>
               <Button
-                disabled={hasBoughtThreshold || totalLength <= 6}
+                disabled={hasBoughtThreshold || !canBuyHint}
                 className="w-4/5"
                 onClick={() => setCurrentPage("threshold")}
               >

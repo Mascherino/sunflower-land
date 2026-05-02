@@ -155,42 +155,38 @@ export class SimonSays {
     }
     this.lives = 3;
     this.startLength = DEFAULT_SEQUENCE_LENGTH;
+    this.scoreThreshold = 5;
     switch (prize?.score) {
       case 7:
         this.targetScore = 5;
-        this.scoreThreshold = 3;
         break;
       case 8:
         this.startLength = 4;
         this.targetScore = 5;
-        this.scoreThreshold = 4;
         break;
       case 9:
         this.startLength = 5;
         this.targetScore = 5;
-        this.scoreThreshold = 5;
         break;
       case 10:
         this.startLength = 6;
         this.targetScore = 5;
-        this.scoreThreshold = 6;
         break;
       case 11:
         this.startLength = 7;
         this.targetScore = 5;
-        this.scoreThreshold = 7;
         break;
       default:
         this.targetScore = 5;
-        this.scoreThreshold = 6;
+        this.scoreThreshold = 5;
         this.duration = 60000 * 10000;
     }
     const minigame =
       this.scene.portalService?.getSnapshot().context.state?.minigames.games[
         "chaacs-temple"
       ];
-    if (hasBoughtLowerThreshold(minigame) && this.scoreThreshold > 3)
-      this.scoreThreshold--;
+    if (hasBoughtLowerThreshold(minigame) && this.targetScore > 3)
+      this.targetScore--;
     this.currLength = this.startLength;
     this.scene.locked = false;
 
@@ -222,9 +218,9 @@ export class SimonSays {
       } else if (event.type === "BUY_THRESHOLD") {
         const game = SimonSays.current;
         if (!game) return;
-        if (this.scoreThreshold > 3) this.scoreThreshold--;
+        if (this.targetScore > 3) this.targetScore--;
         this.scene.portalService?.send("LOWER_THRESHOLD", {
-          totalLength: this.scoreThreshold,
+          totalLength: this.targetScore,
         });
       }
     };
@@ -233,9 +229,8 @@ export class SimonSays {
     // Keep track of listeners to remove when doing HMR
     this.scene.portalService?._listeners.add(this.hintListener);
 
-    this.predefinedSequence = Array.from(
-      { length: this.scoreThreshold + this.targetScore },
-      () => randomInt(0, this.pieces.length),
+    this.predefinedSequence = Array.from({ length: 100 }, () =>
+      randomInt(0, this.pieces.length),
     );
     this.lostLifePrev = false;
 
@@ -244,7 +239,7 @@ export class SimonSays {
         duration: this.duration,
         targetScore: this.targetScore,
         lives: this.lives,
-        totalLength: this.scoreThreshold,
+        totalLength: this.targetScore,
         currentLength: this.currLength,
       });
     }
@@ -497,12 +492,12 @@ export class SimonSays {
           this.currLength++;
           // }
         }
-        const solved = score == this.scene.targetScore;
+        const solved = score == this.targetScore;
         this.scene.portalService?.send("MAKE_MOVE", {
           score: score,
           lives: lives,
           solved: solved,
-          totalLength: this.scoreThreshold,
+          totalLength: this.targetScore,
           currentLength: this.currLength,
         });
         if (this.currentSequence.length === 0) {
@@ -516,7 +511,7 @@ export class SimonSays {
           score: score,
           lives: lives,
           solved: false,
-          totalLength: this.scoreThreshold,
+          totalLength: this.targetScore,
           currentLength: this.currLength,
         });
         speak(this.npc!, getHumiliatingPhrase(score), 2500);

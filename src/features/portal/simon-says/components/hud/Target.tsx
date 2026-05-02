@@ -7,7 +7,7 @@ import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { PortalMachineState } from "../../lib/SimonSaysMachine";
 import { PIXEL_SCALE } from "features/game/lib/constants";
 
-const targetScoreSel = (state: PortalMachineState) => state.context.targetScore;
+const targetScoreSel = (state: PortalMachineState) => state.context.totalLength;
 const scoreSel = (state: PortalMachineState) => state.context.score;
 
 export const Target: React.FC = () => {
