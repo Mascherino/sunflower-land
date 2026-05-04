@@ -20,7 +20,9 @@ export type BumpkinBackground =
   | "Goblin Retreat Background"
   | "Kingdom Background"
   | "Sky Island Background"
-  | "Holiday Feast Background";
+  | "Holiday Feast Background"
+  | "Faulty Barrier Background"
+  | "Deep Sea Salt Cave Background";
 
 export type BumpkinBody =
   | "Beige Farmer Potion"
@@ -148,7 +150,9 @@ export type BumpkinShirt =
   | "Chef Shirt"
   | "Pet Specialist Shirt"
   | "Comfy Xmas Sweater"
-  | "Fish Hook Vest";
+  | "Fish Hook Vest"
+  | "Neon Noiz Jacket"
+  | "404 Chic Top";
 
 export type BumpkinCoat =
   | "Chef Apron"
@@ -223,7 +227,9 @@ export type BumpkinTool =
   | "Moonseeker Hand Puppet"
   | "Master Chef's Cleaver"
   | "Luna's Crescent"
-  | "Candy Halbred";
+  | "Candy Halbred"
+  | "Admin Fools Tools"
+  | "Pistol Shrimp";
 
 export type BumpkinShoe =
   | "Black Farmer Boots"
@@ -247,7 +253,10 @@ export type BumpkinShoe =
   | "Desert Merchant Shoes"
   | "Cowboy Boots"
   | "Speed Boots"
-  | "Beast Shoes";
+  | "Beast Shoes"
+  | "Neon Noiz Shoes"
+  | "404 Chic Boots"
+  | "Spa Slippers";
 
 export type BumpkinNecklace =
   | "Sunflower Amulet"
@@ -376,7 +385,10 @@ export type BumpkinHat =
   | "Reindeer Mask"
   | "Snowman Mask"
   | "Cool Glasses"
-  | "Fish Hook Hat";
+  | "Fish Hook Hat"
+  | "Aether Specs"
+  | "Spa Hat"
+  | "Clam Shell Hat";
 
 export type BumpkinPant =
   | "Farmer Overalls"
@@ -419,7 +431,9 @@ export type BumpkinPant =
   | "Paint Splattered Overalls"
   | "Pet Specialist Pants"
   | "Comfy Xmas Pants"
-  | "Fish Hook Waders";
+  | "Fish Hook Waders"
+  | "Neon Noiz Pants"
+  | "404 Chic Skirt";
 
 export type BumpkinDress =
   | "Royal Dress"
@@ -496,6 +510,7 @@ export type BumpkinOnesie =
   | "Raccoon Onesie"
   | "Frank Onesie"
   | "Cozy Reindeer Onesie"
+  | "Shrimp Onesie"
   | "Maya Armor";
 
 // Goes over clothes
@@ -517,7 +532,8 @@ export type BumpkinSuit =
   | "Amberfall Suit"
   | "Glacierguard Suit"
   | "Research Uniform"
-  | "Sweet Devil Dress";
+  | "Sweet Devil Dress"
+  | "Spa Robe";
 
 export type BumpkinWings =
   | "Angel Wings"
@@ -540,7 +556,8 @@ export type BumpkinWings =
   | "Oracle Syringe"
   | "Slime Wings"
   | "Underworld Stimpack"
-  | "Sweet Devil Wings";
+  | "Sweet Devil Wings"
+  | "Cardboard Wings";
 
 export type BumpkinBeard =
   | "Wise Beard"
@@ -554,7 +571,30 @@ export type BumpkinAura =
   | "Slime Aura"
   | "Wisp Aura"
   | "Diamond Snow Aura"
-  | "Paw Aura";
+  | "Paw Aura"
+  | "Glitch Aura"
+  | "Bubble Aura";
+
+export type BumpkinEyes =
+  | "Bumpkin Eyes"
+  | "Big Wink Eyes"
+  | "Fun Eyes"
+  | "Giggle Eyes"
+  | "Grumpy Eyes"
+  | "Relaxed Eyes"
+  | "Scared Eyes"
+  | "Surprised Eyes"
+  | "Wink Eyes";
+
+export type BumpkinMouth =
+  | "Bumpkin Smile"
+  | "Angry Mouth"
+  | "Baby Teeth"
+  | "Big Smile"
+  | "Fanged Smile"
+  | "Gold Teeth"
+  | "Infernal Smile"
+  | "Neutral Mouth";
 
 export type BumpkinItem =
   | BumpkinBody
@@ -573,7 +613,13 @@ export type BumpkinItem =
   | BumpkinSuit
   | BumpkinWings
   | BumpkinBeard
-  | BumpkinAura;
+  | BumpkinAura
+  | BumpkinEyes
+  | BumpkinMouth;
+
+/** Default face when not equipped (matches API bumpkin image pipeline). */
+export const DEFAULT_BUMPKIN_EYES: BumpkinEyes = "Bumpkin Eyes";
+export const DEFAULT_BUMPKIN_MOUTH: BumpkinMouth = "Bumpkin Smile";
 
 export const ITEM_IDS: Record<BumpkinItem, number> = {
   "Beige Farmer Potion": 1,
@@ -1127,6 +1173,46 @@ export const ITEM_IDS: Record<BumpkinItem, number> = {
   "Fish Hook Vest": 524,
   "Fish Hook Waders": 525,
   "Corn Silk Hair": 526,
+
+  // April Fools 2026 Event Wearables
+  "Neon Noiz Jacket": 527,
+  "404 Chic Top": 528,
+  "Neon Noiz Pants": 529,
+  "404 Chic Skirt": 530,
+  "Admin Fools Tools": 531,
+  "Neon Noiz Shoes": 532,
+  "404 Chic Boots": 533,
+  "Aether Specs": 534,
+  "Faulty Barrier Background": 535,
+  "Cardboard Wings": 536,
+  "Glitch Aura": 537,
+  "Bumpkin Eyes": 538,
+  "Big Wink Eyes": 539,
+  "Fun Eyes": 540,
+  "Giggle Eyes": 541,
+  "Grumpy Eyes": 542,
+  "Relaxed Eyes": 543,
+  "Scared Eyes": 544,
+  "Surprised Eyes": 545,
+  "Wink Eyes": 546,
+  "Bumpkin Smile": 547,
+  "Angry Mouth": 548,
+  "Baby Teeth": 549,
+  "Big Smile": 550,
+  "Fanged Smile": 551,
+  "Gold Teeth": 552,
+  "Infernal Smile": 553,
+  "Neutral Mouth": 554,
+  "Pistol Shrimp": 555,
+
+  // Salt Awakening Wearables
+  "Spa Hat": 556,
+  "Spa Robe": 557,
+  "Spa Slippers": 558,
+  "Bubble Aura": 559,
+  "Deep Sea Salt Cave Background": 560,
+  "Clam Shell Hat": 561,
+  "Shrimp Onesie": 562,
   "Maya Armor": 999,
 };
 
@@ -1157,6 +1243,8 @@ export type Wallet = {
   dress?: BumpkinDress[];
   beard?: BumpkinBeard[];
   aura?: BumpkinAura[];
+  eyes: BumpkinEyes[];
+  mouth: BumpkinMouth[];
 };
 
 export type Equipped = {
@@ -1177,6 +1265,8 @@ export type Equipped = {
   dress?: BumpkinDress;
   beard?: BumpkinBeard;
   aura?: BumpkinAura;
+  eyes?: BumpkinEyes;
+  mouth?: BumpkinMouth;
 };
 
 export type BumpkinPart = keyof Equipped;
@@ -1194,6 +1284,11 @@ export const BUMPKIN_ITEMS: Record<string, number> = Object.assign(
 export const BUMPKIN_ITEMS_IDS = Object.values(ITEM_IDS);
 
 export const BUMPKIN_ITEM_PART: Record<BumpkinItem, keyof Wallet> = {
+  "Spa Hat": "hat",
+  "Spa Robe": "suit",
+  "Spa Slippers": "shoes",
+  "Bubble Aura": "aura",
+  "Deep Sea Salt Cave Background": "background",
   "Walrus Onesie": "onesie",
   "Crimstone Spikes Hair": "hair",
   "Corn Silk Hair": "hair",
@@ -1715,6 +1810,37 @@ export const BUMPKIN_ITEM_PART: Record<BumpkinItem, keyof Wallet> = {
   "Holiday Feast Background": "background",
   "Cozy Reindeer Onesie": "onesie",
   "Diamond Snow Aura": "aura",
+  "Neon Noiz Jacket": "shirt",
+  "404 Chic Top": "shirt",
+  "Neon Noiz Pants": "pants",
+  "404 Chic Skirt": "pants",
+  "Admin Fools Tools": "tool",
+  "Neon Noiz Shoes": "shoes",
+  "404 Chic Boots": "shoes",
+  "Aether Specs": "hat",
+  "Faulty Barrier Background": "background",
+  "Cardboard Wings": "wings",
+  "Glitch Aura": "aura",
+  "Bumpkin Eyes": "eyes",
+  "Big Wink Eyes": "eyes",
+  "Fun Eyes": "eyes",
+  "Giggle Eyes": "eyes",
+  "Grumpy Eyes": "eyes",
+  "Relaxed Eyes": "eyes",
+  "Scared Eyes": "eyes",
+  "Surprised Eyes": "eyes",
+  "Wink Eyes": "eyes",
+  "Bumpkin Smile": "mouth",
+  "Angry Mouth": "mouth",
+  "Baby Teeth": "mouth",
+  "Big Smile": "mouth",
+  "Fanged Smile": "mouth",
+  "Gold Teeth": "mouth",
+  "Infernal Smile": "mouth",
+  "Neutral Mouth": "mouth",
+  "Pistol Shrimp": "tool",
+  "Clam Shell Hat": "hat",
+  "Shrimp Onesie": "onesie",
   "Maya Armor": "onesie",
 };
 
@@ -1774,6 +1900,29 @@ const ALLOWED_BACKGROUNDS: BumpkinBackground[] = [
   "Seashore Background",
 ];
 
+const ALLOWED_BUMPKIN_EYES: BumpkinEyes[] = [
+  "Bumpkin Eyes",
+  "Big Wink Eyes",
+  "Fun Eyes",
+  "Giggle Eyes",
+  "Grumpy Eyes",
+  "Relaxed Eyes",
+  "Scared Eyes",
+  "Surprised Eyes",
+  "Wink Eyes",
+];
+
+const ALLOWED_BUMPKIN_MOUTHS: BumpkinMouth[] = [
+  "Bumpkin Smile",
+  "Angry Mouth",
+  "Baby Teeth",
+  "Big Smile",
+  "Fanged Smile",
+  "Gold Teeth",
+  "Infernal Smile",
+  "Neutral Mouth",
+];
+
 export const ALLOWED_BUMPKIN_ITEMS: BumpkinItem[] = [
   ...ALLOWED_BUMPKIN_HAIR,
   ...ALLOWED_BUMPKIN_SHIRTS,
@@ -1782,4 +1931,6 @@ export const ALLOWED_BUMPKIN_ITEMS: BumpkinItem[] = [
   ...ALLOWED_BUMPKIN_BOOTS,
   ...ALLOWED_BUMPKIN_TOOLS,
   ...ALLOWED_BACKGROUNDS,
+  ...ALLOWED_BUMPKIN_EYES,
+  ...ALLOWED_BUMPKIN_MOUTHS,
 ];

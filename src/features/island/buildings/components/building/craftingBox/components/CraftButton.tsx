@@ -3,9 +3,12 @@ import { Button } from "components/ui/Button";
 import Decimal from "decimal.js-light";
 import { ITEM_DETAILS } from "features/game/types/images";
 import { RecipeIngredient } from "features/game/lib/crafting";
-import { Inventory, Wardrobe } from "features/game/types/game";
+import { GameState, Inventory, Wardrobe } from "features/game/types/game";
 import { ConfirmationModal } from "components/ui/ConfirmationModal";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
+import { SUNNYSIDE } from "assets/sunnyside";
+import { useSpeedUpPayment } from "features/game/lib/useSpeedUpPayment";
+import { SpeedUpPaymentSelector } from "features/game/components/SpeedUpPaymentSelector";
 import fastForward from "assets/icons/fast_forward.png";
 import vipIcon from "assets/icons/vip.webp";
 
@@ -21,12 +24,12 @@ export const CraftButton: React.FC<{
   selectedItems: (RecipeIngredient | null)[];
   inventory: Inventory;
   wardrobe: Wardrobe;
-  gems: number;
-  onInstantCraft: (gems: number) => void;
+  state: GameState;
+  readyAt: number;
+  onInstantCraft: (cost: number, paymentMethod?: "gems" | "coins") => void;
   isQueueFull?: boolean;
   isPreparingQueueSlot?: boolean;
   isViewingQueuedRecipe?: boolean;
-  hasCraftingBoxQueuesAccess?: boolean;
 }> = ({
   isCrafting,
   isPending,
@@ -39,15 +42,27 @@ export const CraftButton: React.FC<{
   selectedItems,
   inventory,
   wardrobe,
-  gems,
+  state,
+  readyAt,
   onInstantCraft,
   isQueueFull = false,
   isPreparingQueueSlot = false,
   isViewingQueuedRecipe = false,
-  hasCraftingBoxQueuesAccess = false,
 }) => {
   const { t } = useAppTranslation();
   const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const payment = useSpeedUpPayment({ readyAt, game: state });
+  const cost =
+    payment.paymentMethod === "coins" ? payment.coinCost : payment.gemCost;
+  const costIcon =
+    payment.paymentMethod === "coins"
+      ? SUNNYSIDE.ui.coins
+      : ITEM_DETAILS["Gem"].image;
+  const confirmationCostMessage =
+    payment.paymentMethod === "coins"
+      ? t("instantCook.coinCostMessage", { coins: cost })
+      : t("instantCook.costMessage", { gems: cost });
 
   const hasRequiredIngredients = useMemo(() => {
     return selectedItems.every((ingredient) => {
@@ -70,20 +85,18 @@ export const CraftButton: React.FC<{
   if (isViewingQueuedRecipe && handleCancelQueuedItem) {
     return (
       <div className="flex flex-col items-center justify-center gap-1 mt-2">
-        {hasCraftingBoxQueuesAccess && (
-          <Button
-            className="whitespace-nowrap relative"
-            onClick={addToQueueHandler}
-            disabled={addToQueueDisabled}
-          >
-            <img
-              src={vipIcon}
-              alt="VIP"
-              className="absolute w-6 sm:w-4 -top-[1px] -right-[2px]"
-            />
-            {t("recipes.addToQueue")}
-          </Button>
-        )}
+        <Button
+          className="relative"
+          onClick={addToQueueHandler}
+          disabled={addToQueueDisabled}
+        >
+          <img
+            src={vipIcon}
+            alt="VIP"
+            className="absolute w-6 sm:w-4 -top-[1px] -right-[2px]"
+          />
+          {t("recipes.addToQueue")}
+        </Button>
         <Button onClick={handleCancelQueuedItem}>{t("remove")}</Button>
       </div>
     );
@@ -92,34 +105,34 @@ export const CraftButton: React.FC<{
   if (isCrafting || isPending) {
     return (
       <div className="flex flex-col items-center justify-center gap-1 mt-2">
-        {hasCraftingBoxQueuesAccess && (
-          <Button
-            className="whitespace-nowrap relative"
-            onClick={addToQueueHandler}
-            disabled={addToQueueDisabled}
-          >
-            <img
-              src={vipIcon}
-              alt="VIP"
-              className="absolute w-6 sm:w-4 -top-[1px] -right-[2px]"
-            />
-            {t("recipes.addToQueue")}
-          </Button>
-        )}
+        <Button
+          className="relative"
+          onClick={addToQueueHandler}
+          disabled={addToQueueDisabled}
+        >
+          <img
+            src={vipIcon}
+            alt="VIP"
+            className="absolute w-4 -top-[1px] -right-[2px]"
+          />
+          {t("recipes.addToQueue")}
+        </Button>
         {isViewingReadyItem && (
-          <Button className="whitespace-nowrap" onClick={handleCollect}>
-            {t("collect")}
-          </Button>
+          <Button onClick={handleCollect}>{t("collect")}</Button>
         )}
         {!isPreparingQueueSlot && !isViewingReadyItem && (
           <Button
-            disabled={!inventory.Gem?.gte(gems) || isPending}
+            disabled={!payment.canAfford || isPending}
             onClick={() => setShowConfirmation(true)}
           >
             <div className="flex items-center justify-center gap-1">
               <img src={fastForward} className="h-5" />
-              <span className="text-sm flex items-center">{gems}</span>
-              <img src={ITEM_DETAILS["Gem"].image} className="h-5" />
+              {!payment.canPayWithCoins && (
+                <>
+                  <span className="text-sm flex items-center">{cost}</span>
+                  <img src={costIcon} className="h-5" />
+                </>
+              )}
             </div>
           </Button>
         )}
@@ -128,14 +141,15 @@ export const CraftButton: React.FC<{
           onHide={() => setShowConfirmation(false)}
           onCancel={() => setShowConfirmation(false)}
           onConfirm={() => {
-            onInstantCraft(gems);
+            onInstantCraft(cost, payment.paymentMethod);
             setShowConfirmation(false);
           }}
           messages={[
             t("instantCook.confirmationMessage"),
-            t("instantCook.costMessage", { gems }),
+            confirmationCostMessage,
           ]}
           confirmButtonLabel={t("instantCook.finish")}
+          bodyContent={<SpeedUpPaymentSelector payment={payment} />}
         />
       </div>
     );
@@ -144,11 +158,18 @@ export const CraftButton: React.FC<{
   return (
     <div className="flex flex-col items-center justify-center gap-1 mt-2">
       <Button
-        className="mt-2 whitespace-nowrap"
+        className="mt-2"
         onClick={handleCraft}
         disabled={isCraftingBoxEmpty || !hasRequiredIngredients}
       >
         {t("craft")}
+      </Button>
+      <Button disabled>
+        <div className="flex items-center justify-center gap-1">
+          <img src={fastForward} className="h-5" />
+          <span className="text-sm flex items-center">{0}</span>
+          <img src={ITEM_DETAILS["Gem"].image} className="h-5" />
+        </div>
       </Button>
     </div>
   );

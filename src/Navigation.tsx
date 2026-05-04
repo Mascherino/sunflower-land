@@ -29,9 +29,18 @@ import { FlowerDashboard } from "features/flowerDashboard/FlowerDashboard";
 import { EconomyDashboard } from "features/economyDashboard/EconomyDashboard";
 import { RetentionDashboard } from "features/retentionDashboard/RetentionDashboard";
 import { ChapterDashboard } from "features/chapterDashboard/ChapterDashboard";
+import { EconomyHub } from "features/economyHub/EconomyHub";
 import { GameWrapper } from "features/game/expansion/Game";
+import { Interior } from "features/interior/Interior";
+import { LevelOne } from "features/interior/LevelOne";
 import { ModalProvider } from "features/game/components/modal/ModalProvider";
 import { FeedProvider } from "features/social/FeedContext";
+import { MinigameDashboard } from "features/minigame/MinigameDashboard";
+import {
+  PlayerEconomyEditor,
+  PlayerEconomyEditorCreate,
+  PlayerEconomyEditorEdit,
+} from "features/playerEconomyEditor/PlayerEconomyEditor";
 
 // Lazy load routes
 const World = lazy(() =>
@@ -195,6 +204,46 @@ export const Navigation: React.FC = () => {
                                   element={
                                     <GameWrapper>
                                       <ChapterDashboard />
+                                    </GameWrapper>
+                                  }
+                                />
+                                <Route
+                                  path="/economy-hub"
+                                  element={
+                                    <GameWrapper>
+                                      <EconomyHub />
+                                    </GameWrapper>
+                                  }
+                                />
+                                <Route
+                                  path="/economy/:slug"
+                                  element={<MinigameDashboard />}
+                                />
+                                <Route
+                                  path="/economy-editor"
+                                  element={<PlayerEconomyEditor />}
+                                />
+                                <Route
+                                  path="/economy-editor/create"
+                                  element={<PlayerEconomyEditorCreate />}
+                                />
+                                <Route
+                                  path="/economy-editor/edit/:slug"
+                                  element={<PlayerEconomyEditorEdit />}
+                                />
+                                <Route
+                                  path="/interior"
+                                  element={
+                                    <GameWrapper>
+                                      <Interior />
+                                    </GameWrapper>
+                                  }
+                                />
+                                <Route
+                                  path="/level_one"
+                                  element={
+                                    <GameWrapper>
+                                      <LevelOne />
                                     </GameWrapper>
                                   }
                                 />

@@ -7,6 +7,7 @@ import { Decimal } from "decimal.js-light";
 import { NPCIcon } from "features/island/bumpkin/components/NPC";
 import { interpretTokenUri } from "lib/utils/tokenUriBuilder";
 import { TradeableDisplay } from "../lib/tradeables";
+import { MINIGAME_TOKEN_IMAGE_FALLBACK } from "features/minigame/lib/minigameTokenIcons";
 import { formatNumber } from "lib/utils/formatNumber";
 import { Checkbox } from "components/ui/Checkbox";
 import { playerModalManager } from "features/social/lib/playerModalManager";
@@ -98,6 +99,13 @@ export const TableRow: React.FC<RowProps> = ({
           <img
             src={details.image}
             className="h-6 w-6 sm:h-8 sm:w-8 object-contain mr-1 sm:mr-4"
+            style={{ imageRendering: "pixelated" }}
+            alt=""
+            onError={(e) => {
+              if (details.type === "economies" && details.minigameCurrencyKey) {
+                e.currentTarget.src = MINIGAME_TOKEN_IMAGE_FALLBACK;
+              }
+            }}
           />
           <p className="py-0.5 text-xxs sm:text-sm">
             {`${isResource ? quantity : details.name}`}

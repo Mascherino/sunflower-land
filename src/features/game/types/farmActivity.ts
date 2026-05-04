@@ -38,7 +38,7 @@ import { GarbageName } from "./garbage";
 import { SeedName } from "./seeds";
 import { TreasureToolName, WorkbenchToolName } from "./tools";
 import { BeachBountyTreasure, TreasureName } from "./treasure";
-import { CompostName, ComposterName } from "./composters";
+import { CompostName, ComposterName, Worm } from "./composters";
 import { PurchaseableBait } from "./fishing";
 import { FlowerName, FlowerSeedName } from "./flowers";
 import { FactionShopItemName } from "./factionShop";
@@ -54,6 +54,13 @@ import { ProcessedResource } from "./processedFood";
 import { ChapterName, ChapterTicket } from "./chapters";
 import { TrackName } from "./tracks";
 import { BonusName } from "./bonuses";
+import type { FermentationCollectedActivity } from "./fermentation";
+import type { SpiceRackCollectedActivity } from "./spiceRack";
+import type { AgedFishName, PrimeAgedFishName } from "./fishing";
+
+export type AgingCollectedActivity =
+  | `${AgedFishName} Collected`
+  | `${PrimeAgedFishName} Collected`;
 
 export type CaughtEvent = `${InventoryItemName} Caught`;
 export type HarvestedEvent = `${FlowerName} Harvested`;
@@ -128,11 +135,15 @@ export type CraftedEvent = `${
   | PetShopItemName
   | RecipeCollectibleName
   | BumpkinItem} Crafted`;
+export type CraftingStartedEvent = `${
+  | RecipeCollectibleName
+  | BumpkinItem} Crafting Started`;
 export type ConsumableEvent = `${ConsumableName} Collected`;
 export type SellEvent = `${SellableName} Sold`;
 export type TreasureEvent = `${TreasureName} Dug`;
 export type ComposterCollectEvent = `${CompostName} Collected`;
 export type CompostedEvent = `${ComposterName} Collected`;
+export type WormCollectedEvent = `${Worm} Collected`;
 export type PlantGreenHouseFruitEvent = `${GreenHouseFruitName} Planted`;
 export type PlantGreenHouseCropEvent = `${GreenHouseCropName} Planted`;
 export type AnimalFeedMixedEvent =
@@ -150,17 +161,22 @@ export type FarmActivityName =
   | HarvestedEvent
   | BountiedEvent
   | CraftedEvent
+  | CraftingStartedEvent
   | ResourceBought
   | BiomeBought
   | "Obsidian Exchanged"
   | "FLOWER Exchanged"
   | "Gems Purchased"
+  | "Starter Pack Purchased"
   | ResourceNodeUpgradeEvent
   | `${PetResourceName} Fetched`
   | PlantGreenHouseFruitEvent
   | PlantGreenHouseCropEvent
   | CookEvent
   | ProcessedEvent
+  | FermentationCollectedActivity
+  | AgingCollectedActivity
+  | SpiceRackCollectedActivity
   | FedEvent
   | BuyEvent
   | CraftedEvent
@@ -191,6 +207,7 @@ export type FarmActivityName =
   | "Oil Drilled"
   | "Obsidian Collected"
   | "Potion Mixed"
+  | "Salt Harvested"
 
   // Misc
   | "Coins Spent"
@@ -214,6 +231,7 @@ export type FarmActivityName =
   | "Chore Skipped"
   | "Bud Placed"
   | ComposterCollectEvent
+  | WormCollectedEvent
   | "Crop Fertilised"
   | "Rod Casted"
   | "Farm Cheered"
@@ -237,18 +255,18 @@ export type FarmActivityName =
   | `${ChapterName} ${TrackName} Milestone Claimed`
   | `${BonusName} Bonus Claimed`
   | `${CrustaceanName} Caught with ${CrustaceanChum}`
-  | "Crafting Queue Cancelled";
+  | "Crafting Queue Cancelled"
+  | "Instant Gems Spent"
+  | "Instant Coins Spent";
 
 export function trackFarmActivity(
   activityName: FarmActivityName,
   farmAnalytics: GameState["farmActivity"],
   amount = new Decimal(1),
-) {
-  const previous = farmAnalytics || {};
-  const activityAmount = previous[activityName] || 0;
+): GameState["farmActivity"] {
+  const previous = { ...farmAnalytics };
+  const activityAmount = previous[activityName] ?? 0;
 
-  return {
-    ...previous,
-    [activityName]: amount.add(activityAmount).toNumber(),
-  };
+  previous[activityName] = Math.max(0, amount.add(activityAmount).toNumber());
+  return previous;
 }

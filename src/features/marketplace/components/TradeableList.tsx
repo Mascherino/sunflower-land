@@ -15,12 +15,10 @@ import lockIcon from "assets/icons/lock.png";
 
 import { TradeableDisplay } from "../lib/tradeables";
 import { Button } from "components/ui/Button";
-import { getBasketItems } from "features/island/hud/components/inventory/utils/inventory";
 import { NumberInput } from "components/ui/NumberInput";
 import { GameWallet } from "features/wallet/Wallet";
 import { formatNumber } from "lib/utils/formatNumber";
 import { InventoryItemName } from "features/game/types/game";
-import { BumpkinItem } from "features/game/types/bumpkin";
 import { TradeableSummary } from "./TradeableSummary";
 import { getTradeType } from "../lib/getTradeType";
 import { ResourceList } from "./ResourceList";
@@ -34,36 +32,39 @@ import { ITEM_DETAILS } from "features/game/types/images";
 import { calculateTradePoints } from "features/game/events/landExpansion/addTradePoints";
 import {
   isAccountTradedWithin90Days,
-  MachineState,
+  selectGameState,
 } from "features/game/lib/gameMachine";
 import { getDayOfYear } from "lib/utils/time";
-import { hasReputation, Reputation } from "features/game/lib/reputation";
+import {
+  hasReputation as checkPlayerReputation,
+  Reputation,
+} from "features/game/lib/reputation";
 import { RequiredReputation } from "features/island/hud/components/reputation/Reputation";
 import { SUNNYSIDE } from "assets/sunnyside";
 import { FaceRecognition } from "features/retreat/components/personhood/FaceRecognition";
 import { isFaceVerified } from "features/retreat/components/personhood/lib/faceRecognition";
+import { useNow } from "lib/utils/hooks/useNow";
 
-const _hasTradeReputation = (state: MachineState) =>
-  hasReputation({
-    game: state.context.state,
-    reputation: Reputation.Cropkeeper,
-  });
 type TradeableListItemProps = {
   authToken: string;
   display: TradeableDisplay;
   id: number;
+  count: number;
   floorPrice: number;
   highestOffer: number;
   onClose: () => void;
+  economy?: string;
 };
 
 export const TradeableListItem: React.FC<TradeableListItemProps> = ({
   authToken,
   display,
   id,
+  count,
   floorPrice,
   highestOffer,
   onClose,
+  economy,
 }) => {
   const { gameService } = useContext(Context);
   const [gameState] = useActor(gameService);
@@ -76,7 +77,13 @@ export const TradeableListItem: React.FC<TradeableListItemProps> = ({
   /** Number of identical listings to create (1–20). Only for resources */
   const [multiple, setMultiple] = useState(1);
 
-  const hasTradeReputation = useSelector(gameService, _hasTradeReputation);
+  const game = useSelector(gameService, selectGameState);
+  const now = useNow();
+  const hasTradeReputation = checkPlayerReputation({
+    game,
+    reputation: Reputation.Cropkeeper,
+    now,
+  });
   const accountTradedRecently = useSelector(gameService, (s) =>
     isAccountTradedWithin90Days(s.context),
   );
@@ -107,38 +114,9 @@ export const TradeableListItem: React.FC<TradeableListItemProps> = ({
     isTradeResource(display.name as InventoryItemName) &&
     display.type === "collectibles";
 
-  const hasReputation = hasTradeReputation || dailyListings < 1;
-
-  // Check inventory count
-  const getCount = () => {
-    switch (display.type) {
-      case "collectibles":
-        if (isResource) {
-          return (
-            getBasketItems(state.inventory)[
-              display.name as InventoryItemName
-            ]?.toNumber() || 0
-          );
-        }
-
-        return (
-          state.inventory[display.name as InventoryItemName]?.toNumber() || 0
-        );
-      case "buds":
-        return state.buds?.[id] ? 1 : 0;
-      case "pets":
-        return state.pets?.nfts?.[id] ? 1 : 0;
-      case "wearables":
-        return state.wardrobe[display.name as BumpkinItem] || 0;
-
-      default:
-        return 0;
-    }
-  };
+  const hasReputationOrDailyQuota = hasTradeReputation || dailyListings < 1;
 
   const getAvailable = () => {
-    const count = getCount();
-
     // Subtract the listed amount
     const totalListed = Object.values(state.trades.listings ?? {}).reduce(
       (acc, listing) => {
@@ -180,6 +158,7 @@ export const TradeableListItem: React.FC<TradeableListItemProps> = ({
         signature,
         quantity: Math.max(1, quantity),
         multiple,
+        ...(display.type === "economies" && economy ? { economy } : {}),
       },
       authToken,
     });
@@ -267,7 +246,7 @@ export const TradeableListItem: React.FC<TradeableListItemProps> = ({
 
     let tax = new Decimal(price).mul(MARKETPLACE_TAX);
     if (isResource) {
-      tax = getResourceTax({ game: state }).mul(price);
+      tax = getResourceTax({ game: state, now }).mul(price);
     }
 
     return (
@@ -342,7 +321,7 @@ export const TradeableListItem: React.FC<TradeableListItemProps> = ({
           })}
         </Label>
 
-        {!hasReputation && (
+        {!hasReputationOrDailyQuota && (
           <RequiredReputation reputation={Reputation.Cropkeeper} />
         )}
       </div>

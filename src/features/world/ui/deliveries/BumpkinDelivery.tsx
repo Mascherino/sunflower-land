@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { Label } from "components/ui/Label";
 import { SUNNYSIDE } from "assets/sunnyside";
 import { Context } from "features/game/GameProvider";
-import { useActor, useSelector } from "@xstate/react";
+import { useActor } from "@xstate/react";
 import { Airdrop, GameState, Order } from "features/game/types/game";
 import { Button } from "components/ui/Button";
 
@@ -36,7 +36,10 @@ import {
   isCoinNPC,
   isTicketNPC,
 } from "features/island/delivery/lib/delivery";
-import { getChapterTicket } from "features/game/types/chapters";
+import {
+  getChapterTicket,
+  getCurrentChapter,
+} from "features/game/types/chapters";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { useNow } from "lib/utils/hooks/useNow";
 import {
@@ -59,7 +62,6 @@ import { FriendshipInfoPanel } from "components/ui/FriendshipInfoPanel";
 import { getActiveCalendarEvent } from "features/game/types/calendar";
 import { RequiredReputation } from "features/island/hud/components/reputation/Reputation";
 import { hasReputation, Reputation } from "features/game/lib/reputation";
-import { MachineState } from "features/game/lib/gameMachine";
 import { getCountAndType } from "features/island/hud/components/inventory/utils/inventory";
 import { getChapterTaskPoints } from "features/game/types/tracks";
 import chapterPointsIcon from "assets/icons/red_medal_short.webp";
@@ -118,12 +120,14 @@ const OrderCard: React.FC<{
     ) {
       if (areBumpkinsOnHoliday(order.createdAt)) {
         return 0;
-      } else {
-        return getChapterTaskPoints({
-          task: "coinDelivery",
-          points: 10,
-        });
       }
+      if (getCurrentChapter(order.createdAt) !== getCurrentChapter(now)) {
+        return 0;
+      }
+      return getChapterTaskPoints({
+        task: "coinDelivery",
+        points: 10,
+      });
     }
     return getChapterTaskPoints({
       task: "delivery",
@@ -700,12 +704,6 @@ interface Props {
   npc: NPCName;
 }
 
-const _hasReputation = (state: MachineState) =>
-  hasReputation({
-    game: state.context.state,
-    reputation: Reputation.Cropkeeper,
-  });
-
 export const BumpkinDelivery: React.FC<Props> = ({ onClose, npc }) => {
   const { t } = useAppTranslation();
   const { gameService } = useContext(Context);
@@ -762,7 +760,11 @@ export const BumpkinDelivery: React.FC<Props> = ({ onClose, npc }) => {
   };
 
   const requiresReputation = GOBLINS_REQUIRING_REPUTATION.includes(npc);
-  const hasCropkeeperReputation = useSelector(gameService, _hasReputation);
+  const hasCropkeeperReputation = hasReputation({
+    game,
+    reputation: Reputation.Cropkeeper,
+    now,
+  });
 
   const dialogue = npcDialogues[npc] || defaultDialogue;
   const intro = useRandomItem(dialogue.intro);

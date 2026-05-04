@@ -24,7 +24,11 @@ import {
 import { BoostTreasure } from "./treasure";
 import { MarineMarvelName, OldFishName } from "./fishing";
 import { ChapterBanner } from "./chapters";
-import { EpicFlowerName, MutantFlowerName } from "./flowers";
+import {
+  EpicFlowerName,
+  MutantFlowerName,
+  PlaceableFlowerName,
+} from "./flowers";
 import { translate } from "lib/i18n/translate";
 import { FactionShopCollectibleName } from "./factionShop";
 import { BED_FARMHAND_COUNT } from "./beds";
@@ -212,6 +216,7 @@ export type CollectibleName =
   | OldFishName
   | MegaStoreCollectibleName
   | EpicFlowerName
+  | PlaceableFlowerName
   | FactionBanner
   | "Lifetime Farmer Banner"
   | FactionShopCollectibleName
@@ -1143,7 +1148,7 @@ export const COLLECTIBLES_DIMENSIONS: Record<CollectibleName, Dimensions> = {
   "Speed Chicken": { width: 1, height: 1 },
   "Ayam Cemani": { width: 1, height: 1 },
   "El Pollo Veloz": { width: 1, height: 1 },
-  "Banana Chicken": { width: 1, height: 2 },
+  "Banana Chicken": { width: 1, height: 1 },
   "Crim Peckster": { width: 1, height: 1 },
   "Knight Chicken": { width: 1, height: 1 },
   "Pharaoh Chicken": { width: 1, height: 1 },
@@ -1300,6 +1305,14 @@ export const COLLECTIBLES_DIMENSIONS: Record<CollectibleName, Dimensions> = {
   "Poseidon's Throne": { width: 3, height: 3 },
   "Fish Kite": { width: 1, height: 1 },
 
+  // Salt Awakening
+  "Crystal Altar": { width: 3, height: 2 },
+  "Dino Egg Trophy": { width: 2, height: 1 },
+  "Salt Lamp": { width: 1, height: 1 },
+  "Salt Crystal Bed": { width: 1, height: 1 },
+  "World Map Rug": { width: 3, height: 2 },
+  "Ripped Salt Bag": { width: 1, height: 1 },
+
   // Spring Blossom SFTs
   "Flower Cart": { width: 2, height: 2 },
   "Blossom Royale": { width: 2, height: 2 },
@@ -1315,10 +1328,62 @@ export const COLLECTIBLES_DIMENSIONS: Record<CollectibleName, Dimensions> = {
   "Tea Rug": { width: 3, height: 3 },
   "Green Field Rug": { width: 3, height: 3 },
 
-  // Flowers
+  // Flowers (epic)
   "Prism Petal": { width: 1, height: 1 },
   "Celestial Frostbloom": { width: 1, height: 1 },
   "Primula Enigma": { width: 1, height: 1 },
+
+  // Placeable flowers
+  "Red Pansy": { width: 1, height: 1 },
+  "Yellow Pansy": { width: 1, height: 1 },
+  "Purple Pansy": { width: 1, height: 1 },
+  "White Pansy": { width: 1, height: 1 },
+  "Blue Pansy": { width: 1, height: 1 },
+  "Red Cosmos": { width: 1, height: 1 },
+  "Yellow Cosmos": { width: 1, height: 1 },
+  "Purple Cosmos": { width: 1, height: 1 },
+  "White Cosmos": { width: 1, height: 1 },
+  "Blue Cosmos": { width: 1, height: 1 },
+  "Red Balloon Flower": { width: 1, height: 1 },
+  "Yellow Balloon Flower": { width: 1, height: 1 },
+  "Purple Balloon Flower": { width: 1, height: 1 },
+  "White Balloon Flower": { width: 1, height: 1 },
+  "Blue Balloon Flower": { width: 1, height: 1 },
+  "Red Daffodil": { width: 1, height: 1 },
+  "Yellow Daffodil": { width: 1, height: 1 },
+  "Purple Daffodil": { width: 1, height: 1 },
+  "White Daffodil": { width: 1, height: 1 },
+  "Blue Daffodil": { width: 1, height: 1 },
+  "Red Carnation": { width: 1, height: 1 },
+  "Yellow Carnation": { width: 1, height: 1 },
+  "Purple Carnation": { width: 1, height: 1 },
+  "White Carnation": { width: 1, height: 1 },
+  "Blue Carnation": { width: 1, height: 1 },
+  "Red Lotus": { width: 1, height: 1 },
+  "Yellow Lotus": { width: 1, height: 1 },
+  "Purple Lotus": { width: 1, height: 1 },
+  "White Lotus": { width: 1, height: 1 },
+  "Blue Lotus": { width: 1, height: 1 },
+  "Red Edelweiss": { width: 1, height: 1 },
+  "Yellow Edelweiss": { width: 1, height: 1 },
+  "Purple Edelweiss": { width: 1, height: 1 },
+  "White Edelweiss": { width: 1, height: 1 },
+  "Blue Edelweiss": { width: 1, height: 1 },
+  "Red Gladiolus": { width: 1, height: 1 },
+  "Yellow Gladiolus": { width: 1, height: 1 },
+  "Purple Gladiolus": { width: 1, height: 1 },
+  "White Gladiolus": { width: 1, height: 1 },
+  "Blue Gladiolus": { width: 1, height: 1 },
+  "Red Lavender": { width: 1, height: 1 },
+  "Yellow Lavender": { width: 1, height: 1 },
+  "Purple Lavender": { width: 1, height: 1 },
+  "White Lavender": { width: 1, height: 1 },
+  "Blue Lavender": { width: 1, height: 1 },
+  "Red Clover": { width: 1, height: 1 },
+  "Yellow Clover": { width: 1, height: 1 },
+  "Purple Clover": { width: 1, height: 1 },
+  "White Clover": { width: 1, height: 1 },
+  "Blue Clover": { width: 1, height: 1 },
 
   // Clash of Factions
   "Turbo Sprout": { width: 2, height: 2 },
@@ -1420,6 +1485,23 @@ export const COLLECTIBLES_DIMENSIONS: Record<CollectibleName, Dimensions> = {
   Squirrel: { width: 2, height: 1 },
   Macaw: { width: 1, height: 1 },
   Butterfly: { width: 1, height: 1 },
+  "Salt Sculpture": { width: 3, height: 3 },
+
+  Pufferfish: { width: 1, height: 1 },
+  "Fat Crab": { width: 1, height: 1 },
+  "Navigation Table": { width: 2, height: 1 },
+  "Royal Crab Pot": { width: 2, height: 2 },
+  "Crab House": { width: 3, height: 2 },
+  "Speed Trap": { width: 1, height: 1 },
+
+  "Flamingo Chicken": { width: 1, height: 1 },
+  "Salt Crystal Flower": { width: 1, height: 1 },
+  "Spa Cow": { width: 2, height: 1 },
+  "Spa Sheep": { width: 2, height: 1 },
+  "Deep Sea Pig": { width: 2, height: 2 },
+  "Deep Sea Slug": { width: 2, height: 2 },
+  "Crystal Shrimp": { width: 2, height: 2 },
+  "Salt Awakening Banner": { width: 1, height: 1 },
 
   "Fox Shrine": { width: 1, height: 1 },
   "Boar Shrine": { width: 1, height: 1 },
@@ -1488,7 +1570,7 @@ export const COLLECTIBLES_DIMENSIONS: Record<CollectibleName, Dimensions> = {
   "Frozen Cow": { width: 2, height: 1 },
   "Frozen Sheep": { width: 2, height: 1 },
   "Summer Chicken": { width: 1, height: 1 },
-  Jellyfish: { width: 2, height: 2 },
+  Jellyfish: { width: 2, height: 1 },
   Quarry: { width: 2, height: 2 },
   "Obsidian Turtle": { width: 1, height: 1 },
   "Winter Guardian": { width: 2, height: 2 },
@@ -1506,7 +1588,7 @@ export const COLLECTIBLES_DIMENSIONS: Record<CollectibleName, Dimensions> = {
   "Dr Cow": { width: 2, height: 1 },
   "Nurse Sheep": { width: 2, height: 1 },
   Lunalist: { width: 1, height: 1 },
-  "Pink Dolphin": { width: 2, height: 2 },
+  "Pink Dolphin": { width: 2, height: 1 },
   "Giant Kale": { width: 2, height: 2 },
 
   "Big Apple": { width: 2, height: 2 },

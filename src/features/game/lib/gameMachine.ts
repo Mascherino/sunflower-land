@@ -54,6 +54,7 @@ import { buySFL } from "../actions/buySFL";
 import { PlaceableLocation } from "../types/collectibles";
 import {
   getIntroductionRead,
+  getReferralsAnnouncementLastRead,
   getVipRead,
 } from "features/announcements/announcementsStorage";
 import { getStarterOfferShown } from "./starterOfferStorage";
@@ -66,7 +67,6 @@ import {
   buyBlockBucks,
   buyBlockBucksMATIC,
 } from "../actions/buyGems";
-import { getSessionId } from "lib/blockchain/Session";
 import { BumpkinItem } from "../types/bumpkin";
 import { getAuctionResults } from "../actions/getAuctionResults";
 import { AuctionResults } from "./auctionMachine";
@@ -81,7 +81,6 @@ import {
   sellMarketResourceRequest,
 } from "../actions/sellMarketResource";
 import { setCachedMarketPrices } from "features/world/ui/market/lib/marketCache";
-import { MinigameName } from "../types/minigames";
 import { OFFLINE_FARM } from "./landData";
 import { isValidRedirect } from "features/portal/lib/portalUtil";
 import {
@@ -99,7 +98,7 @@ import { TRANSACTION_SIGNATURES, TransactionName } from "../types/transactions";
 import { getKeys } from "lib/object";
 import { preloadHotNow } from "features/marketplace/components/MarketplaceHotNow";
 import { getLastTemperateSeasonStartedAt } from "./temperateSeason";
-import { hasVipAccess } from "./vipAccess";
+import { hasLifetimeFarmerBanner, hasVipAccess } from "./vipAccess";
 import { getActiveCalendarEvent, SeasonalEventName } from "../types/calendar";
 import { getConnection, getChainId } from "@wagmi/core";
 import { config } from "features/wallet/WalletProvider";
@@ -111,6 +110,7 @@ import { hasFeatureAccess } from "lib/flags";
 import { isDailyRewardReady } from "../events/landExpansion/claimDailyReward";
 import { getDailyRewardLastAcknowledged } from "../components/DailyReward";
 import { LanguageCode } from "lib/i18n/dictionaries/language";
+import { getBumpkinLevel } from "./level";
 
 // Run at startup in case removed from query params
 const portalName = new URLSearchParams(window.location.search).get("portal");
@@ -334,7 +334,6 @@ export type BlockchainEvent =
   | SellMarketResourceEvent
   | { type: "REFRESH" }
   | { type: "ACKNOWLEDGE" }
-  | { type: "EXPIRED" }
   | { type: "CONTINUE"; id?: string }
   | { type: "RESET" }
   | { type: "DEPOSIT" }
@@ -366,7 +365,16 @@ export type BlockchainEvent =
   | { type: StateMachineVisitEffectName }
   | Effect; // Test only
 
-const playingEventHandler = (eventName: string) => {
+type PlayingEventHandlerOptions = {
+  /** When true (own farm only), queue an autosave as soon as the event is applied. */
+  immediateSave?: boolean;
+};
+
+const playingEventHandler = (
+  eventName: string,
+  options?: PlayingEventHandlerOptions,
+) => {
+  const immediateSave = options?.immediateSave === true;
   return {
     [eventName]: [
       {
@@ -395,6 +403,7 @@ const playingEventHandler = (eventName: string) => {
         ),
       },
       {
+        ...(immediateSave ? { target: "autosaving" as const } : {}),
         actions: assign(
           (context: Context, event: PlayingEvent | VisitingEvent) => {
             const createdAt = new Date();
@@ -452,6 +461,16 @@ const GAME_EVENT_HANDLERS: TransitionsConfig<Context, BlockchainEvent> =
     {},
   );
 
+/** Same as `GAME_EVENT_HANDLERS` but enters `autosaving` after each successful event (own farm / `playing` only). */
+const PLAYING_GAME_EVENT_HANDLERS: TransitionsConfig<Context, BlockchainEvent> =
+  Object.keys(PLAYING_EVENTS).reduce(
+    (events, eventName) => ({
+      ...events,
+      ...playingEventHandler(eventName), // previously true, set to false for now
+    }),
+    {},
+  );
+
 const VISITING_EVENT_HANDLERS: TransitionsConfig<Context, BlockchainEvent> =
   Object.keys(VISITING_EVENTS).reduce(
     (events, eventName) => ({
@@ -461,37 +480,47 @@ const VISITING_EVENT_HANDLERS: TransitionsConfig<Context, BlockchainEvent> =
     {},
   );
 
-const PLACEMENT_EVENT_HANDLERS: TransitionsConfig<Context, BlockchainEvent> = [
-  ...Object.keys(PLACEMENT_EVENTS),
-  "biome.bought",
-  "biome.applied",
-].reduce(
-  (events, eventName) => ({
-    ...events,
-    [eventName]: {
-      actions: assign((context: Context, event: PlacementEvent) => {
-        const createdAt = new Date();
+function createPlacementEventHandlers(
+  immediateSave: boolean,
+): TransitionsConfig<Context, BlockchainEvent> {
+  return [
+    ...Object.keys(PLACEMENT_EVENTS),
+    "biome.bought",
+    "biome.applied",
+  ].reduce(
+    (events, eventName) => ({
+      ...events,
+      [eventName]: {
+        ...(immediateSave ? { target: "autosaving" as const } : {}),
+        actions: assign((context: Context, event: PlacementEvent) => {
+          const createdAt = new Date();
 
-        return {
-          state: processEvent({
-            state: context.state as GameState,
-            action: event,
-            farmId: context.farmId,
-            createdAt: createdAt.getTime(),
-          }) as GameState,
-          actions: [
-            ...context.actions,
-            {
-              ...event,
-              createdAt,
-            },
-          ],
-        };
-      }),
-    },
-  }),
-  {},
-);
+          return {
+            state: processEvent({
+              state: context.state as GameState,
+              action: event,
+              farmId: context.farmId,
+              createdAt: createdAt.getTime(),
+            }) as GameState,
+            actions: [
+              ...context.actions,
+              {
+                ...event,
+                createdAt,
+              },
+            ],
+          };
+        }),
+      },
+    }),
+    {},
+  );
+}
+
+const PLACEMENT_EVENT_HANDLERS = createPlacementEventHandlers(false); // previously true, set to false for now
+
+const LANDSCAPING_PLACEMENT_EVENT_HANDLERS =
+  createPlacementEventHandlers(false);
 
 const EFFECT_EVENT_HANDLERS: TransitionsConfig<Context, BlockchainEvent> =
   getKeys(STATE_MACHINE_EFFECTS).reduce(
@@ -785,6 +814,7 @@ export type BlockchainState = {
     | "gems"
     | "communityCoin"
     | "referralRewards"
+    | "referrals"
     | "dailyReward"
     | "playing"
     | "autosaving"
@@ -837,6 +867,10 @@ export type StateValues = BlockchainState[StateKeys];
 
 export type MachineState = State<Context, BlockchainEvent, BlockchainState>;
 
+/** Stable selectors for `useSelector` with `@xstate/react` (constant function identity). */
+export const selectGameState = (state: MachineState) => state.context.state;
+export const selectVerified = (state: MachineState) => state.context.verified;
+
 export type MachineInterpreter = Interpreter<
   Context,
   any,
@@ -872,10 +906,6 @@ export const saveGame = async (
     transactionId: context.transactionId as string,
     state: context.state,
   });
-
-  // This gives the UI time to indicate that a save is taking place both when clicking save
-  // and when autosaving
-  await new Promise((res) => setTimeout(res, 500));
 
   return {
     saveAt,
@@ -1046,6 +1076,7 @@ export function startGame(authContext: AuthContext) {
                 prices: response.prices,
                 apiKey: response.apiKey,
                 accountTradedAt: response.accountTradedAt,
+                totalHelpedToday: response.totalHelpedToday,
               };
             },
             onDone: [
@@ -1084,9 +1115,8 @@ export function startGame(authContext: AuthContext) {
           id: "portalling",
           invoke: {
             src: async (context) => {
-              const portalId = portalName as MinigameName;
               const { token } = await portal({
-                portalId,
+                portalId: portalName as string,
                 token: authContext.user.rawToken as string,
                 farmId: context.farmId,
               });
@@ -1203,7 +1233,6 @@ export function startGame(authContext: AuthContext) {
                 visitorState: undefined,
                 visitorNftId: undefined,
                 hasHelpedPlayerToday: undefined,
-                totalHelpedToday: undefined,
                 state: context.visitorState,
                 farmId: context.visitorId,
                 nftId: context.visitorNftId,
@@ -1306,7 +1335,11 @@ export function startGame(authContext: AuthContext) {
                 // Wow, they haven't seen the VIP promo in 1 month
                 const readAt = getVipRead();
                 if (
-                  !hasVipAccess({ game: context.state, type: "full" }) &&
+                  !hasVipAccess({
+                    game: context.state,
+                    type: "full",
+                    now: Date.now(),
+                  }) &&
                   (!readAt ||
                     readAt.getTime() <
                       Date.now() - 1 * 31 * 24 * 60 * 60 * 1000)
@@ -1320,6 +1353,7 @@ export function startGame(authContext: AuthContext) {
                 const isExpiring =
                   vip &&
                   vip.expiresAt &&
+                  !hasLifetimeFarmerBanner(context.state) &&
                   vip.expiresAt < Date.now() + 3 * 24 * 60 * 60 * 1000 &&
                   // Haven't read since expiry approached
                   (readAt?.getTime() ?? 0) <
@@ -1330,6 +1364,7 @@ export function startGame(authContext: AuthContext) {
                 const hasExpired =
                   vip &&
                   vip.expiresAt &&
+                  !hasLifetimeFarmerBanner(context.state) &&
                   vip.expiresAt < Date.now() &&
                   // Hasn't read since expired
                   (readAt?.getTime() ?? 0) < vip.expiresAt;
@@ -1344,6 +1379,24 @@ export function startGame(authContext: AuthContext) {
               target: "referralRewards",
               cond: (context) => {
                 return !!context.state.referrals?.rewards;
+              },
+            },
+
+            {
+              target: "referrals",
+              cond: (context) => {
+                const experience = context.state.bumpkin?.experience ?? 0;
+                const level = getBumpkinLevel(experience);
+
+                // Only show once the player is level 10 or above
+                if (level < 10) return false;
+
+                const lastRead = getReferralsAnnouncementLastRead();
+                const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+                // Show if never shown, or last shown more than 30 days ago
+                if (!lastRead) return true;
+                return lastRead.getTime() < Date.now() - thirtyDaysMs;
               },
             },
 
@@ -1721,41 +1774,9 @@ export function startGame(authContext: AuthContext) {
         playing: {
           id: "playing",
           entry: "clearTransactionId",
-          invoke: {
-            /**
-             * An in game loop that checks if Blockchain becomes out of sync
-             * It is a rare event but it saves a user from making too much progress that would not be synced
-             */
-            src: (context) => (cb) => {
-              const interval = setInterval(
-                async () => {
-                  if (!context.farmAddress) return;
-
-                  const sessionID = await getSessionId(
-                    context.farmId as number,
-                  );
-
-                  if (sessionID !== context.sessionId) {
-                    cb("EXPIRED");
-                  }
-                },
-                1000 * 60 * 2,
-              );
-
-              return () => {
-                clearInterval(interval);
-              };
-            },
-            onError: [
-              {
-                target: "error",
-                actions: "assignErrorMessage",
-              },
-            ],
-          },
           on: {
             ...EFFECT_EVENT_HANDLERS,
-            ...GAME_EVENT_HANDLERS,
+            ...PLAYING_GAME_EVENT_HANDLERS,
             ...PLACEMENT_EVENT_HANDLERS,
             UPDATE_USERNAME: {
               actions: assign((context, event) => ({
@@ -1776,12 +1797,6 @@ export function startGame(authContext: AuthContext) {
             },
             REVEAL: {
               target: "revealing",
-            },
-            EXPIRED: {
-              target: "error",
-              actions: assign((_) => ({
-                errorCode: ERRORS.SESSION_EXPIRED as ErrorCode,
-              })),
             },
             RESET: {
               target: "refreshing",
@@ -2549,6 +2564,13 @@ export function startGame(authContext: AuthContext) {
             ],
           },
         },
+        referrals: {
+          on: {
+            ACKNOWLEDGE: {
+              target: "notifying",
+            },
+          },
+        },
 
         dailyReward: {
           on: {
@@ -2599,7 +2621,7 @@ export function startGame(authContext: AuthContext) {
             ],
           },
           on: {
-            ...PLACEMENT_EVENT_HANDLERS,
+            ...LANDSCAPING_PLACEMENT_EVENT_HANDLERS,
             SAVE: {
               actions: send(
                 (context) =>
@@ -2714,6 +2736,7 @@ export function startGame(authContext: AuthContext) {
           apiKey: (_, event) => event.data.apiKey,
           method: (_, event) => event.data.method,
           accountTradedAt: (_, event) => event.data.accountTradedAt,
+          totalHelpedToday: (_, event) => event.data.totalHelpedToday,
         }),
         setTransactionId: assign<Context, any>({
           transactionId: () => randomID(),

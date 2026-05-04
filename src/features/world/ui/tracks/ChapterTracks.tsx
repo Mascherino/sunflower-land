@@ -9,7 +9,7 @@ import { useNow } from "lib/utils/hooks/useNow";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Label } from "components/ui/Label";
 import { useGame } from "features/game/GameProvider";
-import { hasVipAccess } from "features/game/lib/vipAccess";
+import { useVipAccess } from "lib/utils/hooks/useVipAccess";
 import { Button } from "components/ui/Button";
 import coinsIcon from "assets/icons/coins.webp";
 import flowerIcon from "assets/icons/flower_token.webp";
@@ -128,7 +128,7 @@ export const ChapterTracks: React.FC = () => {
     }, 100);
   }, []);
 
-  const hasVip = hasVipAccess({ game: state });
+  const hasVip = useVipAccess({ game: state });
 
   const chapter = getCurrentChapter(now);
   const chapterTicket = getChapterTicket(now);
@@ -433,10 +433,9 @@ export const TrackItem: React.FC<{
 
   const totalClaimed = track === "premium" ? progress.premium : progress.free;
   const isClaimed = totalClaimed >= number;
+  const hasReachedPoints = progress.points >= milestone.points;
   const canClaim =
-    progress.milestone.number > number &&
-    !isClaimed &&
-    totalClaimed === number - 1;
+    hasReachedPoints && !isClaimed && totalClaimed === number - 1;
 
   return (
     <div
@@ -497,6 +496,7 @@ export const MilestoneDetails: React.FC<{
   const { gameState, gameService } = useGame();
   const state = gameState.context.state;
   const progress = getTrackProgress({ state, chapter });
+  const hasVip = useVipAccess({ game: state });
   if (!details) return null;
 
   const pointsProgress = Math.min(progress.points, details.points);
@@ -504,11 +504,11 @@ export const MilestoneDetails: React.FC<{
   const claimed =
     details.track === "premium" ? progress.premium : progress.free;
 
-  const needsVip =
-    details.track === "premium" && !hasVipAccess({ game: state });
+  const needsVip = details.track === "premium" && !hasVip;
+  const hasReachedPoints = progress.points >= details.points;
   const canClaim =
     !needsVip &&
-    progress.milestone.number > details.milestone &&
+    hasReachedPoints &&
     claimed < details.milestone &&
     claimed === details.milestone - 1;
 
@@ -579,7 +579,7 @@ export const ChapterTracksPreview: React.FC = () => {
     | undefined
   >();
 
-  const hasVip = hasVipAccess({ game: state });
+  const hasVip = useVipAccess({ game: state });
 
   const chapter = getCurrentChapter(now);
   const chapterTicket = getChapterTicket(now);

@@ -42,8 +42,8 @@ const HOW_TO_OBTAIN_I18N_KEY: Record<
   mutants: "season.codex.howToObtain.mutants",
   track: "season.codex.howToObtain.track",
   auctioneer: "season.codex.howToObtain.auctioneer",
-  vipChest: "season.codex.howToObtain.vipChest",
   vipGift: "season.codex.howToObtain.vipGift",
+  other: "season.codex.howToObtain.unknown",
 };
 
 const ChapterCollectionItemDetailContent: React.FC<ContentProps> = ({
@@ -103,7 +103,7 @@ const ChapterCollectionItemDetailContent: React.FC<ContentProps> = ({
         <div className="flex items-center gap-1">
           <SquareIcon icon={image} width={9} />
           <Label type="transparent" className="ml-2">
-            <span className="text-xs whitespace-nowrap">{itemName}</span>
+            <span className="text-xs">{itemName}</span>
           </Label>
         </div>
 

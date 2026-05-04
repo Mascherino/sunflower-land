@@ -19,8 +19,8 @@ const INNER_CANVAS_WIDTH = 13.7;
 
 export interface BoxProps {
   hideCount?: boolean;
-  image?: any;
-  secondaryImage?: any;
+  image?: string;
+  secondaryImage?: string;
   isSelected?: boolean;
   count?: Decimal;
   countLabelType?: LabelType;
@@ -59,6 +59,8 @@ export interface BoxProps {
   };
   onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDrop?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onPointerDown?: (e: React.PointerEvent<HTMLDivElement>) => void;
+  style?: React.CSSProperties;
   /**
    * Custom content to show inside the box (e.g. Bumpkin).
    * When provided, this is shown instead of the image.
@@ -87,6 +89,8 @@ export const Box: React.FC<BoxProps> = ({
   progress,
   onDragOver,
   onDrop,
+  onPointerDown,
+  style,
   children,
 }) => {
   const [isHover, setIsHover] = useState(false);
@@ -115,6 +119,8 @@ export const Box: React.FC<BoxProps> = ({
       className={`relative ${className}`}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
+      onPointerDown={onPointerDown}
+      style={style}
     >
       <div
         className={classNames("bg-brown-600 relative", {

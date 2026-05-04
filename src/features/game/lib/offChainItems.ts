@@ -30,6 +30,9 @@ import { BUILDINGS } from "../types/buildings";
 import { FLOWERS } from "../types/flowers";
 import { WORKBENCH_MONUMENTS } from "../types/monuments";
 import { getKeys } from "lib/object";
+import { PICKLED_CROPS } from "../types/pickled";
+import { FERMENTATION_PRODUCTS } from "../types/fermentationProducts";
+import { SPICE_RACK_PRODUCTS } from "../types/spiceRackProducts";
 
 export const OFFCHAIN_ITEMS = new Set<InventoryItemName>([
   "Mark",
@@ -72,6 +75,9 @@ export const OFFCHAIN_ITEMS = new Set<InventoryItemName>([
   ),
   ...HOURGLASSES,
   ...CRUSTACEANS,
+  ...PICKLED_CROPS,
+  ...FERMENTATION_PRODUCTS,
+  ...SPICE_RACK_PRODUCTS,
   "Cheer",
   "Obsidian Shrine",
   "Time Warp Totem",
@@ -84,4 +90,9 @@ export const OFFCHAIN_ITEMS = new Set<InventoryItemName>([
   "Holiday Ticket 2025",
   "Town Sign",
   "Acorn",
+  "CluckCoin",
+  "April Fools Token 2026",
+  "April Fools Ticket 2026",
+  "Salt Sculpture",
+  "Skill Reset Ticket",
 ]);

@@ -106,11 +106,15 @@ export const CHAPTER_TICKET_BOOST_ITEMS: Record<
     rare: "Pet Specialist Pants",
     epic: "Pet Specialist Shirt",
   },
-  // TODO: Add Crabs and Traps items
   "Crabs and Traps": {
     basic: "Fish Hook Hat",
     rare: "Fish Hook Vest",
     epic: "Fish Hook Waders",
+  },
+  "Salt Awakening": {
+    basic: "Spa Hat",
+    rare: "Spa Robe",
+    epic: "Spa Slippers",
   },
 };
 

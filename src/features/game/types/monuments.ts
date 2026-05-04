@@ -14,7 +14,8 @@ type HelpLimitMonumentName =
 type MegastoreMonumentName =
   | "Teamwork Monument"
   | "Cornucopia"
-  | "Poseidon's Throne";
+  | "Poseidon's Throne"
+  | "Crystal Altar";
 
 export type WorkbenchMonumentName =
   | HelpLimitMonumentName
@@ -62,6 +63,12 @@ export const MEGASTORE_MONUMENTS: Record<
   },
   "Poseidon's Throne": {
     name: "Poseidon's Throne",
+    description: "",
+    coins: 0,
+    ingredients: {},
+  },
+  "Crystal Altar": {
+    name: "Crystal Altar",
     description: "",
     coins: 0,
     ingredients: {},
@@ -173,6 +180,7 @@ export const REQUIRED_CHEERS: Record<MonumentName, number> = {
   "Teamwork Monument": 100,
   Cornucopia: 1000,
   "Poseidon's Throne": 2000,
+  "Crystal Altar": 1000,
 };
 
 export type VillageProjectName = Exclude<
@@ -275,6 +283,9 @@ export function getHelpRequired({ game }: { game: GameState }) {
   const petHouseCollectibles = game.petHouse?.pets ?? {};
   const clutterLocations = game.socialFarming.clutter?.locations;
   const pets = game.pets;
+  const isPetHousePlaced = !!game.buildings["Pet House"]?.some(
+    (b) => !!b.coordinates,
+  );
 
   // Reduce clutter to get a count of each type
   const clutter = getKeys(clutterLocations ?? {}).reduce(
@@ -361,7 +372,7 @@ export function getHelpRequired({ game }: { game: GameState }) {
         return acc;
       }
 
-      if (isPetPlacedOnPetHouse) {
+      if (isPetPlacedOnPetHouse && isPetHousePlaced) {
         acc.pendingPetHouseCommonPets = [
           ...acc.pendingPetHouseCommonPets,
           name,
@@ -403,7 +414,7 @@ export function getHelpRequired({ game }: { game: GameState }) {
           return acc;
         }
 
-        if (pet.location === "petHouse") {
+        if (pet.location === "petHouse" && isPetHousePlaced) {
           acc.pendingPetHouseNftPets = [
             ...acc.pendingPetHouseNftPets,
             pet.name,

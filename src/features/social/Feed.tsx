@@ -18,6 +18,7 @@ import { getRelativeTime } from "lib/utils/time";
 import promote from "assets/icons/promote.webp";
 import followIcon from "assets/icons/follow.webp";
 import helpIcon from "assets/icons/help.webp";
+import cheer from "assets/icons/cheer.webp";
 
 import { MachineState } from "features/game/lib/gameMachine";
 import { Context } from "features/game/GameProvider";
@@ -48,6 +49,8 @@ import { HelpInfoPopover } from "./components/HelpInfoPopover";
 import { SearchBar } from "./components/SearchBar";
 import { Detail } from "./actions/getFollowNetworkDetails";
 import { useNow } from "lib/utils/hooks/useNow";
+import Decimal from "decimal.js-light";
+import { getHelpLimit } from "features/game/types/monuments";
 
 type Props = {
   type: "world" | "local";
@@ -56,10 +59,38 @@ type Props = {
   setShowFeed: (showFeed: boolean) => void;
 };
 
+const SERVER_DISPLAY_NAMES: Record<string, string> = {
+  sunflorea_bliss: "Bliss",
+  sunflorea_dream: "Dream",
+  sunflorea_oasis: "Plaza",
+  sunflorea_brazil: "Brazil",
+  sunflorea_magic: "Magic",
+  sunflorea_kale: "Kale",
+  sunflorea_flower: "Flower",
+  sunflorea_stream: "Stream",
+  "Bumpkin Plaza": "Plaza",
+  "Bumpkin Bazaar": "Plaza",
+};
+
+const formatServerName = (server: string) =>
+  SERVER_DISPLAY_NAMES[server] ??
+  server
+    .replace(/^sunflorea[_\s-]*/i, "")
+    .replace(/^bumpkin[_\s-]*/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
 const _username = (state: MachineState) =>
   (state.context.visitorState ?? state.context.state).username;
 const _farmId = (state: MachineState) =>
   state.context.visitorId ?? state.context.farmId;
+const _cheersAvailable = (state: MachineState) =>
+  (state.context.visitorState ?? state.context.state).inventory["Cheer"] ??
+  new Decimal(0);
+const _totalHelpedToday = (state: MachineState) =>
+  state.context.totalHelpedToday;
+const _game = (state: MachineState) =>
+  state.context.visitorState ?? state.context.state;
 const _token = (state: AuthMachineState) =>
   state.context.user.rawToken as string;
 
@@ -103,6 +134,15 @@ export const Feed: React.FC<Props> = ({
   const username = useSelector(gameService, _username);
   const token = useSelector(authService, _token);
   const farmId = useSelector(gameService, _farmId);
+  const cheersAvailable = useSelector(gameService, _cheersAvailable);
+  const totalHelpedToday = useSelector(gameService, _totalHelpedToday);
+  const game = useSelector(gameService, _game);
+  const helpLimit = getHelpLimit({ game });
+  const helpRemaining =
+    totalHelpedToday == null
+      ? undefined
+      : Math.max(helpLimit - totalHelpedToday, 0);
+  const serverLabel = server ? formatServerName(server) : undefined;
 
   const { t } = useAppTranslation();
 
@@ -256,7 +296,7 @@ export const Feed: React.FC<Props> = ({
       <div className="flex flex-col gap-2 h-full w-full">
         <div className="sticky top-0 flex flex-col z-10 bg-[#e4a672]">
           <div className="flex items-center gap-2 pb-1">
-            <div className="flex items-center w-full gap-2">
+            <div className="flex items-center w-full min-w-0 gap-2">
               {showFollowing && (
                 <img
                   src={SUNNYSIDE.icons.arrow_left}
@@ -266,7 +306,20 @@ export const Feed: React.FC<Props> = ({
                 />
               )}
               <Label type="default">{t("feed")}</Label>
-              {server && <span className="text-xxs">{server}</span>}
+              <Label type="default" icon={SUNNYSIDE.icons.drag}>
+                {`${helpRemaining ?? "--"}/${helpLimit}`}
+              </Label>
+              <Label type="default" icon={cheer}>
+                {cheersAvailable.toNumber()}
+              </Label>
+              {serverLabel && (
+                <span
+                  className="min-w-0 max-w-[56px] shrink truncate text-xxs"
+                  title={serverLabel}
+                >
+                  {serverLabel}
+                </span>
+              )}
             </div>
             <img
               src={SUNNYSIDE.icons.close}

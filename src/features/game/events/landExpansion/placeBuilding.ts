@@ -9,11 +9,9 @@ import {
 } from "../../types/game";
 import { produce } from "immer";
 import { ComposterName } from "features/game/types/composters";
+import { createInitialAgingShed } from "features/game/lib/agingShed";
 import { getReadyAt } from "./startComposter";
-import { RECIPES } from "features/game/lib/crafting";
-import { getBoostedCraftingTime } from "./startCrafting";
 import { Coordinates } from "features/game/expansion/components/MapPlacement";
-import { KNOWN_IDS } from "features/game/types";
 
 export enum PLACE_BUILDING_ERRORS {
   NO_BUMPKIN = "You do not have a Bumpkin!",
@@ -141,7 +139,10 @@ export function placeBuilding({
 
         Object.values(animals).forEach((animal) => {
           if (existingBuilding.removedAt) {
-            const timeOffset = createdAt - existingBuilding.removedAt;
+            const timeOffset = Math.max(
+              0,
+              createdAt - existingBuilding.removedAt,
+            );
             animal.asleepAt = animal.asleepAt + timeOffset;
             animal.awakeAt = animal.awakeAt + timeOffset;
             animal.lovedAt = animal.lovedAt + timeOffset;
@@ -151,23 +152,71 @@ export function placeBuilding({
 
       if (action.name === "Crafting Box" && !isSecondBuilding) {
         const { craftingBox } = stateCopy;
-        if (existingBuilding.removedAt && craftingBox.item) {
-          const timeOffset = existingBuilding.removedAt - craftingBox.startedAt;
-          craftingBox.startedAt = createdAt - timeOffset;
-          const collectible = craftingBox.item.collectible;
-          const { seconds: recipeTime } = collectible
-            ? getBoostedCraftingTime({
-                game: stateCopy,
-                time: RECIPES[collectible]?.time ?? 0,
-                prngArgs: {
-                  farmId,
-                  itemId: KNOWN_IDS[collectible],
-                  counter:
-                    stateCopy.farmActivity[`${collectible} Crafted`] ?? 0,
-                },
-              })
-            : { seconds: 0 };
-          craftingBox.readyAt = craftingBox.startedAt + recipeTime;
+        const queue = craftingBox.queue ?? [];
+        if (existingBuilding.removedAt && queue.length > 0) {
+          const downtimeDelta = Math.max(
+            0,
+            createdAt - existingBuilding.removedAt,
+          );
+          stateCopy.craftingBox.queue = queue.map((item) => ({
+            ...item,
+            startedAt: item.startedAt + downtimeDelta,
+            readyAt: item.readyAt + downtimeDelta,
+          }));
+        }
+      }
+
+      if (action.name === "Aging Shed" && !isSecondBuilding) {
+        if (existingBuilding.removedAt) {
+          const downtimeDelta = Math.max(
+            0,
+            createdAt - existingBuilding.removedAt,
+          );
+          if (!stateCopy.agingShed.racks) {
+            stateCopy.agingShed.racks = createInitialAgingShed().racks;
+          }
+          const fermentation = stateCopy.agingShed.racks.fermentation;
+          if (fermentation.length > 0) {
+            stateCopy.agingShed.racks.fermentation = fermentation.map(
+              (job) => ({
+                ...job,
+                startedAt: job.startedAt + downtimeDelta,
+                readyAt: job.readyAt + downtimeDelta,
+              }),
+            );
+          }
+          const aging = stateCopy.agingShed.racks.aging;
+          if (aging.length > 0) {
+            stateCopy.agingShed.racks.aging = aging.map((slot) => ({
+              ...slot,
+              startedAt: slot.startedAt + downtimeDelta,
+              readyAt: slot.readyAt + downtimeDelta,
+            }));
+          }
+          const spice = stateCopy.agingShed.racks.spice;
+          if (spice.length > 0) {
+            stateCopy.agingShed.racks.spice = spice.map((job) => ({
+              ...job,
+              startedAt: job.startedAt + downtimeDelta,
+              readyAt: job.readyAt + downtimeDelta,
+            }));
+          }
+          if (stateCopy.agingShed.upgradeReadyAt !== undefined) {
+            stateCopy.agingShed.upgradeReadyAt += downtimeDelta;
+          }
+        }
+      }
+
+      if (action.name === "Water Well" && !isSecondBuilding) {
+        if (
+          existingBuilding.removedAt &&
+          stateCopy.waterWell.upgradeReadyAt !== undefined
+        ) {
+          const downtimeDelta = Math.max(
+            0,
+            createdAt - existingBuilding.removedAt,
+          );
+          stateCopy.waterWell.upgradeReadyAt += downtimeDelta;
         }
       }
 

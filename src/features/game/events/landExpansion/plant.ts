@@ -324,7 +324,7 @@ export const getCropPlotTime = ({
     boostsUsed.push({ name: "Sparrow Shrine", value: "x0.75" });
   }
 
-  if (isBuffActive({ buff: "Power hour", game })) {
+  if (isBuffActive({ buff: "Power hour", game, now: createdAt })) {
     seconds = seconds * 0.5;
     boostsUsed.push({ name: "Power hour", value: "x0.5" });
   }
@@ -376,7 +376,10 @@ export const getCropPlotTime = ({
     boostsUsed.push({ name: "Broccoli Hat", value: "x0.5" });
   }
 
-  if (plot?.fertiliser?.name === "Rapid Root") {
+  if (
+    plot?.fertiliser?.name === "Rapid Root" ||
+    plot?.fertiliser?.name === "Sproutroot Surprise"
+  ) {
     seconds = seconds * 0.5;
   }
 

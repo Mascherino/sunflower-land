@@ -18,7 +18,6 @@ import blueVipIcon from "assets/icons/blue_vip.webp";
 import purpleVipIcon from "assets/icons/purple_vip.webp";
 import multiCast from "src/assets/icons/multi-cast.webp";
 
-import trophyIcon from "assets/icons/trophy.png";
 import shopIcon from "assets/icons/shop.png";
 import { Button } from "components/ui/Button";
 import { SUNNYSIDE } from "assets/sunnyside";
@@ -26,7 +25,7 @@ import Decimal from "decimal.js-light";
 import { acknowledgeVIP } from "features/announcements/announcementsStorage";
 import { ITEM_DETAILS } from "features/game/types/images";
 import {
-  hasVipAccess,
+  hasLifetimeFarmerBanner,
   VIP_PRICES,
   VIP_TRIAL_PERIOD_MS,
   VipBundle,
@@ -40,15 +39,17 @@ import { gameAnalytics } from "lib/gameAnalytics";
 import { REPUTATION_POINTS } from "features/game/lib/reputation";
 import * as Auth from "features/auth/lib/Provider";
 import { useNow } from "lib/utils/hooks/useNow";
-import { hasFeatureAccess } from "lib/flags";
 import { NoticeboardItems } from "features/world/ui/kingdom/KingdomNoticeboard";
-import { GameState } from "features/game/types/game";
+import { GameState, VIP } from "features/game/types/game";
 import { secondsToString } from "lib/utils/time";
 import { VIPSavings } from "./VIPSavings";
+import { useVipAccess } from "lib/utils/hooks/useVipAccess";
 
 const _inventory = (state: MachineState) => state.context.state.inventory;
 const _vip = (state: MachineState) => state.context.state.vip;
 const _state = (state: MachineState) => state.context.state;
+const _hasLifetimeFarmerBanner = (state: MachineState) =>
+  hasLifetimeFarmerBanner(state.context.state);
 
 const VIP_NAME: Record<VipBundle, TranslationKeys> = {
   "1_MONTH": "vip.1Month",
@@ -62,23 +63,27 @@ const VIP_ICONS: Record<VipBundle, string> = {
   "2_YEARS": purpleVipIcon,
 };
 
-const VIPLabel: React.FC<{ state: GameState; now: number }> = ({
-  state,
-  now,
-}) => {
+const VIPLabel: React.FC<{
+  state: GameState;
+  now: number;
+  vip: VIP | undefined;
+  hasLifetimeBanner: boolean;
+  hasFullVip: boolean;
+  hasTrialVip: boolean;
+}> = ({ state, now, vip, hasLifetimeBanner, hasFullVip, hasTrialVip }) => {
   const { t } = useAppTranslation();
 
-  if (!state.vip || (!state.vip.trialStartedAt && !state.vip.expiresAt)) {
+  const hasVipTimestampFields = !!(vip?.trialStartedAt || vip?.expiresAt);
+  const hasTrial = !hasFullVip && hasTrialVip;
+
+  if (!hasLifetimeBanner && (!vip || !hasVipTimestampFields)) {
     return null;
   }
-  const hasVip = hasVipAccess({ game: state, now, type: "full" });
-
-  const hasTrial = !hasVip && hasVipAccess({ game: state, now, type: "trial" });
 
   if (hasTrial) {
     return (
       <Label type="success" className="ml-2" icon={SUNNYSIDE.icons.confirm}>
-        {`Trial - ${secondsToString((state.vip.trialStartedAt! + VIP_TRIAL_PERIOD_MS - now) / 1000, { length: "short" })} left`}
+        {`Trial - ${secondsToString((state.vip!.trialStartedAt! + VIP_TRIAL_PERIOD_MS - now) / 1000, { length: "short" })} left`}
       </Label>
     );
   }
@@ -86,20 +91,30 @@ const VIPLabel: React.FC<{ state: GameState; now: number }> = ({
   const vipExpiresAt = state.vip?.expiresAt ?? 0;
   const expiresSoon = vipExpiresAt < now + 1000 * 60 * 60 * 24 * 7;
 
-  if (hasVip) {
+  if (hasFullVip) {
     return (
       <>
         <div className="flex justify-between my-2">
           <Label type="success" className="ml-2" icon={SUNNYSIDE.icons.confirm}>
             {t("vip.access")}
           </Label>
-          {Number(vipExpiresAt) > 0 && (
+          {hasLifetimeBanner ? (
             <Label
-              type={expiresSoon ? "danger" : "transparent"}
-              icon={SUNNYSIDE.icons.stopwatch}
+              type="success"
+              className="ml-2"
+              icon={SUNNYSIDE.icons.confirm}
             >
-              {`Expires: ${new Date(vipExpiresAt).toLocaleDateString()}`}
+              {t("vip.lifetime")}
             </Label>
+          ) : (
+            Number(vipExpiresAt) > 0 && (
+              <Label
+                type={expiresSoon ? "danger" : "transparent"}
+                icon={SUNNYSIDE.icons.stopwatch}
+              >
+                {`Expires: ${new Date(vipExpiresAt).toLocaleDateString()}`}
+              </Label>
+            )
           )}
         </div>
       </>
@@ -124,6 +139,7 @@ export const VIPItems: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const now = useNow();
 
   const gemBalance = inventory["Gem"] ?? new Decimal(0);
+  const hasLifetimeBanner = useSelector(gameService, _hasLifetimeFarmerBanner);
 
   const handlePurchase = () => {
     gameService.send("vip.bought", {
@@ -136,24 +152,43 @@ export const VIPItems: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       item: selected as VipBundle,
       type: "Web3",
     });
+
+    const isFirstVip = !vip?.bundles?.length;
+    const boughtStarterPack = !!state.farmActivity["Starter Pack Purchased"];
+
+    if (isFirstVip && boughtStarterPack) {
+      gameAnalytics.trackMilestone({
+        event: "VIP:Conversion:StarterPack",
+      });
+    }
+
+    if (isFirstVip) {
+      const DAY_MS = 24 * 60 * 60 * 1000;
+      const accountAgeMs = Date.now() - state.createdAt;
+      const sevenDaysMs = 7 * DAY_MS;
+
+      if (accountAgeMs < sevenDaysMs) {
+        const dayBucket = Math.min(
+          6,
+          Math.max(0, Math.floor(accountAgeMs / DAY_MS)),
+        );
+        const tag = boughtStarterPack ? "HasStarterPack" : "NoStarterPack";
+        gameAnalytics.trackMilestone({
+          event: `VIP:Conversion:NewUser:Day${dayBucket}:${tag}`,
+        });
+      }
+    }
+
     setSelected(undefined);
   };
 
-  const hasTrial =
-    !hasVipAccess({ game: state, type: "full" }) &&
-    hasVipAccess({ game: state, now, type: "trial" });
+  const hasFullVip = useVipAccess({ game: state, type: "full" });
+  const hasTrialVip = useVipAccess({ game: state, type: "trial" });
+
+  const hasTrial = !hasFullVip && hasTrialVip;
 
   const hasOneYear = vip && vip.expiresAt > now + 1000 * 60 * 60 * 24 * 365;
 
-  const getExpiresAt = () => {
-    if (!vip) return 0;
-
-    const paidVipExpiresAt = vip?.expiresAt ?? 0;
-
-    return paidVipExpiresAt;
-  };
-
-  const vipExpiresAt = getExpiresAt();
   const chapterTicket = getChapterTicket(now);
   const currentChapter = getCurrentChapter(now);
 
@@ -186,6 +221,15 @@ export const VIPItems: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               name: t(VIP_NAME[selected as VipBundle]),
             })}
           </p>
+          {hasLifetimeBanner && (
+            <Label
+              type="danger"
+              className="px-1 mb-2"
+              icon={ITEM_DETAILS["Lifetime Farmer Banner"].image}
+            >
+              {t("vip.lifetime.noPurchase")}
+            </Label>
+          )}
           <div className="flex ">
             <Button className="mr-1" onClick={() => setSelected(undefined)}>
               {t("no")}
@@ -193,6 +237,7 @@ export const VIPItems: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <Button
               disabled={
                 hasOneYear ||
+                hasLifetimeBanner ||
                 gemBalance.lt(VIP_PRICES[selected as VipBundle] ?? 0)
               }
               onClick={handlePurchase}
@@ -226,7 +271,14 @@ export const VIPItems: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           </a>
         </div>
         <p className="text-xs px-1 mt-2 mb-2">{t("season.vip.description")}</p>
-        <VIPLabel state={state} now={now} />
+        <VIPLabel
+          state={state}
+          now={now}
+          vip={vip}
+          hasLifetimeBanner={hasLifetimeBanner}
+          hasFullVip={hasFullVip}
+          hasTrialVip={hasTrialVip}
+        />
 
         <div className="flex mt-3 mb-2 px-1">
           {getKeys(VIP_PRICES).map((name) => (
@@ -275,14 +327,10 @@ export const VIPItems: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 text: t("vip.benefit.cookingQueue"),
                 icon: ITEM_DETAILS["Pumpkin Soup"].image,
               },
-              ...(hasFeatureAccess(state, "CRAFTING_BOX_QUEUES")
-                ? [
-                    {
-                      text: t("vip.benefit.craftingQueue"),
-                      icon: ITEM_DETAILS["Crafting Box"].image,
-                    },
-                  ]
-                : []),
+              {
+                text: t("vip.benefit.craftingQueue"),
+                icon: ITEM_DETAILS["Crafting Box"].image,
+              },
               {
                 text: t("vip.benefit.multicast"),
                 icon: multiCast,
@@ -305,20 +353,11 @@ export const VIPItems: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     }
                   : undefined,
               },
-              { text: t("vip.benefit.competition"), icon: trophyIcon },
-              ...(currentChapter === "Paw Prints"
+              ...(currentChapter === "Salt Awakening"
                 ? [
                     {
-                      text: t("vip.benefit.bonusPetEnergy"),
-                      icon: SUNNYSIDE.icons.lightning,
-                    },
-                  ]
-                : []),
-              ...(currentChapter === "Crabs and Traps"
-                ? [
-                    {
-                      text: t("vip.benefit.bonusFishingAttempts"),
-                      icon: ITEM_DETAILS["Rod"].image,
+                      text: t("vip.benefit.bonusSaltYield"),
+                      icon: ITEM_DETAILS["Salt"].image,
                     },
                   ]
                 : []),

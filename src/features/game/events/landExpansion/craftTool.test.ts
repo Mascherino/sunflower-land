@@ -368,4 +368,66 @@ describe("craftTool", () => {
 
     expect(state.inventory["Mariner Pot"]).toEqual(new Decimal(1));
   });
+
+  it("Salt Rakes cost 20% less coins with Cheap Rakes skill", () => {
+    const state = craftTool({
+      state: {
+        ...GAME_STATE,
+        coins: 100,
+        inventory: { Wood: new Decimal(10) },
+        bumpkin: {
+          ...GAME_STATE.bumpkin,
+          skills: {
+            "Cheap Rakes": 1,
+          },
+        },
+      },
+      action: {
+        type: "tool.crafted",
+        tool: "Salt Rake",
+      },
+    });
+
+    expect(state.coins).toEqual(84);
+  });
+
+  it("Salt Rakes cost 10% less with Salt Sculpture level 4", () => {
+    const state = craftTool({
+      state: {
+        ...GAME_STATE,
+        coins: 100,
+        inventory: { Wood: new Decimal(10) },
+        sculptures: { "Salt Sculpture": { level: 4 } },
+      },
+      action: {
+        type: "tool.crafted",
+        tool: "Salt Rake",
+      },
+    });
+
+    expect(state.coins).toEqual(82);
+  });
+
+  it("stacks Cheap Rakes + Salt Sculpture level 4 discount", () => {
+    const state = craftTool({
+      state: {
+        ...GAME_STATE,
+        coins: 100,
+        inventory: { Wood: new Decimal(10) },
+        sculptures: { "Salt Sculpture": { level: 4 } },
+        bumpkin: {
+          ...GAME_STATE.bumpkin,
+          skills: {
+            "Cheap Rakes": 1,
+          },
+        },
+      },
+      action: {
+        type: "tool.crafted",
+        tool: "Salt Rake",
+      },
+    });
+
+    expect(state.coins).toEqual(100 - 20 * 0.8 * 0.9);
+  });
 });

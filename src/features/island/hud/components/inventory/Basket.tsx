@@ -24,6 +24,8 @@ import {
   CONSUMABLES,
   COOKABLES,
   PIRATE_CAKE,
+  PRIME_AGED_FISH,
+  AGED_FISH,
 } from "features/game/types/consumables";
 import { ANIMAL_RESOURCES, COMMODITIES } from "features/game/types/resources";
 import { BEANS, EXOTIC_CROPS } from "features/game/types/beans";
@@ -53,7 +55,11 @@ import {
   CROP_COMPOST,
   FRUIT_COMPOST,
 } from "features/game/types/composters";
-import { FISH, PURCHASEABLE_BAIT } from "features/game/types/fishing";
+import {
+  FermentationBait,
+  FISH,
+  PURCHASEABLE_BAIT,
+} from "features/game/types/fishing";
 import { Label } from "components/ui/Label";
 import {
   FLOWERS,
@@ -75,6 +81,13 @@ import { PET_RESOURCES } from "features/game/types/pets";
 import { useNow } from "lib/utils/hooks/useNow";
 import { PROCESSED_RESOURCES } from "features/game/types/processedFood";
 import { CRUSTACEANS_DESCRIPTIONS } from "features/game/types/crustaceans";
+import { FERMENTATION_PRODUCTS } from "features/game/types/fermentationProducts";
+import { PICKLED_CROPS, PickledCropName } from "features/game/types/pickled";
+import {
+  SPICE_RACK_PRODUCTS,
+  SpiceRackProductName,
+} from "features/game/types/spiceRackProducts";
+import { ANIMAL_FEED_BUFF_ITEMS } from "features/game/events/landExpansion/applyAnimalFeedBuff";
 
 interface Prop {
   gameState: GameState;
@@ -165,8 +178,12 @@ export const Basket: React.FC<Prop> = ({ gameState, selected, onSelect }) => {
   };
 
   const getItems = <T extends string | number | symbol, K>(
-    items: Record<T, K>,
-  ) => {
+    items: Record<T, K> | T[],
+  ): T[] => {
+    if (Array.isArray(items)) {
+      return items.filter((item) => item in basketMap);
+    }
+
     return getKeys(items).filter((item) => item in basketMap);
   };
 
@@ -190,6 +207,7 @@ export const Basket: React.FC<Prop> = ({ gameState, selected, onSelect }) => {
   const craftingResources = getItems(RECIPE_CRAFTABLES);
   const animalResources = getItems(ANIMAL_RESOURCES);
   const animalFeeds = getItems(ANIMAL_FOODS);
+  const animalFeedBuffs = getItems(ANIMAL_FEED_BUFF_ITEMS);
   const processedFood = getItems(PROCESSED_RESOURCES);
   const crustaceans = getItems(CRUSTACEANS_DESCRIPTIONS);
 
@@ -204,6 +222,8 @@ export const Basket: React.FC<Prop> = ({ gameState, selected, onSelect }) => {
   const pirateCake = getItems(PIRATE_CAKE);
 
   const fertilisers = getItems(FERTILISERS);
+  const fermentationProducts = getItems([...FERMENTATION_PRODUCTS]);
+  const pickledCrops: PickledCropName[] = getItems([...PICKLED_CROPS]);
   const coupons = getItems(COUPONS).sort((a, b) => a.localeCompare(b));
   const easterEggs = getItems(EASTER_EGG);
   const treasure = getItems(SELLABLE_TREASURES);
@@ -212,7 +232,16 @@ export const Basket: React.FC<Prop> = ({ gameState, selected, onSelect }) => {
   const fruitCompost = getItems(FRUIT_COMPOST);
   const worm = getItems(WORM);
   const purchaseableBait = getItems(PURCHASEABLE_BAIT);
+  const fermentedBaits: FermentationBait[] = getItems([
+    "Capsule Bait",
+    "Umbrella Bait",
+    "Crimson Baitfish",
+  ]);
+  const spices: SpiceRackProductName[] = getItems([...SPICE_RACK_PRODUCTS]);
   const fish = getItems(FISH).sort((a, b) => a.localeCompare(b));
+  const agedFish = [...getItems(AGED_FISH), ...getItems(PRIME_AGED_FISH)].sort(
+    (a, b) => a.localeCompare(b),
+  );
   const petResources = getItems(PET_RESOURCES);
 
   const allSeeds = [
@@ -320,10 +349,19 @@ export const Basket: React.FC<Prop> = ({ gameState, selected, onSelect }) => {
 
           {itemsSection(
             t("fertilisers"),
-            [...cropCompost, ...fruitCompost, ...fertilisers],
+            Array.from(
+              new Set([
+                ...cropCompost,
+                ...fruitCompost,
+                ...fertilisers,
+                ...fermentationProducts,
+              ]),
+            ),
             ITEM_DETAILS["Rapid Root"].image,
           )}
           {itemsSection(t("tools"), allTools, ITEM_DETAILS["Axe"].image)}
+          {itemsSection(t("feeds"), [...animalFeeds], ITEM_DETAILS.Hay.image)}
+          {itemsSection(t("spices"), spices, ITEM_DETAILS["Spice Base"].image)}
           {itemsSection(t("crops"), crops, ITEM_DETAILS.Sunflower.image)}
           {itemsSection(t("fruits"), fruits, ITEM_DETAILS["Orange"].image)}
           {itemsSection(t("flowers"), flowers, SUNNYSIDE.icons.seedling)}
@@ -344,13 +382,17 @@ export const Basket: React.FC<Prop> = ({ gameState, selected, onSelect }) => {
             ITEM_DETAILS["Acorn"].image,
           )}
           {itemsSection(t("animal"), animalResources, ITEM_DETAILS.Egg.image)}
-          {itemsSection(t("feeds"), animalFeeds, ITEM_DETAILS.Hay.image)}
           {itemsSection(
             t("bait"),
-            [...worm, ...purchaseableBait],
+            [...worm, ...purchaseableBait, ...fermentedBaits],
             ITEM_DETAILS["Earthworm"].image,
           )}
           {itemsSection(t("fish"), fish, ITEM_DETAILS["Anchovy"].image)}
+          {itemsSection(
+            t("agedFish"),
+            agedFish,
+            ITEM_DETAILS["Aged Anchovy"].image,
+          )}
           {itemsSection(
             t("crustaceans"),
             crustaceans,
@@ -360,6 +402,11 @@ export const Basket: React.FC<Prop> = ({ gameState, selected, onSelect }) => {
             t("processedResources"),
             processedFood,
             ITEM_DETAILS["Fish Flake"].image,
+          )}
+          {itemsSection(
+            t("pickledCrops"),
+            pickledCrops,
+            ITEM_DETAILS["Pickled Radish"].image,
           )}
           {itemsSection(
             t("foods"),

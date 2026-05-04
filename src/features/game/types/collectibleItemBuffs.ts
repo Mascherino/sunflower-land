@@ -322,6 +322,90 @@ export const COLLECTIBLE_BUFF_LABELS: Partial<
     },
   ],
 
+  // Fertilisers
+  "Sprout Mix": () => [
+    {
+      shortDescription: translate("description.sprout.mix.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+      boostedItemIcon: ITEM_DETAILS["Crop Plot"].image,
+    },
+  ],
+  "Fruitful Blend": () => [
+    {
+      shortDescription: translate("description.fruitful.blend.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+      boostedItemIcon: ITEM_DETAILS["Fruit Patch"].image,
+    },
+  ],
+  "Rapid Root": () => [
+    {
+      shortDescription: translate("description.rapid.root.boost"),
+      labelType: "info",
+      boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+      boostedItemIcon: ITEM_DETAILS["Crop Plot"].image,
+    },
+  ],
+  "Sproutroot Surprise": () => [
+    {
+      shortDescription: translate("description.sprout.mix.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+      boostedItemIcon: ITEM_DETAILS["Crop Plot"].image,
+    },
+    {
+      shortDescription: translate("description.rapid.root.boost"),
+      labelType: "info",
+      boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+      boostedItemIcon: ITEM_DETAILS["Crop Plot"].image,
+    },
+  ],
+  "Turbofruit Mix": () => [
+    {
+      shortDescription: translate("description.fruitful.blend.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+      boostedItemIcon: ITEM_DETAILS["Fruit Patch"].image,
+    },
+    {
+      shortDescription: translate("description.turbofruit.mix.boost"),
+      labelType: "info",
+      boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+      boostedItemIcon: ITEM_DETAILS["Fruit Patch"].image,
+    },
+  ],
+  "Greenhouse Glow": () => [
+    {
+      shortDescription: translate("description.greenhouse.glow.boost"),
+      labelType: "info",
+      boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+      boostedItemIcon: ITEM_DETAILS["Greenhouse"].image,
+    },
+  ],
+  "Greenhouse Goodie": () => [
+    {
+      shortDescription: translate("description.greenhouse.goodie.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+      boostedItemIcon: ITEM_DETAILS["Greenhouse"].image,
+    },
+  ],
+  "Salt Lick": () => [
+    {
+      shortDescription: translate("description.salt.lick.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+    },
+  ],
+  "Honey Treat": () => [
+    {
+      shortDescription: translate("description.honey.treat.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+    },
+  ],
+
   // Clash of Factions
   "Turbo Sprout": () => [
     {
@@ -878,6 +962,14 @@ export const COLLECTIBLE_BUFF_LABELS: Partial<
       labelType: "vibrant",
       boostTypeIcon: lightning,
       boostedItemIcon: ITEM_DETAILS["Pumpkin Soup"].image,
+    },
+  ],
+  "Dino Egg Trophy": () => [
+    {
+      shortDescription: translate("dinoEggTrophy.boost.description"),
+      labelType: "vibrant",
+      boostTypeIcon: lightning,
+      boostedItemIcon: SUNNYSIDE.ui.coins,
     },
   ],
   "Treasure Map": () => [
@@ -2001,6 +2093,20 @@ export const COLLECTIBLE_BUFF_LABELS: Partial<
       boostTypeIcon: helpIcon,
     },
   ],
+  "Crystal Altar": () => [
+    {
+      shortDescription: translate("description.crystalAltar.boost"),
+      labelType: "info",
+      boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+    },
+    {
+      shortDescription: translate("megastore.monument.helpsNeeded", {
+        count: 1000,
+      }),
+      labelType: "info",
+      boostTypeIcon: helpIcon,
+    },
+  ],
   "Crimstone Clam": () => [
     {
       shortDescription: translate("description.crimstoneClam.boost"),
@@ -2064,6 +2170,89 @@ export const COLLECTIBLE_BUFF_LABELS: Partial<
       boostedItemIcon: ITEM_DETAILS["Rod"].image,
     },
   ],
+  "Salt Sculpture": () => [
+    {
+      shortDescription: translate("description.saltSculpture.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+    },
+  ],
+  "Navigation Table": () => [
+    {
+      shortDescription: translate("description.navigationTable.boost"),
+      labelType: "vibrant",
+      boostTypeIcon: lightning,
+    },
+  ],
+  "Royal Crab Pot": () => [
+    {
+      shortDescription: translate("description.royalCrabPot.boost"),
+      labelType: "vibrant",
+      boostTypeIcon: lightning,
+    },
+  ],
+  "Crab House": () => [
+    {
+      shortDescription: translate("description.crabHouse.boost"),
+      labelType: "vibrant",
+      boostTypeIcon: lightning,
+    },
+  ],
+  "Speed Trap": () => [
+    {
+      shortDescription: translate("description.speedTrap.boost"),
+      labelType: "info",
+      boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+    },
+  ],
+  "Flamingo Chicken": () => [
+    {
+      shortDescription: translate("description.flamingoChicken.boost"),
+      labelType: "info",
+      boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+      boostedItemIcon: SUNNYSIDE.animals.chickenAsleep,
+    },
+  ],
+  "Spa Sheep": () => [
+    {
+      shortDescription: translate("description.spaSheep.boost"),
+      labelType: "vibrant",
+      boostTypeIcon: lightning,
+      boostedItemIcon: SUNNYSIDE.animals.sheepSleeping,
+    },
+  ],
+  "Spa Cow": () => [
+    {
+      shortDescription: translate("description.spaCow.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+      boostedItemIcon: SUNNYSIDE.resource.milk,
+    },
+  ],
+  "Deep Sea Slug": () => [
+    {
+      shortDescription: translate("description.deepSeaSlug.boost"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+      boostedItemIcon: ITEM_DETAILS["Rod"].image,
+    },
+    {
+      shortDescription: translate("description.deepSeaSlug.boost.2"),
+      labelType: "success",
+      boostTypeIcon: powerup,
+      boostedItemIcon: ITEM_DETAILS["Earthworm"].image,
+    },
+  ],
+  "Salt Crystal Flower": () => [
+    {
+      shortDescription: translate("description.saltCrystalFlower.boost"),
+      labelType: "vibrant",
+      boostTypeIcon: lightning,
+      boostedItemIcon: SUNNYSIDE.icons.plant,
+    },
+  ],
+
+  // All items go above this line
 
   ...Object.fromEntries(
     getObjectEntries(CHAPTER_TICKET_BOOST_ITEMS)

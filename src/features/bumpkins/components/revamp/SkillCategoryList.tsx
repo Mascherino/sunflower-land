@@ -32,7 +32,6 @@ import { SkillReset } from "./SkillReset";
 import fruits from "assets/fruit/fruits.png";
 import Decimal from "decimal.js-light";
 import { capitalize } from "lib/utils/capitalize";
-
 export const SKILL_TREE_ICONS: Record<BumpkinRevampSkillTree, string> = {
   Crops: SUNNYSIDE.skills.crops,
   Trees: SUNNYSIDE.skills.trees,
@@ -45,6 +44,7 @@ export const SKILL_TREE_ICONS: Record<BumpkinRevampSkillTree, string> = {
   "Bees & Flowers": ITEM_DETAILS["Red Pansy"].image,
   Machinery: ITEM_DETAILS["Crop Machine"].image,
   Compost: ITEM_DETAILS["Premium Composter"].image,
+  Aging: ITEM_DETAILS["Salt"].image,
 };
 
 const _state = (state: MachineState) => state.context.state;
@@ -89,10 +89,14 @@ export const SkillCategoryList: React.FC<{
 
   const hasEnoughGems = inventory.Gem?.gte(gemCost) ?? false;
   const gemBalance = inventory.Gem ?? new Decimal(0);
+  const ticketBalance = inventory["Skill Reset Ticket"] ?? new Decimal(0);
+  const hasTicket = ticketBalance.gte(1);
 
   const resetType: PaymentType = canResetForFree(previousFreeSkillResetAt)
     ? "free"
-    : "gems";
+    : hasTicket
+      ? "ticket"
+      : "gems";
 
   const handleSkillsReset = () => {
     gameService.send({
@@ -115,6 +119,7 @@ export const SkillCategoryList: React.FC<{
     if (!hasSkills) return false;
     if (resetType === "free" && !canResetForFree(previousFreeSkillResetAt))
       return false;
+    if (resetType === "ticket" && !hasTicket) return false;
     if (resetType === "gems" && !hasEnoughGems) return false;
 
     return true;
@@ -131,8 +136,8 @@ export const SkillCategoryList: React.FC<{
             state.island.type,
             islandType,
           );
-          if (getRevampSkillTreeCategoriesByIsland(islandType).length <= 0)
-            return;
+          const categories = getRevampSkillTreeCategoriesByIsland(islandType);
+          if (categories.length <= 0) return;
 
           return (
             <div key={islandType} className="flex flex-col items-stretch">
@@ -159,45 +164,43 @@ export const SkillCategoryList: React.FC<{
                 )}
               </div>
               <div className="grid grid-cols-2 gap-1">
-                {getRevampSkillTreeCategoriesByIsland(islandType).map(
-                  (category) => {
-                    const skills = getRevampSkills(category);
-                    const icon = SKILL_TREE_ICONS[skills[0].tree];
-                    const skillsAcquiredInCategoryCount = getKeys({
-                      ...bumpkin?.skills,
-                    }).filter((acquiredSkillName) =>
-                      skills.find((skill) => skill.name === acquiredSkillName),
-                    ).length;
+                {categories.map((category) => {
+                  const skills = getRevampSkills(category);
+                  const icon = SKILL_TREE_ICONS[skills[0].tree];
+                  const skillsAcquiredInCategoryCount = getKeys({
+                    ...bumpkin?.skills,
+                  }).filter((acquiredSkillName) =>
+                    skills.find((skill) => skill.name === acquiredSkillName),
+                  ).length;
 
-                    return (
-                      <div key={category}>
-                        <ButtonPanel
-                          disabled={!hasUnlockedIslandCategory}
-                          onClick={
-                            hasUnlockedIslandCategory
-                              ? () => onClick(category)
-                              : undefined
-                          }
-                          className={classNames(
-                            `flex relative items-center mb-1 hover:bg-brown-200`,
-                            { "cursor-pointer": hasUnlockedIslandCategory },
-                          )}
+                  return (
+                    <div key={category}>
+                      <ButtonPanel
+                        disabled={!hasUnlockedIslandCategory}
+                        onClick={
+                          hasUnlockedIslandCategory
+                            ? () => onClick(category)
+                            : undefined
+                        }
+                        className={classNames(
+                          `flex relative items-center mb-1 hover:bg-brown-200`,
+                          { "cursor-pointer": hasUnlockedIslandCategory },
+                        )}
+                      >
+                        <Label
+                          type="default"
+                          className="px-1 text-xxs absolute -top-3 -right-1"
                         >
-                          <Label
-                            type="default"
-                            className="px-1 text-xxs absolute -top-3 -right-1"
-                          >
-                            {`${skillsAcquiredInCategoryCount}/${skills.filter((skill) => !skill.disabled).length}`}
-                          </Label>
-                          <div className="flex gap-2 justify-center items-center">
-                            <SquareIcon icon={icon} width={14} />
-                            <span className="text-sm">{category}</span>
-                          </div>
-                        </ButtonPanel>
-                      </div>
-                    );
-                  },
-                )}
+                          {`${skillsAcquiredInCategoryCount}/${skills.filter((skill) => !skill.disabled).length}`}
+                        </Label>
+                        <div className="flex gap-2 justify-center items-center">
+                          <SquareIcon icon={icon} width={14} />
+                          <span className="text-sm">{category}</span>
+                        </div>
+                      </ButtonPanel>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -223,6 +226,7 @@ export const SkillCategoryList: React.FC<{
           resetType={resetType}
           gemCost={gemCost}
           gemBalance={gemBalance}
+          ticketBalance={ticketBalance}
           getNextResetDateAndTime={getNextResetDateAndTime}
           hasSkills={hasSkills}
           canResetSkills={canResetSkills}

@@ -35,6 +35,8 @@ export const getSortedCollectiblePositions = (object: Collectibles) => {
       id: item.id,
       x: item.coordinates!.x,
       y: item.coordinates!.y,
+      oX: item.coordinates!.oX,
+      oY: item.coordinates!.oY,
       flipped: item.flipped,
       name,
     }));
@@ -42,4 +44,23 @@ export const getSortedCollectiblePositions = (object: Collectibles) => {
 
 export function comparePositions(prev: any, next: any) {
   return isEqual(prev.positions, next.positions);
+}
+
+export type SaltFarmLayoutSlice = {
+  positions: { id: string; x: number; y: number }[];
+  saltFarmLevel: number;
+  basicLand: number;
+  saltNodeIds: string[];
+};
+
+export function compareSaltFarmSlice(
+  prev: SaltFarmLayoutSlice,
+  next: SaltFarmLayoutSlice,
+) {
+  return (
+    isEqual(prev.positions, next.positions) &&
+    prev.saltFarmLevel === next.saltFarmLevel &&
+    prev.basicLand === next.basicLand &&
+    isEqual(prev.saltNodeIds, next.saltNodeIds)
+  );
 }

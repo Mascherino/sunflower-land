@@ -290,9 +290,15 @@ export const TradeableListings: React.FC<TradeableListingsProps> = ({
             authToken={authToken}
             display={display}
             id={id}
+            count={count}
             floorPrice={tradeable?.floor ?? 0}
             highestOffer={highestOffer}
             onClose={onListClose}
+            economy={
+              tradeable?.collection === "economies"
+                ? tradeable.economy
+                : undefined
+            }
           />
         </Panel>
         {isResource && <ResourceTaxes />}
@@ -310,7 +316,7 @@ export const TradeableListings: React.FC<TradeableListingsProps> = ({
                   className="mr-0.5"
                 >
                   {t("marketplace.listingsLeft", {
-                    amount: 1,
+                    amount: limitedTradesLeft,
                     limit: MAX_LIMITED_SALES,
                   })}
                 </Label>

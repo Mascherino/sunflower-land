@@ -5,7 +5,7 @@ import {
   PatchFruitSeedName,
 } from "features/game/types/fruits";
 import { FruitPatch, GameState } from "features/game/types/game";
-import { getFruitPatchTime, plantFruit } from "./fruitPlanted";
+import { getFruitPatchTime, getPlantedAt, plantFruit } from "./fruitPlanted";
 
 const dateNow = Date.now();
 const GAME_STATE: GameState = {
@@ -177,6 +177,40 @@ describe("fruitPlanted", () => {
           plantedAt: expect.any(Number),
         }),
       }),
+    );
+  });
+
+  it("plants with Turbofruit Mix fertiliser on the patch", () => {
+    const seedAmount = new Decimal(5);
+    const patchIndex = "1";
+    const gameWithBumpkin = { ...GAME_STATE, bumpkin: INITIAL_BUMPKIN };
+    const { plantedAt: expectedPlantedAt } = getPlantedAt(
+      "Apple Seed",
+      gameWithBumpkin,
+      dateNow,
+      "Turbofruit Mix",
+    );
+    const state = plantFruit({
+      state: {
+        ...gameWithBumpkin,
+        inventory: { "Apple Seed": seedAmount },
+        fruitPatches: {
+          ...GAME_STATE.fruitPatches,
+          1: {
+            ...GAME_STATE.fruitPatches[1],
+            fertiliser: { name: "Turbofruit Mix", fertilisedAt: dateNow },
+          },
+        },
+      },
+      createdAt: dateNow,
+      action: {
+        type: "fruit.planted",
+        index: patchIndex,
+        seed: "Apple Seed",
+      },
+    });
+    expect(state.fruitPatches[patchIndex].fruit?.plantedAt).toEqual(
+      expectedPlantedAt,
     );
   });
 
@@ -639,6 +673,203 @@ describe("fruitPlanted", () => {
     ).toThrow("Invalid harvests left amount");
   });
 
+  it("accepts harvest count at the upper bound of default fruit harvest range (5)", () => {
+    const patchIndex = "1";
+    const state = plantFruit({
+      state: {
+        ...GAME_STATE,
+        bumpkin: INITIAL_BUMPKIN,
+        inventory: {
+          "Apple Seed": new Decimal(5),
+        },
+      },
+      createdAt: dateNow,
+      harvestsLeft: () => 5,
+      action: {
+        type: "fruit.planted",
+        index: patchIndex,
+        seed: "Apple Seed",
+      },
+    });
+    expect(state.fruitPatches[patchIndex].fruit?.harvestsLeft).toEqual(5);
+  });
+
+  it("does not accept harvest count above default random range without Immortal Pear", () => {
+    expect(() =>
+      plantFruit({
+        state: {
+          ...GAME_STATE,
+          bumpkin: INITIAL_BUMPKIN,
+          inventory: {
+            "Apple Seed": new Decimal(3),
+          },
+        },
+        createdAt: dateNow,
+        harvestsLeft: () => 6,
+        action: {
+          type: "fruit.planted",
+          index: "1",
+          seed: "Apple Seed",
+        },
+      }),
+    ).toThrow("Invalid harvests left amount");
+  });
+
+  it("does not accept harvest count below default random range without Immortal Pear", () => {
+    expect(() =>
+      plantFruit({
+        state: {
+          ...GAME_STATE,
+          bumpkin: INITIAL_BUMPKIN,
+          inventory: {
+            "Apple Seed": new Decimal(3),
+          },
+        },
+        createdAt: dateNow,
+        harvestsLeft: () => 2,
+        action: {
+          type: "fruit.planted",
+          index: "1",
+          seed: "Apple Seed",
+        },
+      }),
+    ).toThrow("Invalid harvests left amount");
+  });
+
+  it("accepts harvest count at the upper bound with Immortal Pear", () => {
+    const patchIndex = "1";
+    const state = plantFruit({
+      state: {
+        ...GAME_STATE,
+        bumpkin: INITIAL_BUMPKIN,
+        inventory: {
+          "Apple Seed": new Decimal(5),
+          "Immortal Pear": new Decimal(1),
+        },
+        collectibles: {
+          "Immortal Pear": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "123",
+              readyAt: 0,
+            },
+          ],
+        },
+      },
+      createdAt: dateNow,
+      harvestsLeft: () => 5,
+      action: {
+        type: "fruit.planted",
+        index: patchIndex,
+        seed: "Apple Seed",
+      },
+    });
+    expect(state.fruitPatches[patchIndex].fruit?.harvestsLeft).toEqual(6);
+  });
+
+  it("does not accept harvest count above Immortal Pear range without Pear Turbocharge", () => {
+    expect(() =>
+      plantFruit({
+        state: {
+          ...GAME_STATE,
+          bumpkin: INITIAL_BUMPKIN,
+          inventory: {
+            "Apple Seed": new Decimal(3),
+            "Immortal Pear": new Decimal(1),
+          },
+          collectibles: {
+            "Immortal Pear": [
+              {
+                coordinates: { x: 0, y: 0 },
+                createdAt: 0,
+                id: "123",
+                readyAt: 0,
+              },
+            ],
+          },
+        },
+        createdAt: dateNow,
+        harvestsLeft: () => 6,
+        action: {
+          type: "fruit.planted",
+          index: "1",
+          seed: "Apple Seed",
+        },
+      }),
+    ).toThrow("Invalid harvests left amount");
+  });
+
+  it("accepts harvest count at the upper bound with Immortal Pear and Pear Turbocharge", () => {
+    const patchIndex = "1";
+    const state = plantFruit({
+      state: {
+        ...GAME_STATE,
+        bumpkin: {
+          ...INITIAL_BUMPKIN,
+          skills: { "Pear Turbocharge": 1 },
+        },
+        inventory: {
+          "Apple Seed": new Decimal(5),
+          "Immortal Pear": new Decimal(1),
+        },
+        collectibles: {
+          "Immortal Pear": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "123",
+              readyAt: 0,
+            },
+          ],
+        },
+      },
+      createdAt: dateNow,
+      harvestsLeft: () => 5,
+      action: {
+        type: "fruit.planted",
+        index: patchIndex,
+        seed: "Apple Seed",
+      },
+    });
+    expect(state.fruitPatches[patchIndex].fruit?.harvestsLeft).toEqual(7);
+  });
+
+  it("does not accept harvest count above Immortal Pear range with Pear Turbocharge", () => {
+    expect(() =>
+      plantFruit({
+        state: {
+          ...GAME_STATE,
+          bumpkin: {
+            ...INITIAL_BUMPKIN,
+            skills: { "Pear Turbocharge": 1 },
+          },
+          inventory: {
+            "Apple Seed": new Decimal(3),
+            "Immortal Pear": new Decimal(1),
+          },
+          collectibles: {
+            "Immortal Pear": [
+              {
+                coordinates: { x: 0, y: 0 },
+                createdAt: 0,
+                id: "123",
+                readyAt: 0,
+              },
+            ],
+          },
+        },
+        createdAt: dateNow,
+        harvestsLeft: () => 6,
+        action: {
+          type: "fruit.planted",
+          index: "1",
+          seed: "Apple Seed",
+        },
+      }),
+    ).toThrow("Invalid harvests left amount");
+  });
+
   it("increments the fruit seed planted activity", () => {
     const amount = 1;
     const state = plantFruit({
@@ -661,6 +892,36 @@ describe("fruitPlanted", () => {
 });
 
 describe("getFruitTime", () => {
+  it("applies 20% growth time reduction with Turbofruit Mix on the patch", () => {
+    const seed = "Apple Seed";
+    const { seconds: base } = getFruitPatchTime(seed, TEST_FARM);
+    const { seconds: withTurbo } = getFruitPatchTime(
+      seed,
+      TEST_FARM,
+      "Turbofruit Mix",
+    );
+    expect(withTurbo / base).toBeCloseTo(0.8, 5);
+  });
+
+  it("getPlantedAt accounts for Turbofruit Mix fertiliser", () => {
+    const seed = "Apple Seed";
+    const { plantedAt } = getPlantedAt(
+      seed,
+      TEST_FARM,
+      dateNow,
+      "Turbofruit Mix",
+    );
+    const baseSeconds = getFruitPatchTime(seed, TEST_FARM).seconds;
+    const boostedSeconds = getFruitPatchTime(
+      seed,
+      TEST_FARM,
+      "Turbofruit Mix",
+    ).seconds;
+    const offset = PATCH_FRUIT_SEEDS[seed].plantSeconds - boostedSeconds;
+    expect(plantedAt).toEqual(dateNow - offset * 1000);
+    expect(boostedSeconds).toBeCloseTo(baseSeconds * 0.8, 5);
+  });
+
   it("applies a 50% speed boost with Squirrel Monkey placed for orange seeds", () => {
     const seed = "Orange Seed";
     const orangePlantSeconds = PATCH_FRUIT_SEEDS[seed].plantSeconds;

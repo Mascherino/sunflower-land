@@ -29,6 +29,12 @@ import { FLOWER_SEEDS, FLOWERS } from "features/game/types/flowers";
 import { updateBeehives } from "features/game/lib/updateBeehives";
 import { isWearableActive } from "features/game/lib/wearables";
 import { getPlotsToFertilise } from "./bulkFertilisePlot";
+import {
+  getMaxStoredSaltCharges,
+  getSaltChargeGenerationTime,
+  getStoredSaltCharges,
+  rechargeAllSaltNodes,
+} from "features/game/types/salt";
 
 export type SkillUseAction = {
   type: "skill.used";
@@ -211,6 +217,16 @@ function useBarnyardRouse({
   });
 
   return game;
+}
+
+function useSaltSurge({
+  game,
+  createdAt = Date.now(),
+}: {
+  game: GameState;
+  createdAt?: number;
+}): GameState {
+  return rechargeAllSaltNodes(game, createdAt);
 }
 
 export function getSkillCooldown({
@@ -418,6 +434,32 @@ export function powerSkillDisabledConditions({
           reason: translate("powerSkills.reason.animalsNotAsleep"),
         };
       }
+      break;
+    }
+
+    case "Salt Surge": {
+      const { nodes } = state.saltFarm;
+      const maxCharges = getMaxStoredSaltCharges(
+        state.sculptures?.["Salt Sculpture"]?.level ?? 0,
+      );
+      const { chargeGenerationTimeMs } = getSaltChargeGenerationTime({
+        gameState: state,
+      });
+      if (
+        Object.values(nodes).every(
+          (node) =>
+            getStoredSaltCharges(node, createdAt, {
+              chargeIntervalMs: chargeGenerationTimeMs,
+              maxCharges,
+            }) === maxCharges,
+        )
+      ) {
+        return {
+          disabled: true,
+          reason: "All salt nodes are already fully charged",
+        };
+      }
+      break;
     }
   }
   return { disabled: false };
@@ -515,6 +557,10 @@ export function skillUse({ state, action, createdAt = Date.now() }: Options) {
 
     if (skill === "Barnyard Rouse") {
       stateCopy = useBarnyardRouse({ game: stateCopy, createdAt });
+    }
+
+    if (skill === "Salt Surge") {
+      stateCopy = useSaltSurge({ game: stateCopy, createdAt });
     }
 
     if (items) {

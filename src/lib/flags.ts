@@ -17,7 +17,7 @@ const usernameFeatureFlag = (game: GameState) => {
   );
 };
 
-const defaultFeatureFlag = ({ inventory }: GameState) =>
+const betaFeatureFlag = ({ inventory }: GameState) =>
   CONFIG.NETWORK === "amoy" || !!inventory["Beta Pass"]?.gt(0);
 
 export const testnetFeatureFlag = () => CONFIG.NETWORK === "amoy";
@@ -29,30 +29,81 @@ const testnetLocalStorageFeatureFlag = (key: string) => () => {
   return testnetFeatureFlag() || localStorageFeatureFlag(key);
 };
 
-const timeBasedTestnetFeatureFlag = (date: Date) => () => (now: number) => {
-  return testnetFeatureFlag() || now >= date.getTime();
-};
-
-const timeBasedOnlyFeatureFlag = (date: Date) => () => (now: number) =>
-  now >= date.getTime();
-
-const betaTimeBasedFeatureFlag =
-  (date: Date) => (game: GameState) => (now: number) => {
-    return defaultFeatureFlag(game) || now > date.getTime();
-  };
-
-const adminTimeBasedFeatureFlag = (date: Date) => (game: GameState) => {
-  return adminFeatureFlag(game) || Date.now() > date.getTime();
-};
-
 const timePeriodFeatureFlag =
-  ({ start, end }: { start: Date; end: Date }) =>
+  ({ start, end }: TimeBasedFeatureWindow) =>
   () =>
   (now: number) => {
-    return now > start.getTime() && now < end.getTime();
+    if (end === null) {
+      return testnetFeatureFlag() || now >= start.getTime();
+    }
+
+    return (
+      (testnetFeatureFlag() || now > start.getTime()) && now < end.getTime()
+    );
+  };
+
+const betaTimePeriodFeatureFlag =
+  ({ start, end }: TimeBasedFeatureWindow) =>
+  (game: GameState) =>
+  (now: number) => {
+    if (end === null) {
+      return betaFeatureFlag(game) || now > start.getTime();
+    }
+
+    return (
+      (betaFeatureFlag(game) || now > start.getTime()) && now < end.getTime()
+    );
   };
 
 export type FeatureFlag = (game: GameState) => boolean;
+
+/**
+ * @param start - The start date of the feature.
+ * @param end - The end date of the feature. If null, the feature is available indefinitely.
+ */
+export type TimeBasedFeatureWindow = { start: Date; end: Date | null };
+
+export const TIME_BASED_FEATURE_FLAG_WINDOWS = {
+  TICKETS_FROM_COIN_NPC: { start: new Date("2026-02-24T00:00:00Z"), end: null },
+  APRIL_FOOLS_EVENT_FLAG: {
+    start: new Date("2026-04-01T00:00:00Z"),
+    end: new Date("2026-04-08T00:00:00Z"),
+  },
+} satisfies Record<string, TimeBasedFeatureWindow>;
+
+/** All time-based flags receive the full window; start-only helpers ignore `end`. */
+export type TimeBasedFeatureFlag = (
+  window: TimeBasedFeatureWindow,
+) => (game: GameState) => (now: number) => boolean;
+
+export type TimeBasedFeatureName = keyof typeof TIME_BASED_FEATURE_FLAG_WINDOWS;
+
+export const TIME_BASED_FEATURE_FLAGS: Record<
+  TimeBasedFeatureName,
+  TimeBasedFeatureFlag
+> = {
+  TICKETS_FROM_COIN_NPC: timePeriodFeatureFlag,
+  APRIL_FOOLS_EVENT_FLAG: betaTimePeriodFeatureFlag,
+};
+
+/**
+ * @param featureName - The name of the feature to check access for.
+ * @param startTime - Instant to evaluate access at (e.g. order `createdAt` or `Date.now()`).
+ * @param game - The game state.
+ * @returns True if the player has access to the feature at `startTime`, false otherwise.
+ */
+export function hasTimeBasedFeatureAccess({
+  featureName,
+  now,
+  game,
+}: {
+  featureName: TimeBasedFeatureName;
+  game: GameState;
+  now: number;
+}) {
+  const window = TIME_BASED_FEATURE_FLAG_WINDOWS[featureName];
+  return TIME_BASED_FEATURE_FLAGS[featureName](window)(game)(now);
+}
 
 /*
  * How to Use:
@@ -63,62 +114,55 @@ export type FeatureFlag = (game: GameState) => boolean;
  */
 const FEATURE_FLAGS = {
   // For testing
-  JEST_TEST: defaultFeatureFlag,
+  JEST_TEST: betaFeatureFlag,
 
   // Permanent Feature Flags
   AIRDROP_PLAYER: adminFeatureFlag,
-  HOARDING_CHECK: defaultFeatureFlag,
+  HOARDING_CHECK: betaFeatureFlag,
   STREAMER_HAT: (game) =>
     (game.wardrobe["Streamer Hat"] ?? 0) > 0 || testnetFeatureFlag(),
 
   // Temporary Feature Flags
-  FACE_RECOGNITION_TEST: defaultFeatureFlag,
+  FACE_RECOGNITION_TEST: betaFeatureFlag,
   LEDGER: testnetLocalStorageFeatureFlag("ledger"),
 
   LEAGUES: () => false,
 
   EASTER: () => false,
 
-  HOLIDAYS_EVENT_FLAG: (game) =>
-    betaTimeBasedFeatureFlag(new Date("2025-12-23T00:00:00Z"))(game) &&
-    Date.now() < new Date("2026-01-05T00:00:00Z").getTime(),
-
   STREAM_STAGE_ACCESS: adminFeatureFlag,
 
   MODERATOR: (game) =>
     !!((game.wardrobe.Halo ?? 0) > 0) && !!game.inventory["Beta Pass"]?.gt(0),
-  CRAFTING_BOX_QUEUES: defaultFeatureFlag,
+  CRAFTING_BOX_QUEUES: betaFeatureFlag,
   // CRAFTING_BOX_QUEUES: () => false,
 
-  BETA_ACCESS: defaultFeatureFlag,
-} satisfies Record<string, FeatureFlag>;
+  BETA_ACCESS: betaFeatureFlag,
 
-const TIME_BASED_FEATURE_FLAGS = {
-  TICKETS_FROM_COIN_NPC: timeBasedOnlyFeatureFlag(
-    new Date("2026-02-24T00:00:00Z"),
-  ),
-} satisfies Record<string, TimeBasedFeatureFlag>;
+  CHAACS_TEMPLE_BETA: betaFeatureFlag,
+
+  /** Pixel-perfect placement: nudge selected items by sub-tile pixels via on-screen
+   * arrows + WASD/arrow keys. Stored coordinates can become decimals; collision
+   * detection rounds at read time so grid behaviour is preserved. */
+  PIXEL_PERFECT_PLACEMENT: betaFeatureFlag,
+  /**
+   * Gates the new home-interior placement system: the /interior route, the
+   * /level_one upgrade route, and the `interior.upgrade` event. Beta-pass /
+   * testnet only until the feature ships to all players.
+   */
+  HOME_EXPANSIONS: betaFeatureFlag,
+
+  /** Quick drag-and-drop landscaping panel shown at the bottom of the screen. */
+  QUICK_LANDSCAPING_PANEL: betaFeatureFlag,
+
+  /** Player economies: token dashboard, portal player-economy API, marketplace minigames row. */
+  PLAYER_ECONOMIES: (game) => !!game.settings.economiesEnabled,
+  /** @deprecated Use PLAYER_ECONOMIES */
+  TOKEN_MINIGAMES: (game) => !!game.settings.economiesEnabled,
+} satisfies Record<string, FeatureFlag>;
 
 export type FeatureName = keyof typeof FEATURE_FLAGS;
 
 export const hasFeatureAccess = (game: GameState, featureName: FeatureName) => {
   return FEATURE_FLAGS[featureName](game);
-};
-
-export type TimeBasedFeatureFlag = (
-  game: GameState,
-) => (now: number) => boolean;
-
-export type TimeBasedFeatureName = keyof typeof TIME_BASED_FEATURE_FLAGS;
-
-export const hasTimeBasedFeatureAccess = ({
-  featureName,
-  now,
-  game: _game,
-}: {
-  featureName: TimeBasedFeatureName;
-  now: number;
-  game: GameState;
-}) => {
-  return TIME_BASED_FEATURE_FLAGS[featureName]()(now);
 };

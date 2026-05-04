@@ -45,7 +45,16 @@ export type LandscapingDecorationName =
   | "Basic Bear"
   | "Bonnie's Tombstone"
   | "Grubnash's Tombstone"
-  | "Town Sign";
+  | "Town Sign"
+  | "Big Table"
+  | "Crate"
+  | "Empty Pot"
+  | "High Table"
+  | "Large Podium"
+  | "Long Table"
+  | "Royal Podium"
+  | "Square Table"
+  | "Stool";
 
 export type ShopDecorationName = LandscapingDecorationName;
 
@@ -187,7 +196,17 @@ export type EventDecorationName =
   | "Winter Alpaca"
   | "Penguin Surprise"
   | "Frozen Meat"
-  | "Ho Ho oh oh…";
+  | "Ho Ho oh oh…"
+  | "Teeth Toy"
+  | "Fake Treasure"
+  | "Fake Mouse"
+  | "Pet Tree"
+  | "Definitely not a Flower"
+  | "Bumpkin Rug"
+  | "Goblin Rug"
+  | "Pet Rug"
+  | "Jester in a box"
+  | "The Sunflower Man Statue";
 
 export type TileName =
   | "Black Tile"
@@ -1408,7 +1427,95 @@ export const DECORATION_DIMENSIONS: Record<DecorationName, Dimensions> = {
     width: 2,
     height: 2,
   },
+  "Teeth Toy": {
+    width: 2,
+    height: 1,
+  },
+  "Fake Treasure": {
+    width: 2,
+    height: 2,
+  },
+  "Fake Mouse": {
+    width: 1,
+    height: 1,
+  },
+  "Pet Tree": {
+    width: 1,
+    height: 2,
+  },
+  "Definitely not a Flower": {
+    width: 1,
+    height: 2,
+  },
+  "Bumpkin Rug": {
+    width: 2,
+    height: 2,
+  },
+  "Goblin Rug": {
+    width: 2,
+    height: 2,
+  },
+  "Pet Rug": {
+    width: 2,
+    height: 2,
+  },
+  "Jester in a box": {
+    width: 2,
+    height: 2,
+  },
+  "The Sunflower Man Statue": {
+    width: 2,
+    height: 2,
+  },
+  "Big Table": {
+    width: 3,
+    height: 3,
+  },
+  Crate: {
+    width: 1,
+    height: 1,
+  },
+  "Empty Pot": {
+    width: 2,
+    height: 1,
+  },
+  "High Table": {
+    width: 1,
+    height: 2,
+  },
+  "Large Podium": {
+    width: 3,
+    height: 3,
+  },
+  "Long Table": {
+    width: 2,
+    height: 1,
+  },
+  "Royal Podium": {
+    width: 2,
+    height: 2,
+  },
+  "Square Table": {
+    width: 2,
+    height: 2,
+  },
+  Stool: {
+    width: 1,
+    height: 1,
+  },
 };
+
+export const HOME_LANDSCAPING_DECORATIONS: LandscapingDecorationName[] = [
+  "Big Table",
+  "Crate",
+  "Empty Pot",
+  "High Table",
+  "Large Podium",
+  "Long Table",
+  "Royal Podium",
+  "Square Table",
+  "Stool",
+];
 
 export type Decoration = {
   name: DecorationName;
@@ -1649,6 +1756,60 @@ export const LANDSCAPING_DECORATIONS: Record<
     ingredients: {
       Wood: new Decimal(100),
     },
+  },
+  "Big Table": {
+    name: "Big Table",
+    description: translate("description.big.table"),
+    coins: 2000,
+    ingredients: {},
+  },
+  Crate: {
+    name: "Crate",
+    description: translate("description.crate"),
+    coins: 500,
+    ingredients: {},
+  },
+  "Empty Pot": {
+    name: "Empty Pot",
+    description: translate("description.empty.pot"),
+    coins: 500,
+    ingredients: {},
+  },
+  "High Table": {
+    name: "High Table",
+    description: translate("description.high.table"),
+    coins: 1000,
+    ingredients: {},
+  },
+  "Large Podium": {
+    name: "Large Podium",
+    description: translate("description.large.podium"),
+    coins: 2000,
+    ingredients: {},
+  },
+  "Long Table": {
+    name: "Long Table",
+    description: translate("description.long.table"),
+    coins: 1000,
+    ingredients: {},
+  },
+  "Royal Podium": {
+    name: "Royal Podium",
+    description: translate("description.royal.podium"),
+    coins: 2500,
+    ingredients: {},
+  },
+  "Square Table": {
+    name: "Square Table",
+    description: translate("description.square.table"),
+    coins: 1000,
+    ingredients: {},
+  },
+  Stool: {
+    name: "Stool",
+    description: translate("description.stool"),
+    coins: 500,
+    ingredients: {},
   },
 };
 

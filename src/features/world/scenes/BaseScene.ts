@@ -313,6 +313,11 @@ export abstract class BaseScene extends Phaser.Scene {
   };
 
   preload() {
+    this.load.spritesheet("love_aura", "world/love_aura.png", {
+      frameWidth: 20,
+      frameHeight: 19,
+    });
+
     if (this.options.map?.json) {
       const json = {
         ...this.options.map.json,
@@ -369,7 +374,7 @@ export abstract class BaseScene extends Phaser.Scene {
         experience: this.gameState.bumpkin?.experience ?? 0,
         totalDeliveries: this.gameState.delivery.fulfilledCount ?? 0,
         dailyStreak: this.gameState.dailyRewards?.streaks ?? 0,
-        isVip: hasVipAccess({ game: this.gameState }),
+        isVip: hasVipAccess({ game: this.gameState, now: Date.now() }),
         createdAt: this.gameState.createdAt,
         islandType: this.gameState.island.type,
       });

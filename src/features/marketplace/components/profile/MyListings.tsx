@@ -20,7 +20,10 @@ import { RemoveListing } from "../RemoveListing";
 import { tradeToId } from "features/marketplace/lib/offers";
 import { isTradeResource } from "features/game/actions/tradeLimits";
 import { MyTableRow } from "./MyTableRow";
-import { MARKETPLACE_TAX } from "features/game/types/marketplace";
+import {
+  CollectionName,
+  MARKETPLACE_TAX,
+} from "features/game/types/marketplace";
 import { Button } from "components/ui/Button";
 import { BulkRemoveTrades } from "../BulkRemoveListings";
 
@@ -33,7 +36,18 @@ const _state = (state: MachineState) => state.context.state;
 
 export const MyListings: React.FC = () => {
   const { t } = useAppTranslation();
-  const params = useParams();
+  const params = useParams<{
+    collection?: CollectionName;
+    id?: string;
+    economy?: string;
+  }>();
+
+  const routeCollection: CollectionName | undefined =
+    params.economy != null && params.id != null && params.collection == null
+      ? "economies"
+      : params.collection;
+
+  const routeEconomy = params.economy;
   const { gameService } = useContext(Context);
 
   const { authService } = useContext(Auth.Context);
@@ -55,7 +69,7 @@ export const MyListings: React.FC = () => {
   const listings = trades.listings ?? {};
 
   const filteredListings =
-    params.id && params.collection
+    params.id && routeCollection
       ? Object.fromEntries(
           Object.entries(listings).filter(([_, listing]) => {
             const listingItemId = tradeToId({
@@ -64,9 +78,16 @@ export const MyListings: React.FC = () => {
                 items: listing.items,
               },
             });
-
+            const listingCollection = listing.collection as string;
+            if (routeCollection === "economies") {
+              return (
+                listingCollection === "economies" &&
+                listing.economy === routeEconomy &&
+                listingItemId === Number(params.id)
+              );
+            }
             return (
-              listing.collection === params.collection &&
+              listing.collection === routeCollection &&
               listingItemId === Number(params.id)
             );
           }),
@@ -189,11 +210,17 @@ export const MyListings: React.FC = () => {
                       isResource={isResource}
                       fee={listing.tax ?? listing.sfl * MARKETPLACE_TAX}
                       onCancel={() => setRemoveListingId(id)}
-                      onRowClick={() =>
-                        navigate(
-                          `${isWorldRoute ? "/world" : ""}/marketplace/${details.type}/${itemId}`,
-                        )
-                      }
+                      onRowClick={() => {
+                        const base = `${isWorldRoute ? "/world" : ""}/marketplace`;
+                        const listingCol = listing.collection as string;
+                        if (listingCol === "economies" && listing.economy) {
+                          navigate(
+                            `${base}/economies/${listing.economy}/${itemId}`,
+                          );
+                          return;
+                        }
+                        navigate(`${base}/${details.type}/${itemId}`);
+                      }}
                       onClaim={() => setClaimId(id)}
                     />
                   );

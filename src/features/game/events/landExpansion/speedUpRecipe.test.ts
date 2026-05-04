@@ -12,7 +12,6 @@
 // 20: Less than 48 hrs
 
 import { INITIAL_FARM } from "features/game/lib/constants";
-import { getInstantGems } from "features/game/lib/getInstantGems";
 import { speedUpRecipe } from "./speedUpRecipe";
 import Decimal from "decimal.js-light";
 import { BAKERY_COOKABLES, COOKABLES } from "features/game/types/consumables";
@@ -430,72 +429,6 @@ describe("instantCook", () => {
     // Ready at for the fish should now be minus the milk cooking time
     expect(result).toBe(fishShouldBeReadyAt - twentyMinutesMs);
   });
-});
-
-describe("getInstantGems", () => {
-  const farmId = 1;
-  it("returns the correct amount of gems for a 1 hour recipe", () => {
-    expect(
-      getInstantGems({
-        readyAt: Date.now() + 1 * 60 * 60 * 1000,
-        game: INITIAL_FARM,
-      }),
-    ).toEqual(5);
-  });
-
-  it("returns the 20% more when player has spent 100 gems in a day", () => {
-    const now = new Date("2024-01-01T03:00:00Z");
-    expect(
-      getInstantGems({
-        readyAt: now.getTime() + 1 * 60 * 60 * 1000,
-        game: {
-          ...INITIAL_FARM,
-          gems: {
-            history: {
-              "2024-01-01": { spent: 100 },
-            },
-          },
-        },
-        now: now.getTime(),
-      }),
-    ).toEqual(6);
-  });
-
-  it("returns the 40% more when player has spent 200 gems in a day", () => {
-    const now = new Date("2024-01-01T03:00:00Z");
-    expect(
-      getInstantGems({
-        readyAt: now.getTime() + 1 * 60 * 60 * 1000,
-        game: {
-          ...INITIAL_FARM,
-          gems: {
-            history: {
-              "2024-01-01": { spent: 200 },
-            },
-          },
-        },
-        now: now.getTime(),
-      }),
-    ).toEqual(7);
-  });
-
-  it("returns the 100% more when player has spent 500 gems in a day", () => {
-    const now = new Date("2024-01-01T03:00:00Z");
-    expect(
-      getInstantGems({
-        readyAt: now.getTime() + 1 * 60 * 60 * 1000,
-        game: {
-          ...INITIAL_FARM,
-          gems: {
-            history: {
-              "2024-01-01": { spent: 500 },
-            },
-          },
-        },
-        now: now.getTime(),
-      }),
-    ).toEqual(10);
-  });
 
   it("doesn't remove other ready recipes when speeding up the current recipe", () => {
     const now = Date.now();
@@ -540,5 +473,84 @@ describe("getInstantGems", () => {
       },
     ]);
     expect(state.inventory["Radish Cake"]).toEqual(new Decimal(1));
+  });
+
+  describe("Dino Egg Trophy coin payment", () => {
+    it("throws when paymentMethod is 'coins' without a placed Dino Egg Trophy", () => {
+      expect(() =>
+        speedUpRecipe({
+          farmId,
+          action: {
+            buildingId: "123",
+            buildingName: "Fire Pit",
+            type: "recipe.spedUp",
+            paymentMethod: "coins",
+          },
+          state: {
+            ...INITIAL_FARM,
+            coins: 100_000,
+            inventory: { Gem: new Decimal(0) },
+            buildings: {
+              "Fire Pit": [
+                {
+                  id: "123",
+                  coordinates: { x: 0, y: 0 },
+                  createdAt: 0,
+                  readyAt: 0,
+                  crafting: [
+                    { name: "Mashed Potato", readyAt: Date.now() + 1000 },
+                  ],
+                },
+              ],
+            },
+          },
+        }),
+      ).toThrow("Dino Egg Trophy required");
+    });
+
+    it("charges coins (and 0 gems) when trophy is placed and cooks the recipe", () => {
+      const state = speedUpRecipe({
+        farmId,
+        action: {
+          buildingId: "123",
+          buildingName: "Fire Pit",
+          type: "recipe.spedUp",
+          paymentMethod: "coins",
+        },
+        state: {
+          ...INITIAL_FARM,
+          coins: 1000,
+          inventory: { Gem: new Decimal(0) },
+          collectibles: {
+            "Dino Egg Trophy": [
+              {
+                id: "trophy-1",
+                createdAt: 0,
+                coordinates: { x: 0, y: 0 },
+                readyAt: 0,
+              },
+            ],
+          },
+          buildings: {
+            "Fire Pit": [
+              {
+                id: "123",
+                coordinates: { x: 0, y: 0 },
+                createdAt: 0,
+                readyAt: 0,
+                crafting: [
+                  { name: "Mashed Potato", readyAt: Date.now() + 1000 },
+                ],
+              },
+            ],
+          },
+        },
+      });
+
+      // Mashed Potato 1s remaining ⇒ 1 gem ⇒ 50 coins.
+      expect(state.coins).toBe(950);
+      expect(state.inventory.Gem).toEqual(new Decimal(0));
+      expect(state.inventory["Mashed Potato"]).toEqual(new Decimal(1));
+    });
   });
 });

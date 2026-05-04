@@ -1,6 +1,7 @@
 import { InventoryItemName } from "../types/game";
 import { CHAPTERS } from "./chapters";
 import { BumpkinItem } from "./bumpkin";
+import { getPetNFTRevealConfig } from "./petRevealConfig";
 
 type Releases = {
   tradeAt: Date;
@@ -579,6 +580,28 @@ export const WEARABLE_RELEASES: Partial<Record<BumpkinItem, Releases>> = {
     withdrawAt: new Date("2026-06-04T00:00:00Z"),
   },
 
+  // Salt Awakening Wearables
+  "Spa Hat": {
+    tradeAt: CHAPTERS["Salt Awakening"].endDate,
+    withdrawAt: CHAPTERS["Salt Awakening"].endDate,
+  },
+  "Spa Robe": {
+    tradeAt: CHAPTERS["Salt Awakening"].endDate,
+    withdrawAt: CHAPTERS["Salt Awakening"].endDate,
+  },
+  "Spa Slippers": {
+    tradeAt: CHAPTERS["Salt Awakening"].endDate,
+    withdrawAt: CHAPTERS["Salt Awakening"].endDate,
+  },
+  "Bubble Aura": {
+    tradeAt: CHAPTERS["Salt Awakening"].endDate,
+    withdrawAt: CHAPTERS["Salt Awakening"].endDate,
+  },
+  "Deep Sea Salt Cave Background": {
+    tradeAt: CHAPTERS["Salt Awakening"].endDate,
+    withdrawAt: CHAPTERS["Salt Awakening"].endDate,
+  },
+
   "Moonseeker Potion": {
     tradeAt: new Date("2025-11-06"),
     withdrawAt: new Date("2025-11-06"),
@@ -680,6 +703,52 @@ export const WEARABLE_RELEASES: Partial<Record<BumpkinItem, Releases>> = {
   "Cozy Reindeer Onesie": {
     tradeAt: new Date("2026-02-01"),
     withdrawAt: new Date("2026-02-01"),
+  },
+
+  // April Fools 2026
+  "Neon Noiz Jacket": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "404 Chic Top": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Neon Noiz Pants": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "404 Chic Skirt": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Admin Fools Tools": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Neon Noiz Shoes": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "404 Chic Boots": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Aether Specs": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Faulty Barrier Background": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Cardboard Wings": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Glitch Aura": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
   },
 };
 
@@ -1511,13 +1580,22 @@ export const INVENTORY_RELEASES: InventoryReleases = {
     tradeAt: CHAPTERS["Crabs and Traps"].endDate,
     withdrawAt: new Date("2026-06-04T00:00:00Z"),
   },
-  "Pearl Bed": {
-    tradeAt: CHAPTERS["Crabs and Traps"].endDate,
-    withdrawAt: new Date("2026-06-04T00:00:00Z"),
-  },
   "Crimstone Clam": {
     tradeAt: CHAPTERS["Crabs and Traps"].endDate,
     withdrawAt: new Date("2026-06-04T00:00:00Z"),
+  },
+
+  // Salt Awakening Collectibles
+  "Crystal Altar": {
+    tradeAt: CHAPTERS["Salt Awakening"].endDate,
+    withdrawAt: CHAPTERS["Salt Awakening"].endDate,
+  },
+  "Dino Egg Trophy": {
+    tradeAt: CHAPTERS["Salt Awakening"].endDate,
+    withdrawAt: CHAPTERS["Salt Awakening"].endDate,
+  },
+  CluckCoin: {
+    tradeAt: new Date("2025-01-01T00:00:00.000Z"),
   },
   "Fish Kite": {
     tradeAt: CHAPTERS["Crabs and Traps"].endDate,
@@ -1632,9 +1710,65 @@ export const INVENTORY_RELEASES: InventoryReleases = {
     withdrawAt: new Date("2026-02-01"),
   },
 
+  "Teeth Toy": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Fake Treasure": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Fake Mouse": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Pet Tree": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Definitely not a Flower": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Bumpkin Rug": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Goblin Rug": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Pet Rug": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "Jester in a box": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+  "The Sunflower Man Statue": {
+    tradeAt: new Date("2026-04-17T00:00:00Z"),
+    withdrawAt: new Date("2026-04-17T00:00:00Z"),
+  },
+
   // Tutorial marketplace item
   "Stone Beetle": {
     tradeAt: new Date("2026-03-09"),
     // Cannot withdraw the tutorial item
   },
 };
+
+export function getPetReleases(petId: number): {
+  tradeAt?: Date;
+  withdrawAt?: Date;
+} {
+  const config = getPetNFTRevealConfig().find(
+    (c) => petId >= c.startId && petId <= c.endId,
+  );
+  if (!config) return {};
+
+  return {
+    tradeAt: config.tradeAt,
+    withdrawAt: config.withdrawAt,
+  };
+}

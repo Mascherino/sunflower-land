@@ -26,7 +26,6 @@ import {
   Bumpkin,
 } from "features/game/types/game";
 import { expansionRequirements } from "features/game/events/landExpansion/revealLand";
-import { getExpansionCoinCostWithVip } from "features/game/lib/vipAccess";
 import { translate } from "lib/i18n/translate";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { ExpansionRequirements } from "components/ui/layouts/ExpansionRequirements";
@@ -34,6 +33,8 @@ import confetti from "canvas-confetti";
 import { ModalContext } from "features/game/components/modal/ModalProvider";
 import { useVisiting } from "lib/utils/visitUtils";
 import { useNow } from "lib/utils/hooks/useNow";
+import { useExpansionCoinCostWithVip } from "lib/utils/hooks/useVipAccess";
+import { OuterPanel } from "components/ui/Panel";
 
 interface ExpandIconProps {
   onOpen: () => void;
@@ -273,7 +274,7 @@ export const UpcomingExpansion: React.FC = () => {
     getBumpkinLevel(state.bumpkin?.experience ?? 0) <
     (requirements?.bumpkinLevel ?? 0);
 
-  const effectiveCoinCost = getExpansionCoinCostWithVip({
+  const effectiveCoinCost = useExpansionCoinCostWithVip({
     coins: requirements?.coins,
     game: state,
   });
@@ -320,6 +321,7 @@ export const UpcomingExpansion: React.FC = () => {
         <CloseButtonPanel
           bumpkinParts={NPC_WEARABLES.grimbly}
           onClose={() => setShowBumpkinModal(false)}
+          container={OuterPanel}
         >
           <ExpansionRequirements
             state={state}

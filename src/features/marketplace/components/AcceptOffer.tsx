@@ -20,7 +20,7 @@ import {
   BlockchainEvent,
   Context as ContextType,
   isAccountTradedWithin90Days,
-  MachineState,
+  selectGameState,
 } from "features/game/lib/gameMachine";
 import { useOnMachineTransition } from "lib/utils/hooks/useOnMachineTransition";
 import { Context } from "features/game/GameProvider";
@@ -32,14 +32,13 @@ import { RequiredReputation } from "features/island/hud/components/reputation/Re
 import { isFaceVerified } from "features/retreat/components/personhood/lib/faceRecognition";
 import { FaceRecognition } from "features/retreat/components/personhood/FaceRecognition";
 import { isTradeResource } from "features/game/actions/tradeLimits";
+import {
+  MinigameCurrencyDisclaimerPanel,
+  showsMinigameCurrencyDisclaimer,
+} from "./MinigameCurrencyDisclaimerPanel";
 import { SUNNYSIDE } from "assets/sunnyside";
 import Decimal from "decimal.js-light";
-const _state = (state: MachineState) => state.context.state;
-const _hasReputation = (state: MachineState) =>
-  hasReputation({
-    game: state.context.state,
-    reputation: Reputation.Cropkeeper,
-  });
+import { useNow } from "lib/utils/hooks/useNow";
 
 const AcceptOfferContent: React.FC<{
   onClose: () => void;
@@ -52,8 +51,13 @@ const AcceptOfferContent: React.FC<{
   const { t } = useAppTranslation();
 
   const { gameService } = useContext(Context);
-  const state = useSelector(gameService, _state);
-  const hasReputation = useSelector(gameService, _hasReputation);
+  const state = useSelector(gameService, selectGameState);
+  const now = useNow();
+  const hasTradeReputation = hasReputation({
+    game: state,
+    reputation: Reputation.Cropkeeper,
+    now,
+  });
   const accountTradedRecently = useSelector(gameService, (s) =>
     isAccountTradedWithin90Days(s.context),
   );
@@ -138,7 +142,7 @@ const AcceptOfferContent: React.FC<{
     display.type === "collectibles" &&
     isTradeResource(display.name as InventoryItemName)
   ) {
-    tax = getResourceTax({ game: state }).mul(offer.sfl);
+    tax = getResourceTax({ game: state, now }).mul(offer.sfl);
   }
 
   return (
@@ -148,7 +152,7 @@ const AcceptOfferContent: React.FC<{
           <Label type="default" className="-ml-1">
             {t("marketplace.acceptOffer")}
           </Label>
-          {!hasReputation && (
+          {!hasTradeReputation && (
             <RequiredReputation reputation={Reputation.Cropkeeper} />
           )}
         </div>
@@ -159,6 +163,9 @@ const AcceptOfferContent: React.FC<{
           quantity={offer.quantity}
           estTradePoints={estTradePoints}
         />
+        {showsMinigameCurrencyDisclaimer(display.name) && (
+          <MinigameCurrencyDisclaimerPanel className="mt-3" />
+        )}
       </div>
 
       {!hasItem && (
@@ -172,7 +179,7 @@ const AcceptOfferContent: React.FC<{
           {t("cancel")}
         </Button>
         <Button
-          disabled={!hasReputation || !hasItem || accountTradedRecently}
+          disabled={!hasTradeReputation || !hasItem || accountTradedRecently}
           onClick={() => confirm()}
           className="relative"
         >

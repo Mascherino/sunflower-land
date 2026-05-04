@@ -1,4 +1,5 @@
 import { CropName, GreenHouseCropName } from "../types/crops";
+import { FermentationBait } from "../types/fishing";
 import { GreenHouseFruitName, PatchFruitName } from "../types/fruits";
 import {
   AnimalResource,
@@ -15,19 +16,37 @@ export const EMBLEM_TRADE_LIMITS: Record<FactionEmblem, number> = {
   "Nightshade Emblem": 200,
 };
 
+export const EMBLEM_TRADE_MINIMUMS: Record<FactionEmblem, number> = {
+  "Goblin Emblem": 1,
+  "Sunflorian Emblem": 1,
+  "Bumpkin Emblem": 1,
+  "Nightshade Emblem": 1,
+};
+
 export type TradeResource = Extract<
   InventoryItemName,
   | CropName
   | PatchFruitName
   | GreenHouseFruitName
   | GreenHouseCropName
-  | CommodityName
+  | Exclude<
+      CommodityName,
+      | "Diamond"
+      | "Sunstone"
+      | "Oil"
+      | "Obsidian"
+      | "Refined Salt"
+      | "Wild Mushroom"
+      | "Magic Mushroom"
+      | "Chicken"
+    >
   | AnimalResource
   | FactionEmblem
-  | PetResourceName
+  | Exclude<PetResourceName, "Acorn" | "Fossil Shell">
+  | FermentationBait
 >;
 
-export const TRADE_LIMITS: Partial<Record<TradeResource, number>> = {
+export const TRADE_LIMITS: Record<TradeResource, number> = {
   // Crops
   Sunflower: 4000,
   Potato: 3000,
@@ -75,6 +94,7 @@ export const TRADE_LIMITS: Partial<Record<TradeResource, number>> = {
   Iron: 200,
   Gold: 100,
   Crimstone: 20,
+  Salt: 100,
 
   // Animal Produce
   Egg: 500,
@@ -94,9 +114,12 @@ export const TRADE_LIMITS: Partial<Record<TradeResource, number>> = {
   Ribbon: 100,
   Dewberry: 100,
   Moonfur: 100,
+  "Capsule Bait": 10,
+  "Umbrella Bait": 10,
+  "Crimson Baitfish": 10,
 };
 
-export const TRADE_MINIMUMS: Partial<Record<TradeResource, number>> = {
+export const TRADE_MINIMUMS: Record<TradeResource, number> = {
   Sunflower: 200,
   Potato: 200,
   Rhubarb: 200,
@@ -140,6 +163,7 @@ export const TRADE_MINIMUMS: Partial<Record<TradeResource, number>> = {
   Iron: 5,
   Gold: 3,
   Crimstone: 1,
+  Salt: 10,
 
   Honey: 5,
   Feather: 20,
@@ -157,13 +181,11 @@ export const TRADE_MINIMUMS: Partial<Record<TradeResource, number>> = {
   Ribbon: 1,
   Dewberry: 1,
   Moonfur: 1,
-};
 
-export const EMBLEM_TRADE_MINIMUMS: Record<FactionEmblem, number> = {
-  "Goblin Emblem": 1,
-  "Sunflorian Emblem": 1,
-  "Bumpkin Emblem": 1,
-  "Nightshade Emblem": 1,
+  "Capsule Bait": 1,
+  "Umbrella Bait": 1,
+  "Crimson Baitfish": 1,
+  ...EMBLEM_TRADE_MINIMUMS,
 };
 
 export const isTradeResource = (

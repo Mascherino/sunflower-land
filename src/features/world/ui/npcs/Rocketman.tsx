@@ -25,7 +25,7 @@ import {
 } from "features/game/events/landExpansion/exchangeFLOWER";
 import { isFaceVerified } from "features/retreat/components/personhood/lib/faceRecognition";
 import { FaceRecognition } from "features/retreat/components/personhood/FaceRecognition";
-import { hasVipAccess } from "features/game/lib/vipAccess";
+import { useVipAccess } from "lib/utils/hooks/useVipAccess";
 
 interface Props {
   onClose: () => void;
@@ -150,12 +150,12 @@ export const FlowerExchange: React.FC<FlowerExchangeProps> = ({ onClose }) => {
     state.flower?.history?.[new Date().toISOString().split("T")[0]]
       ?.loveCharmsSpent ?? 0;
   const willExceedDailyLimit = loveCharmsSpent + loveCharms > DAILY_LIMIT;
+  const isVIP = useVipAccess({ game: state, type: "full" });
 
   if (!isFaceVerified({ game: state })) {
     return <FaceRecognition />;
   }
 
-  const isVIP = hasVipAccess({ game: state, type: "full" });
   if (!isVIP) {
     return (
       <div className="p-1">
@@ -211,7 +211,7 @@ export const FlowerExchange: React.FC<FlowerExchangeProps> = ({ onClose }) => {
 
   const isOutOfRange =
     loveCharmsSpent >= DAILY_LIMIT ||
-    loveCharms < 50 ||
+    loveCharms < EXCHANGE_FLOWER_PRICE ||
     willExceedDailyLimit ||
     loveCharmCount.lt(loveCharms);
 
@@ -272,7 +272,7 @@ export const FlowerExchange: React.FC<FlowerExchangeProps> = ({ onClose }) => {
         <Label type="danger">
           {willExceedDailyLimit || loveCharmsSpent >= DAILY_LIMIT
             ? t("flower.exchange.error.max")
-            : loveCharms < 50
+            : loveCharms < EXCHANGE_FLOWER_PRICE
               ? t("flower.exchange.error.min")
               : loveCharmCount.lt(loveCharms)
                 ? t("flower.exchange.error.balance")

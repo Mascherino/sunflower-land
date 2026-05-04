@@ -1,14 +1,17 @@
 import { GameState } from "features/game/types/game";
 import { produce } from "immer";
 import {
+  chargeCoinsForSpeedUp,
   getInstantGems,
   makeGemHistory,
+  SpeedUpPaymentMethod,
 } from "features/game/lib/getInstantGems";
 import Decimal from "decimal.js-light";
 import { recalculateCraftingQueue } from "./cancelQueuedCrafting";
 
 export type InstantCraftAction = {
   type: "crafting.spedUp";
+  paymentMethod?: SpeedUpPaymentMethod;
 };
 
 type Options = {
@@ -31,15 +34,15 @@ export function speedUpCrafting({
 
     const { craftingBox, inventory } = game;
     const queue = craftingBox.queue ?? [];
-    const { readyAt, item, status } = craftingBox;
+    const { readyAt, status } = craftingBox;
 
-    if (status !== "crafting" || !item) {
+    if (status !== "crafting" || queue.length === 0) {
       throw new Error("Crafting box is not crafting");
     }
 
     const firstInProgress = queue.find((q) => q.readyAt > createdAt);
     const currentReadyAt =
-      queue.length > 0 ? (firstInProgress?.readyAt ?? readyAt) : readyAt;
+      firstInProgress?.readyAt ?? queue[0]?.readyAt ?? readyAt;
     if (currentReadyAt <= createdAt) {
       throw new Error("Crafting box is not ready to be sped up");
     }
@@ -50,15 +53,19 @@ export function speedUpCrafting({
       game,
     });
 
-    const inventoryGems = inventory["Gem"] ?? new Decimal(0);
+    if (action.paymentMethod === "coins") {
+      game = chargeCoinsForSpeedUp({ game, gems, createdAt });
+    } else {
+      const inventoryGems = inventory["Gem"] ?? new Decimal(0);
 
-    if (!inventoryGems.gte(gems)) {
-      throw new Error("Insufficient gems");
+      if (!inventoryGems.gte(gems)) {
+        throw new Error("Insufficient gems");
+      }
+
+      inventory["Gem"] = inventoryGems.sub(gems);
+
+      game = makeGemHistory({ game, amount: gems, createdAt });
     }
-
-    inventory["Gem"] = inventoryGems.sub(gems);
-
-    game = makeGemHistory({ game, amount: gems, createdAt });
 
     if (queue.length > 0) {
       const readyItems = queue.filter((q) => q.readyAt <= createdAt);
@@ -72,13 +79,6 @@ export function speedUpCrafting({
       });
 
       game.craftingBox.queue = [...readyItems, ...recalculated];
-      const firstActive = game.craftingBox.queue?.[0];
-      if (firstActive) {
-        game.craftingBox.readyAt = firstActive.readyAt;
-        game.craftingBox.startedAt = firstActive.startedAt;
-      }
-    } else {
-      craftingBox.readyAt = createdAt;
     }
 
     return game;

@@ -503,6 +503,9 @@ export const SUNNYSIDE = {
     petHouse1: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/pet_house_red.webp`,
     petHouse2: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/pet_house_blue.webp`,
     petHouse3: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/pet_house_purple.webp`,
+    agingShed1: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/aging_shed_1.webp`,
+    agingShed2: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/aging_shed_2.webp`,
+    agingShed3: `${CONFIG.PROTECTED_IMAGE_URL}/buildings/aging_shed_3.webp`,
 
     //DESERT
     desertFirePit: `${CONFIG.PROTECTED_IMAGE_URL}/desert/buildings/fire_pit.webp`,
@@ -1457,6 +1460,7 @@ export const SUNNYSIDE = {
     power_shovel: `${CONFIG.PROTECTED_IMAGE_URL}/tools/power_shovel.png`,
     rusty_shovel: `${CONFIG.PROTECTED_IMAGE_URL}/tools/rusty_shovel.png`,
     sand_shovel: `${CONFIG.PROTECTED_IMAGE_URL}/tools/sand_shovel.png`,
+    salt_rake: `${CONFIG.PROTECTED_IMAGE_URL}/tools/salt_rake.webp`,
     shovel: `${CONFIG.PROTECTED_IMAGE_URL}/tools/shovel.png`,
     stone_pickaxe: `${CONFIG.PROTECTED_IMAGE_URL}/tools/stone_pickaxe.png`,
     wood_pickaxe: `${CONFIG.PROTECTED_IMAGE_URL}/tools/wood_pickaxe.png`,
@@ -1716,5 +1720,10 @@ export const SUNNYSIDE = {
     seaSnail: `${CONFIG.PROTECTED_IMAGE_URL}/crustaceans/sea_snail.webp`,
     seaUrchin: `${CONFIG.PROTECTED_IMAGE_URL}/crustaceans/sea_urchin.webp`,
     shrimp: `${CONFIG.PROTECTED_IMAGE_URL}/crustaceans/shrimp.webp`,
+  },
+  sculptures: {
+    saltSculpture1: `${CONFIG.PROTECTED_IMAGE_URL}/sculptures/salt_sculpture_01.webp`,
+    saltSculpture2: `${CONFIG.PROTECTED_IMAGE_URL}/sculptures/salt_sculpture_02.webp`,
+    saltSculpture3: `${CONFIG.PROTECTED_IMAGE_URL}/sculptures/salt_sculpture_03.webp`,
   },
 };

@@ -80,6 +80,16 @@ import restlessAnimals from "assets/icons/skill_icons/restless_animals.png";
 import rockyFavor from "assets/icons/skill_icons/rocky_favor.png";
 import seededBounty from "assets/icons/skill_icons/seedybounty.png";
 import strongRoots from "assets/icons/skill_icons/strong_roots.png";
+import ager from "assets/icons/skill_icons/ager.webp";
+import bacalhau from "assets/icons/skill_icons/bacalhau.webp";
+import cheapRakes from "assets/icons/skill_icons/cheap_rakes.webp";
+import fishSmoking from "assets/icons/skill_icons/fish_smoking.webp";
+import refiner from "assets/icons/skill_icons/refiner.webp";
+import saltSurge from "assets/icons/skill_icons/salt_surge.webp";
+import saltySeas from "assets/icons/skill_icons/salty_seas.webp";
+import seaBlessed from "assets/icons/skill_icons/sea_blessed.webp";
+import speedyAging from "assets/icons/skill_icons/speedy_aging.webp";
+import wideRakes from "assets/icons/skill_icons/wide_rakes.webp";
 import xpIcon from "assets/icons/xp.png";
 import { NPCName } from "lib/npcs";
 import { BuffLabel } from ".";
@@ -126,7 +136,8 @@ export type BumpkinRevampSkillTree =
   | "Cooking"
   | "Bees & Flowers"
   | "Machinery"
-  | "Compost";
+  | "Compost"
+  | "Aging";
 
 export type BumpkinSkill = {
   name: BumpkinSkillName;
@@ -3230,6 +3241,207 @@ export const BUMPKIN_REVAMP_SKILL_TREE = {
     },
     disabled: false,
   },
+
+  // Salt - Tier 1
+  "Cheap Rakes": {
+    name: "Cheap Rakes",
+    tree: "Aging",
+    disabled: false,
+    requirements: {
+      points: 1,
+      tier: 1,
+      island: "basic",
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.cheapRakes"),
+        labelType: "success",
+        boostTypeIcon: SUNNYSIDE.ui.coins,
+        boostedItemIcon: ITEM_DETAILS["Salt Rake"].image,
+      },
+    },
+    image: cheapRakes,
+  },
+  "Speedy Aging": {
+    name: "Speedy Aging",
+    tree: "Aging",
+    disabled: false,
+    requirements: {
+      points: 1,
+      tier: 1,
+      island: "basic",
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.speedyAging"),
+        labelType: "info",
+        boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+        boostedItemIcon: SUNNYSIDE.icons.fish,
+      },
+    },
+    image: speedyAging,
+  },
+  "Salty Seas": {
+    name: "Salty Seas",
+    tree: "Aging",
+    disabled: false,
+    requirements: {
+      points: 1,
+      tier: 1,
+      island: "basic",
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.saltySeas"),
+        labelType: "info",
+        boostTypeIcon: SUNNYSIDE.icons.stopwatch,
+        boostedItemIcon: ITEM_DETAILS["Salt"].image,
+      },
+    },
+    image: saltySeas,
+  },
+  "Wide Rakes": {
+    name: "Wide Rakes",
+    tree: "Aging",
+    disabled: false,
+    requirements: {
+      points: 1,
+      tier: 1,
+      island: "basic",
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.wideRakes"),
+        labelType: "success",
+        boostTypeIcon: powerup,
+        boostedItemIcon: ITEM_DETAILS["Salt"].image,
+      },
+    },
+    image: wideRakes,
+  },
+  Bacalhau: {
+    name: "Bacalhau",
+    tree: "Aging",
+    disabled: false,
+    requirements: {
+      points: 1,
+      tier: 1,
+      island: "basic",
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.bacalhau"),
+        labelType: "success",
+        boostTypeIcon: powerup,
+        boostedItemIcon: bacalhau,
+      },
+    },
+    image: bacalhau,
+  },
+
+  // Salt - Tier 2
+  "Fish Smoking": {
+    name: "Fish Smoking",
+    tree: "Aging",
+    disabled: false,
+    requirements: {
+      points: 2,
+      tier: 2,
+      island: "basic",
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.fishSmoking"),
+        labelType: "vibrant",
+        boostTypeIcon: SUNNYSIDE.icons.lightning,
+        boostedItemIcon: SUNNYSIDE.icons.fish,
+      },
+    },
+    image: fishSmoking,
+  },
+  Refiner: {
+    name: "Refiner",
+    tree: "Aging",
+    disabled: false,
+    requirements: {
+      points: 2,
+      tier: 2,
+      island: "basic",
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.refiner"),
+        labelType: "vibrant",
+        boostTypeIcon: SUNNYSIDE.icons.lightning,
+      },
+    },
+    image: refiner,
+  },
+  "Sea Blessed": {
+    name: "Sea Blessed",
+    tree: "Aging",
+    disabled: false,
+    requirements: {
+      points: 2,
+      tier: 2,
+      island: "basic",
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.seaBlessed"),
+        labelType: "vibrant",
+        boostTypeIcon: SUNNYSIDE.icons.lightning,
+        boostedItemIcon: ITEM_DETAILS["Salt"].image,
+      },
+    },
+    image: seaBlessed,
+  },
+
+  // Salt - Tier 3
+  Ager: {
+    name: "Ager",
+    tree: "Aging",
+    disabled: false,
+    requirements: {
+      points: 3,
+      tier: 3,
+      island: "basic",
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.ager.buff"),
+        labelType: "success",
+        boostTypeIcon: powerup,
+      },
+      debuff: {
+        shortDescription: translate("skill.ager.debuff"),
+        labelType: "danger",
+        boostTypeIcon: redArrowDown,
+      },
+    },
+    image: ager,
+  },
+  "Salt Surge": {
+    name: "Salt Surge",
+    tree: "Aging",
+    disabled: false,
+    power: true,
+    requirements: {
+      points: 3,
+      tier: 3,
+      island: "basic",
+      cooldown: 1000 * 60 * 60 * 72,
+    },
+    boosts: {
+      buff: {
+        shortDescription: translate("skill.saltSurge"),
+        labelType: "vibrant",
+        boostTypeIcon: SUNNYSIDE.icons.lightning,
+        boostedItemIcon: ITEM_DETAILS["Salt"].image,
+      },
+    },
+    image: saltSurge,
+  },
 } satisfies Record<string, BumpkinSkillRevamp>;
 
 export type BumpkinRevampSkillName = keyof typeof BUMPKIN_REVAMP_SKILL_TREE;
@@ -3243,17 +3455,16 @@ export const SKILL_TREE_CATEGORIES = Array.from(
 export const getRevampSkillTreeCategoriesByIsland = (
   islandType: IslandType,
 ) => {
-  const skillTreeCategoriesByIsland = Array.from(
+  return Array.from(
     new Set(
       getKeys(BUMPKIN_REVAMP_SKILL_TREE)
-        .filter(
-          (skill) =>
-            BUMPKIN_REVAMP_SKILL_TREE[skill].requirements.island === islandType,
-        )
+        .filter((skillName) => {
+          const skill = BUMPKIN_REVAMP_SKILL_TREE[skillName];
+          return skill.requirements.island === islandType;
+        })
         .map((skill) => BUMPKIN_REVAMP_SKILL_TREE[skill].tree),
     ),
   );
-  return skillTreeCategoriesByIsland;
 };
 
 export const getSkills = (treeName: BumpkinSkillTree) => {

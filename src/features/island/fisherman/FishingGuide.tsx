@@ -8,7 +8,11 @@ import { translate } from "lib/i18n/translate";
 import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import { Label } from "components/ui/Label";
 import { getKeys } from "lib/object";
-import { FISH, FishingBait } from "features/game/types/fishing";
+import {
+  FISH,
+  FishingBait,
+  getFermentationBaitsForFishBaits,
+} from "features/game/types/fishing";
 import { SEASON_ICONS } from "../buildings/components/building/market/SeasonalSeeds";
 import { TemperateSeasonName } from "features/game/types/game";
 import { useGame } from "features/game/GameProvider";
@@ -47,8 +51,11 @@ const SEASON_ORDER: TemperateSeasonName[] = [
 
 const BAIT_ORDER: FishingBait[] = [
   "Earthworm",
+  "Capsule Bait",
   "Grub",
+  "Umbrella Bait",
   "Red Wiggler",
+  "Crimson Baitfish",
   "Fishing Lure",
   "Fish Flake",
   "Fish Stick",
@@ -65,7 +72,11 @@ const FishingRow: React.FC<{
 
   const seasonSet = new Set(details.seasons);
 
-  const baits = BAIT_ORDER.filter((bait) => details.baits.includes(bait));
+  const allowedBaits = [
+    ...details.baits,
+    ...getFermentationBaitsForFishBaits(details.baits),
+  ];
+  const baits = BAIT_ORDER.filter((bait) => allowedBaits.includes(bait));
 
   return (
     <div

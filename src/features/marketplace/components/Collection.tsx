@@ -15,7 +15,11 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { Context } from "features/game/GameProvider";
 import { MachineState } from "features/game/lib/gameMachine";
 import { InventoryItemName } from "features/game/types/game";
-import { PetCategory, getPetLevel } from "features/game/types/pets";
+import {
+  PET_FETCHES,
+  PetCategory,
+  getPetLevel,
+} from "features/game/types/pets";
 import { getNFTTraits } from "./TradeableInfo";
 import { PetTraits } from "features/pets/data/types";
 import { Bud } from "lib/buds/types";
@@ -44,6 +48,8 @@ import {
 } from "../lib/traitOptions";
 import { useTranslation } from "react-i18next";
 import { Label } from "components/ui/Label";
+import { marketplaceMinigameItemPath } from "../lib/minigameTradePath";
+import { getBudBoostFilterLabels } from "../lib/budBoostFilters";
 
 const budTraitLabels = createTraitLabelLookup(BUD_TRAIT_GROUPS);
 const petTraitLabels = createTraitLabelLookup(PET_TRAIT_GROUPS);
@@ -105,8 +111,9 @@ export const Collection: React.FC<{
   const { t } = useTranslation();
   const isWorldRoute = useLocation().pathname.includes("/world");
   // Get query string params
-  const [queryParams] = useSearchParams();
+  const [queryParams, setSearchParams] = useSearchParams();
   let filters = queryParams.get("filters") ?? "";
+
   const chapterFilter = queryParams.get("chapter") ?? "";
   const chapterKey = toTraitValueId(chapterFilter);
   const ownershipParam = queryParams.get("ownership") ?? "";
@@ -206,7 +213,6 @@ export const Collection: React.FC<{
     filters.includes("temporary") && !hideLimited ? ["temporary", token] : null,
     collectionFetcher,
   );
-
   const data = {
     items: [
       ...(resources?.items || []),
@@ -451,6 +457,12 @@ export const Collection: React.FC<{
                   selectedValues.includes(category),
                 );
               }
+              case "resource":
+                return PET_FETCHES[petTraits.type].fetches.some(
+                  ({ name, level }) =>
+                    petLevel >= level &&
+                    selectedValues.includes(toTraitValueId(name)),
+                );
               case "aura":
                 return selectedValues.includes(
                   toTraitValueId(petTraits.aura ?? ""),
@@ -519,6 +531,10 @@ export const Collection: React.FC<{
               case "colour":
                 return selectedValues.includes(
                   toTraitValueId(budTraits.colour ?? ""),
+                );
+              case "boost":
+                return getBudBoostFilterLabels(budTraits).some((boost) =>
+                  selectedValues.includes(toTraitValueId(boost)),
                 );
               default:
                 return true;
@@ -616,10 +632,23 @@ export const Collection: React.FC<{
                 state,
                 experience:
                   item.collection === "pets" ? item.experience : undefined,
+                marketplaceItem: item,
               });
 
+              const marketplaceBase = `${isWorldRoute ? "/world" : ""}/marketplace`;
+              const detailPath =
+                item.collection === "economies"
+                  ? marketplaceMinigameItemPath(
+                      marketplaceBase,
+                      item.economy,
+                      item.id,
+                    )
+                  : `${marketplaceBase}/${item.collection}/${item.id}`;
+
+              const rowKey = String(item.id);
+
               return (
-                <div key={item.id} style={style} className="pr-1 pb-1">
+                <div key={rowKey} style={style} className="pr-1 pb-1">
                   <ListViewCard
                     details={display}
                     price={new Decimal(item.floor)}
@@ -627,15 +656,12 @@ export const Collection: React.FC<{
                     onClick={() => {
                       const scrollPosition =
                         gridRef.current?._outerRef.scrollTop;
-                      navigate(
-                        `${isWorldRoute ? "/world" : ""}/marketplace/${item.collection}/${item.id}`,
-                        {
-                          state: {
-                            scrollPosition,
-                            route: backRoute,
-                          },
+                      navigate(detailPath, {
+                        state: {
+                          scrollPosition,
+                          route: backRoute,
                         },
-                      );
+                      });
                       onNavigated?.();
                     }}
                     expiresAt={item.expiresAt}

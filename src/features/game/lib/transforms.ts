@@ -38,6 +38,18 @@ export function makeGame(farm: any): GameState {
     island: farm.island,
     bank: farm.bank,
     home: farm.home,
+    // Interior is a new, entirely separate placement surface. Seed it with an
+    // empty ground level for any player coming back from the API who does not
+    // yet have this field — the feature is front-end-only for v1 and they opt
+    // in by placing items at /interior. We tolerate two legacy shapes:
+    //   - `farm.interior` missing entirely → default to a fresh ground level
+    //   - `farm.interior.collectibles` from an earlier prototype where data
+    //     wasn't yet nested under .ground → migrate it under .ground.
+    interior: farm.interior?.ground
+      ? farm.interior
+      : farm.interior?.collectibles
+        ? { ground: { collectibles: farm.interior.collectibles } }
+        : { ground: { collectibles: {} } },
     createdAt: farm.createdAt,
     stockExpiry: farm.stockExpiry || {},
     coins: farm.coins,
@@ -115,6 +127,7 @@ export function makeGame(farm: any): GameState {
     henHouse: farm.henHouse,
     barn: farm.barn,
     waterWell: farm.waterWell,
+    agingShed: farm.agingShed,
     petHouse: farm.petHouse,
     craftingBox: farm.craftingBox,
     season: farm.season,
@@ -135,5 +148,7 @@ export function makeGame(farm: any): GameState {
     socialFarming: farm.socialFarming,
     pets: farm.pets,
     prototypes: farm.prototypes,
+    saltFarm: farm.saltFarm ?? { level: 0, nodes: {} },
+    sculptures: farm.sculptures,
   };
 }

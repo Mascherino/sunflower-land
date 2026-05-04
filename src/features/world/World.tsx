@@ -31,6 +31,7 @@ import { getBumpkinLevel } from "features/game/lib/level";
 import { getActiveFloatingIsland } from "features/game/types/floatingIsland";
 import { adminFeatureFlag } from "lib/flags";
 import { useVisiting } from "lib/utils/visitUtils";
+import { useNow } from "lib/utils/hooks/useNow";
 
 interface Props {
   isCommunity?: boolean;
@@ -77,7 +78,9 @@ const _isIntroducing = (state: MMOMachineState) =>
 
 type MMOProps = { isCommunity: boolean };
 
-const SCENE_ACCESS: Partial<Record<SceneId, (game: GameState) => boolean>> = {
+const SCENE_ACCESS: Partial<
+  Record<SceneId, (game: GameState, now: number) => boolean>
+> = {
   goblin_house: (game) => game.faction?.name === "goblins",
   sunflorian_house: (game) => game.faction?.name === "sunflorians",
   bumpkin_house: (game) => game.faction?.name === "bumpkins",
@@ -121,6 +124,7 @@ export const MMO: React.FC<MMOProps> = ({ isCommunity }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isVisiting } = useVisiting();
+  const now = useNow();
 
   const mmoService = useInterpret(mmoMachine, {
     context: {
@@ -183,7 +187,7 @@ export const MMO: React.FC<MMOProps> = ({ isCommunity }) => {
 
   if (
     SCENE_ACCESS[name as SceneId] &&
-    !SCENE_ACCESS[name as SceneId]?.(gameState.context.state)
+    !SCENE_ACCESS[name as SceneId]?.(gameState.context.state, now)
   ) {
     return (
       <Panel>
