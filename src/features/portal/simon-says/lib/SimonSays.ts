@@ -157,22 +157,22 @@ export class SimonSays {
     this.startLength = DEFAULT_SEQUENCE_LENGTH;
     this.scoreThreshold = 5;
     switch (prize?.score) {
-      case 7:
+      case 3:
         this.targetScore = 5;
         break;
-      case 8:
+      case 4:
         this.startLength = 4;
         this.targetScore = 5;
         break;
-      case 9:
+      case 5:
         this.startLength = 5;
         this.targetScore = 5;
         break;
-      case 10:
+      case 6:
         this.startLength = 6;
         this.targetScore = 5;
         break;
-      case 11:
+      case 7:
         this.startLength = 7;
         this.targetScore = 5;
         break;
