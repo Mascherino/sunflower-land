@@ -161,43 +161,6 @@ export const Mission: React.FC<Props> = ({
               </div>
             </div>
           )}
-
-          {/* Remove after testing */}
-          <div className="flex flex-col mt-2">
-            <Label type="chill">{"Testing"}</Label>
-            <div className="flex flex-wrap flex-row mt-2 justify-evenly">
-              <Button
-                className="w-20 h-20"
-                onClick={() => portalService.send("TEST", { score: 7 })}
-              >
-                {"20 marks"}
-              </Button>
-              <Button
-                onClick={() => portalService.send("TEST", { score: 8 })}
-                className="mx-1 w-20 h-20"
-              >
-                {"30 marks"}
-              </Button>
-              <Button
-                className="w-20 h-20"
-                onClick={() => portalService.send("TEST", { score: 9 })}
-              >
-                {"40 marks"}
-              </Button>
-              <Button
-                onClick={() => portalService.send("TEST", { score: 10 })}
-                className="mx-1 w-20 h-20"
-              >
-                {"50 marks"}
-              </Button>
-              <Button
-                className="w-20 h-20"
-                onClick={() => portalService.send("TEST", { score: 11 })}
-              >
-                {"60 marks"}
-              </Button>
-            </div>
-          </div>
         </>
       )}
       {currentPage === "guide" && (
