@@ -143,23 +143,23 @@ export class SimonSays {
     this.lives = 3;
     this.startLength = DEFAULT_SEQUENCE_LENGTH;
     this.scoreThreshold = 5;
-    switch (prize?.score) {
-      case 3:
+    switch (prize?.items.Mark) {
+      case 20:
         this.targetScore = 5;
         break;
-      case 4:
+      case 30:
         this.startLength = 4;
         this.targetScore = 5;
         break;
-      case 5:
+      case 40:
         this.startLength = 5;
         this.targetScore = 5;
         break;
-      case 6:
+      case 50:
         this.startLength = 6;
         this.targetScore = 5;
         break;
-      case 7:
+      case 60:
         this.startLength = 7;
         this.targetScore = 5;
         break;
