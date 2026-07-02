@@ -7593,7 +7593,7 @@
   "memory.guide.howtoplay.text.3": "If the cards you have flipped match, they will disappear and you get one score point.",
   "memory.guide.howtoplay.text.4": "If they do not match, they will automatically flip back and you can try again.",
   "memory.guide.howtoplay.text.5": "Each card flip costs you one move. The number of moves you have left is displayed in the top left corner as healthbar.",
-  "memory.guide.howtoplay.text.6": "Reaching 0 health will end the game with your current score.",
+  "memory.guide.howtoplay.text.6": "Reaching 0 health or running out of time will end the game with your current score.",
   "memory.guide.goal.label": "Additional information",
   "memory.guide.goal.text.1": "The number of matches you need to find to win is displayed in the top left corner.",
   "memory.guide.goal.text.2": "Whenever you find the second card of a match, you will not be lose a health point for the second flip.",
