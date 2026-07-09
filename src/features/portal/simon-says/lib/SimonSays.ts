@@ -59,11 +59,12 @@ export class SimonSays {
   private hintListener: ((event: EventObject) => void) | null = null;
   static current: SimonSays | null = null;
   public settings: ChaacsTempleSettings = getChaacsTempleSettings();
-  private speedScale: number = defaultSpeedScale;
+  private speedScale: number;
   constructor(scene: SimonSaysScene) {
     this.scene = scene;
 
     this.setupSounds();
+    this.speedScale = this.settings.SpeedScale ?? defaultSpeedScale;
 
     SimonSays.current = this;
     EventBus.emitter
