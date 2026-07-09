@@ -3,6 +3,7 @@ import {
   defaultBgmVolume,
   defaultEffectsMuted,
   defaultEffectsVolume,
+  defaultSpeedScale,
 } from "../util/Constants";
 
 export interface ChaacsTempleSettings {
@@ -14,9 +15,11 @@ export interface ChaacsTempleSettings {
     volume?: number;
     isMuted?: boolean;
   };
+  SpeedScale?: number;
 }
 
 export const defaultSettings: ChaacsTempleSettings = {
   Music: { volume: defaultBgmVolume, isMuted: defaultBgmMuted },
   Effects: { volume: defaultEffectsVolume, isMuted: defaultEffectsMuted },
+  SpeedScale: defaultSpeedScale,
 };

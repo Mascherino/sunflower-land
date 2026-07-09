@@ -7,6 +7,7 @@ import { useAppTranslation } from "lib/i18n/useAppTranslations";
 import {
   defaultBgmVolume,
   defaultEffectsVolume,
+  defaultSpeedScale,
   SIMON_SAYS_NPC_WEARABLES,
 } from "../../util/Constants";
 import { Modal } from "components/ui/Modal";
@@ -33,6 +34,10 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
   );
   const [bgmVolume, setBgmVolume] = useState<Decimal>(
     new Decimal(settings.Music?.volume ?? defaultBgmVolume).mul(100),
+  );
+
+  const [speedScale, setSpeedScale] = useState<Decimal>(
+    new Decimal(settings.SpeedScale ?? defaultSpeedScale),
   );
 
   const button = new Howl({
@@ -80,6 +85,13 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
     setSetting({ Effects: { volume: volume } });
   };
 
+  const emitSpeedScale = (value: number) => {
+    EventBus.emitter.emit("SETTINGS_CHANGED", {
+      SpeedScale: value,
+    });
+    setSetting({ SpeedScale: value });
+  };
+
   const changeBgmVolume = (value: Decimal) => {
     // Divide by 100 to convert scale from 1 - 100 to 0.01 - 1.0
     let newValue = Math.floor(value.toNumber()) / 100;
@@ -106,6 +118,16 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
     }
     setEffectsVolume(value);
     emitEffectsVolume(newValue);
+  };
+
+  const changeSpeedScale = (value: Decimal) => {
+    if (value.lessThan(1)) {
+      value = new Decimal(1);
+    } else if (value.greaterThan(5)) {
+      value = new Decimal(5);
+    }
+    setSpeedScale(value);
+    emitSpeedScale(value.toNumber());
   };
 
   return (
@@ -246,6 +268,51 @@ export const SettingsModal: React.FC<{ show: boolean; onHide: () => void }> = ({
               >
                 {"+10"}
               </Button>
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <div className="w-full h-[1px] bg-brown-200 rounded my-4 opacity-75"></div>
+          </div>
+
+          <div className="flex flex-col mt-1.5">
+            <div className="flex items-center">
+              <span>{t("chaacsTemple.settings.speedScale")}</span>
+            </div>
+            <div className="flex flex-row items-center">
+              <div className="w-full flex flex-row items-center mt-1.5">
+                <Button
+                  onClick={() => changeSpeedScale(speedScale.sub(0.5))}
+                  className="w-[50%]"
+                >
+                  {"-0.5"}
+                </Button>
+                <Button
+                  onClick={() => changeSpeedScale(speedScale.sub(0.25))}
+                  className="w-[50%] mx-1"
+                >
+                  {"-0.25"}
+                </Button>
+                <NumberInput
+                  readOnly={true}
+                  maxDecimalPlaces={2}
+                  allowNegative={false}
+                  value={speedScale}
+                  className="h-[50px] opacity-75 !cursor-not-allowed"
+                />
+                <Button
+                  onClick={() => changeSpeedScale(speedScale.add(0.25))}
+                  className="w-[50%] mx-1"
+                >
+                  {"+0.25"}
+                </Button>
+                <Button
+                  onClick={() => changeSpeedScale(speedScale.add(0.5))}
+                  className="w-[50%]"
+                >
+                  {"+0.5"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

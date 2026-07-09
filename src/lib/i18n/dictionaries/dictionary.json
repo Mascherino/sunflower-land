@@ -8886,6 +8886,7 @@
   "chaacsTemple.settings.effectsMuted": "Enable sound effects?",
   "chaacsTemple.settings.effectsVolume": "Sound effects volume",
   "chaacsTemple.settings.disableAnimations": "Enable animations?",
+  "chaacsTemple.settings.speedScale": "Speed multiplier",
   "saltHarvest.blockedReason.notEnoughSaltRakes": "Not enough Salt Rakes",
   "saltHarvest.blockedReason.noSaltChargesAvailable": "No salt charges available",
   "saltHarvest.startHarvest": "Start Harvest",

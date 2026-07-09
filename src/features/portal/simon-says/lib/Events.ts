@@ -3,5 +3,6 @@ export type EVENTS = {
     Music?: { volume?: number; isMuted?: boolean };
     Effects?: { volume?: number; isMuted?: boolean };
     isAnimationsDisabled?: boolean;
+    speedScale?: number;
   };
 };

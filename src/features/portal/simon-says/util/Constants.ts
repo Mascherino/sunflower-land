@@ -17,6 +17,7 @@ export const defaultBgmMuted = false;
 export const defaultBgmVolume = 0.1;
 export const defaultEffectsMuted = false;
 export const defaultEffectsVolume = 0.85;
+export const defaultSpeedScale = 1.0;
 
 export const midOffset = 1.6;
 export const outerOffset = 3.67;

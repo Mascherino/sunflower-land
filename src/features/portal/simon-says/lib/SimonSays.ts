@@ -9,6 +9,7 @@ import {
   DEFAULT_SEQUENCE_LENGTH,
   defaultBgmVolume,
   defaultEffectsVolume,
+  defaultSpeedScale,
   GAME_LIGHT_COLOR,
   IMAGE_SCALE,
   LIFEBRAZER_LIGHT_RADIUS,
@@ -58,6 +59,7 @@ export class SimonSays {
   private hintListener: ((event: EventObject) => void) | null = null;
   static current: SimonSays | null = null;
   public settings: ChaacsTempleSettings = getChaacsTempleSettings();
+  private speedScale: number = defaultSpeedScale;
   constructor(scene: SimonSaysScene) {
     this.scene = scene;
 
@@ -89,6 +91,10 @@ export class SimonSays {
       settings.Effects?.volume ??
       oldSettings.Effects?.volume ??
       defaultEffectsVolume;
+
+    const newSpeedScale =
+      settings.speedScale ?? oldSettings.SpeedScale ?? defaultSpeedScale;
+    this.speedScale = newSpeedScale;
 
     ["extinguish", "thunder", "pieces"].forEach((key) => {
       const sound = this.scene.SOUNDS[key as keyof typeof this.scene.SOUNDS];
@@ -561,13 +567,16 @@ export class SimonSays {
    */
   private async blinkSequence(sequenceLength: number = 0) {
     this.scene.portalService?.send("START_BLINK");
+    const speed = this.speedScale;
     this.pieces.forEach((piece) => piece.sprite.disableInteractive(true));
     const partialSequence = this.predefinedSequence.slice(0, this.currLength);
     this.currentSequence = partialSequence;
     for (const val of partialSequence) {
       const piece = this.pieces[val];
-      this.blinkPiece(piece);
-      await delay(blinkDuration * 1000 + 500);
+      this.blinkPiece(piece, speed);
+
+      // Divide through speed as speed is given as scale from 0.1 (slowest) - 2.0 (fastest)
+      await delay((blinkDuration * 1000 + 500) / speed);
     }
     this.pieces.forEach((piece) =>
       piece.sprite.setInteractive({ useHandCursor: true, pixelPerfect: true }),
@@ -585,17 +594,20 @@ export class SimonSays {
     }, 1500);
   }
 
-  private blinkPiece(piece: GamePiece) {
+  private blinkPiece(piece: GamePiece, speedScale: number) {
     const active = piece.config.stem + "_active";
     const inactive = piece.config.stem + "_inactive";
 
     piece.sprite.setTexture(active);
     piece.glow?.setVisible(true);
     piece.sound.play();
-    setTimeout(() => {
-      piece.sprite.setTexture(inactive);
-      piece.glow?.setVisible(false);
-    }, blinkDuration * 1000);
+    setTimeout(
+      () => {
+        piece.sprite.setTexture(inactive);
+        piece.glow?.setVisible(false);
+      },
+      (blinkDuration * 1000) / speedScale,
+    );
   }
 
   /**
