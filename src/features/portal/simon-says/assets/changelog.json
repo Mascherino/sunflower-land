@@ -2,5 +2,13 @@
   {
     "date": "25-03-2026",
     "text": ["Beta test release"]
+  },
+  {
+    "date": "24-06-2026",
+    "text": ["Public release 🚀"]
+  },
+  {
+    "date": "09-07-2026",
+    "text": ["Added speed multiplier user setting"]
   }
 ]
